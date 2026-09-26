@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Compass, BookOpen, MapPin, Sparkles, Image, Shield, UploadCloud, UserCheck, Globe, Menu, X, ChevronDown, Check, ArrowRight } from 'lucide-react';
+import { Compass, BookOpen, Sparkles, Image, Shield, UploadCloud, UserCheck, Globe, Menu, X, ChevronDown, Check, ArrowRight } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: string;
@@ -39,17 +39,18 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'explore', label: t.explore, icon: <BookOpen className="w-4 h-4" /> },
     { id: 'learn', label: t.learn, icon: <Sparkles className="w-4 h-4" /> },
     { id: 'media', label: t.media, icon: <Image className="w-4 h-4" /> },
-    { id: 'ask', label: t.ask, icon: <Sparkles className="w-4 h-4 text-cyan-400" /> }
+    { id: 'ask', label: t.ask, icon: <Sparkles className="w-4 h-4 text-cyan-600" /> }
   ];
 
   return (
     <header 
       className="sticky top-0 z-50 w-full transition-all" 
       style={{ 
-        background: 'rgba(3, 8, 22, 0.25)', 
-        backdropFilter: 'blur(12px)', 
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)' 
+        background: 'rgba(255, 255, 255, 0.88)', 
+        backdropFilter: 'blur(16px)', 
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(14, 116, 144, 0.12)',
+        boxShadow: '0 2px 16px rgba(15, 23, 42, 0.04)'
       }}
     >
       <div className="site-container-wide h-20 flex items-center justify-between">
@@ -59,7 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-3.5 cursor-pointer select-none"
           onClick={() => setCurrentTab('home')}
         >
-          <div className="h-11 w-11 rounded-full bg-white/95 p-1 shadow-lg shadow-cyan-950/40 border border-cyan-400/40 flex items-center justify-center relative overflow-hidden group flex-shrink-0">
+          <div className="h-11 w-11 rounded-full bg-white p-1 shadow-sm border border-cyan-500/30 flex items-center justify-center relative overflow-hidden group flex-shrink-0">
             <img 
               src="/images/dhruva-logo.png" 
               alt="DHRUVA Logo" 
@@ -68,51 +69,51 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-black tracking-wider text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              <span className="text-xl font-black tracking-wider text-slate-900" style={{ fontFamily: 'var(--font-heading)' }}>
                 DHRUVA
               </span>
             </div>
-            <p className="text-[11px] text-sky-200/80 font-medium tracking-wide">
+            <p className="text-[11px] text-slate-500 font-medium tracking-wide">
               {lang === 'en' ? 'Polar Science Outreach & Knowledge Portal' : 'ध्रुवीय विज्ञान प्रसार एवं ज्ञान पोर्टल'}
             </p>
           </div>
         </div>
 
-        {/* Desktop Navigation (Centered text links with active cyan underline) */}
+        {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-7">
           {navLinks.map(link => (
             <button
               key={link.id}
               onClick={() => setCurrentTab(link.id)}
-              className={`relative py-2 text-sm font-medium transition-colors ${currentTab === link.id
-                  ? 'text-white'
-                  : 'text-slate-300 hover:text-white'
+              className={`relative py-2 text-sm font-semibold transition-colors ${currentTab === link.id
+                  ? 'text-cyan-700 font-bold'
+                  : 'text-slate-600 hover:text-cyan-700'
                 }`}
             >
               {link.label}
               {currentTab === link.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(0,240,255,0.8)]" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-cyan-600 rounded-full shadow-[0_0_8px_rgba(2,132,199,0.4)]" />
               )}
             </button>
           ))}
           <button
             onClick={() => setCurrentTab('about')}
-            className={`relative py-2 text-sm font-medium transition-colors ${currentTab === 'about' ? 'text-white' : 'text-slate-300 hover:text-white'
+            className={`relative py-2 text-sm font-semibold transition-colors ${currentTab === 'about' ? 'text-cyan-700 font-bold' : 'text-slate-600 hover:text-cyan-700'
               }`}
           >
             {lang === 'en' ? 'About' : 'परिचय'}
             {currentTab === 'about' && (
-              <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(0,240,255,0.8)]" />
+              <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-cyan-600 rounded-full shadow-[0_0_8px_rgba(2,132,199,0.4)]" />
             )}
           </button>
         </nav>
 
-        {/* Right Action Tools: Circular Search + Language Pill + Role Dropdown */}
+        {/* Right Action Tools */}
         <div className="hidden sm:flex items-center gap-3">
           {/* Quick Search Button */}
           <button
             onClick={() => setCurrentTab('explore')}
-            className="w-9 h-9 rounded-full bg-slate-900/60 hover:bg-cyan-950/50 border border-slate-700/60 hover:border-cyan-400/60 flex items-center justify-center text-slate-300 hover:text-cyan-300 transition-all shadow-sm"
+            className="w-9 h-9 rounded-full bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-400 flex items-center justify-center text-slate-600 hover:text-cyan-700 transition-all shadow-sm"
             title="Search polar research"
           >
             <span className="sr-only">Search</span>
@@ -122,45 +123,45 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Bilingual Language Pill Toggle */}
-          <div className="flex items-center bg-slate-900/60 border border-slate-700/60 rounded-full px-2.5 py-1 text-xs font-medium text-slate-300 shadow-sm">
+          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-full px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
             <button
               onClick={() => setLang('en')}
-              className={`transition-colors font-semibold ${lang === 'en' ? 'text-cyan-300' : 'text-slate-400 hover:text-white'
+              className={`transition-colors font-bold ${lang === 'en' ? 'text-cyan-700' : 'text-slate-400 hover:text-slate-700'
                 }`}
             >
               EN
             </button>
-            <span className="mx-1.5 text-slate-600">|</span>
+            <span className="mx-1.5 text-slate-300">|</span>
             <button
               onClick={() => setLang('hi')}
-              className={`transition-colors font-semibold ${lang === 'hi' ? 'text-cyan-300' : 'text-slate-400 hover:text-white'
+              className={`transition-colors font-bold ${lang === 'hi' ? 'text-cyan-700' : 'text-slate-400 hover:text-slate-700'
                 }`}
             >
               हिंदी
             </button>
           </div>
 
-          {/* Role Switcher Dropdown (Evaluation mode for all 3 portals) */}
+          {/* Role Switcher Dropdown */}
           <div className="relative">
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
               className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all shadow-sm cursor-pointer"
               style={{
                 background: currentUser?.role === 'admin' 
-                  ? 'rgba(244, 63, 94, 0.18)' 
+                  ? '#FFE4E6' 
                   : currentUser?.role === 'researcher' 
-                  ? 'rgba(56, 189, 248, 0.18)' 
-                  : 'rgba(255, 255, 255, 0.10)',
+                  ? '#E0F2FE' 
+                  : '#F1F5F9',
                 borderColor: currentUser?.role === 'admin'
-                  ? 'rgba(244, 63, 94, 0.4)'
-                  : currentUser?.role === 'researcher'
-                  ? 'rgba(56, 189, 248, 0.4)'
-                  : 'rgba(255, 255, 255, 0.22)',
-                color: currentUser?.role === 'admin'
                   ? '#FDA4AF'
                   : currentUser?.role === 'researcher'
                   ? '#7DD3FC'
-                  : '#FFFFFF'
+                  : '#CBD5E1',
+                color: currentUser?.role === 'admin'
+                  ? '#BE123C'
+                  : currentUser?.role === 'researcher'
+                  ? '#0369A1'
+                  : '#0F172A'
               }}
             >
               {currentUser?.role === 'admin' ? (
@@ -176,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'Public Portal'}
               </span>
               {currentUser?.role === 'public' || !currentUser ? (
-                <ArrowRight className="w-3.5 h-3.5 opacity-90 ml-0.5" />
+                <ArrowRight className="w-3.5 h-3.5 opacity-80 ml-0.5" />
               ) : (
                 <ChevronDown className="w-3.5 h-3.5 opacity-70" />
               )}
@@ -184,10 +185,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {roleDropdownOpen && (
               <div
-                className="absolute right-0 mt-2 w-64 rounded-xl border p-2 shadow-2xl z-50"
-                style={{ background: '#0B1533', borderColor: 'var(--polar-border)' }}
+                className="absolute right-0 mt-2 w-64 rounded-xl border p-2 shadow-xl z-50"
+                style={{ background: '#FFFFFF', borderColor: 'rgba(14, 116, 144, 0.2)' }}
               >
-                <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 px-3 py-1.5 border-b border-slate-700/50">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-700 px-3 py-1.5 border-b border-slate-100">
                   Portal & Role Switcher
                 </div>
 
@@ -197,16 +198,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setRoleDropdownOpen(false);
                     setCurrentTab('home');
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-800/80 flex items-center justify-between text-slate-200 mt-1"
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 mt-1 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-cyan-400" />
+                    <Globe className="w-4 h-4 text-cyan-600" />
                     <div>
-                      <div className="font-semibold">Public User</div>
-                      <div className="text-[10px] text-slate-400">Search, Read & Ask DHRUVA</div>
+                      <div className="font-semibold text-slate-900">Public User</div>
+                      <div className="text-[10px] text-slate-500">Search, Read & Ask DHRUVA</div>
                     </div>
                   </div>
-                  {(!currentUser || currentUser?.role === 'public') && <Check className="w-4 h-4 text-cyan-400" />}
+                  {(!currentUser || currentUser?.role === 'public') && <Check className="w-4 h-4 text-cyan-600" />}
                 </button>
 
                 <button
@@ -215,16 +216,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setRoleDropdownOpen(false);
                     setCurrentTab('researcher-dashboard');
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-800/80 flex items-center justify-between text-slate-200"
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <UploadCloud className="w-4 h-4 text-sky-400" />
+                    <UploadCloud className="w-4 h-4 text-sky-600" />
                     <div>
-                      <div className="font-semibold">Dr. Ananya (Researcher)</div>
-                      <div className="text-[10px] text-slate-400">Upload paper & Track review</div>
+                      <div className="font-semibold text-slate-900">Dr. Ananya (Researcher)</div>
+                      <div className="text-[10px] text-slate-500">Upload paper & Track review</div>
                     </div>
                   </div>
-                  {currentUser?.role === 'researcher' && <Check className="w-4 h-4 text-sky-400" />}
+                  {currentUser?.role === 'researcher' && <Check className="w-4 h-4 text-sky-600" />}
                 </button>
 
                 <button
@@ -233,25 +234,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setRoleDropdownOpen(false);
                     setCurrentTab('admin-verification');
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-800/80 flex items-center justify-between text-slate-200"
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-rose-400" />
+                    <Shield className="w-4 h-4 text-rose-600" />
                     <div>
-                      <div className="font-semibold">Dr. Swaminathan (Admin)</div>
-                      <div className="text-[10px] text-slate-400">Verify AI claims & Publish</div>
+                      <div className="font-semibold text-slate-900">Dr. Swaminathan (Admin)</div>
+                      <div className="text-[10px] text-slate-500">Verify AI claims & Publish</div>
                     </div>
                   </div>
-                  {currentUser?.role === 'admin' && <Check className="w-4 h-4 text-rose-400" />}
+                  {currentUser?.role === 'admin' && <Check className="w-4 h-4 text-rose-600" />}
                 </button>
 
-                <div className="border-t border-slate-700/50 mt-1 pt-1">
+                <div className="border-t border-slate-100 mt-1 pt-1">
                   <button
                     onClick={() => {
                       setRoleDropdownOpen(false);
                       setCurrentTab('login');
                     }}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 flex items-center gap-2"
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-700 hover:bg-cyan-50 flex items-center gap-2 cursor-pointer"
                   >
                     <span>Full Authentication / Sign In →</span>
                   </button>
@@ -263,9 +264,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Dedicated Sign In / Portal button */}
           <button
             onClick={() => setCurrentTab('login')}
-            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${currentTab === 'login'
-                ? 'bg-cyan-500 text-black font-semibold'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10'
+            className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${currentTab === 'login'
+                ? 'bg-cyan-600 text-white shadow-sm'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
               }`}
           >
             {currentUser && currentUser.role !== 'public' ? 'Portal' : 'Sign In'}
@@ -275,7 +276,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {currentUser?.role === 'researcher' && (
             <button
               onClick={() => setCurrentTab('researcher-dashboard')}
-              className="btn-cyan text-xs py-1.5 px-3"
+              className="btn-cyan text-xs py-1.5 px-3 cursor-pointer"
             >
               <UploadCloud className="w-3.5 h-3.5" />
               <span>My Repository</span>
@@ -285,7 +286,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {currentUser?.role === 'admin' && (
             <button
               onClick={() => setCurrentTab('admin-verification')}
-              className="btn-danger text-xs py-1.5 px-3"
+              className="btn-danger text-xs py-1.5 px-3 cursor-pointer"
             >
               <Shield className="w-3.5 h-3.5" />
               <span>Admin Review</span>
@@ -297,7 +298,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="lg:hidden flex items-center gap-2">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-slate-300 hover:text-white"
+            className="p-2 text-slate-700 hover:text-cyan-700"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -306,7 +307,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden px-4 pt-2 pb-6 border-t border-slate-800 bg-slate-950/95 space-y-3">
+        <div className="lg:hidden px-4 pt-2 pb-6 border-t border-slate-100 bg-white/95 shadow-xl space-y-3">
           <div className="grid grid-cols-2 gap-2">
             {navLinks.map(link => (
               <button
@@ -315,7 +316,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setCurrentTab(link.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium ${currentTab === link.id ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-300'
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold ${currentTab === link.id ? 'bg-cyan-50 text-cyan-700' : 'text-slate-700 hover:bg-slate-50'
                   }`}
               >
                 {link.icon}
@@ -324,17 +325,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             ))}
           </div>
 
-          <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
             <div className="flex gap-2">
               <button
                 onClick={() => setLang('en')}
-                className={`px-3 py-1 text-xs font-semibold rounded ${lang === 'en' ? 'bg-cyan-500 text-black' : 'text-slate-400'}`}
+                className={`px-3 py-1 text-xs font-bold rounded ${lang === 'en' ? 'bg-cyan-600 text-white' : 'text-slate-600 bg-slate-100'}`}
               >
                 EN
               </button>
               <button
                 onClick={() => setLang('hi')}
-                className={`px-3 py-1 text-xs font-semibold rounded ${lang === 'hi' ? 'bg-cyan-500 text-black' : 'text-slate-400'}`}
+                className={`px-3 py-1 text-xs font-bold rounded ${lang === 'hi' ? 'bg-cyan-600 text-white' : 'text-slate-600 bg-slate-100'}`}
               >
                 हिंदी
               </button>
@@ -364,7 +365,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-800/60">
+          <div className="pt-2 border-t border-slate-100">
             <button
               onClick={() => {
                 setCurrentTab('login');

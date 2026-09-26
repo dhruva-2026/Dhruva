@@ -88,7 +88,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col text-slate-100 selection:bg-cyan-500 selection:text-black relative">
+    <div className="min-h-screen flex flex-col text-slate-900 selection:bg-cyan-100 selection:text-cyan-950 relative">
 
       {/* Global Iceberg Parallax & Atmospheric Background */}
       <ParallaxBackground />

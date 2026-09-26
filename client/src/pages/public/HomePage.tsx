@@ -39,10 +39,11 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
 
   const cardBase: React.CSSProperties = {
     borderRadius: '14px',
-    border: '1px solid rgba(56,189,248,0.2)',
-    background: 'rgba(6,24,56,0.75)',
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
+    border: '1px solid rgba(14, 116, 144, 0.16)',
+    background: 'rgba(255, 255, 255, 0.88)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
     overflow: 'hidden',
     transition: 'all 0.22s ease',
     cursor: 'pointer',
@@ -62,14 +63,14 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 <span className="eyebrow-dot" />
                 <span>{lang === 'en' ? 'KNOWLEDGE FOR A BRIGHTER TOMORROW' : 'उज्ज्वल कल के लिए ज्ञान'}</span>
               </div>
-              <h1 className="text-4xl sm:text-6xl lg:text-[68px] font-extrabold tracking-tight text-white leading-[1.08] mb-6 sm:mb-7">
+              <h1 className="text-4xl sm:text-6xl lg:text-[68px] font-extrabold tracking-tight text-slate-900 leading-[1.08] mb-6 sm:mb-7">
                 {lang === 'en' ? (<>Discover India's<br /><span className="heading-gradient">Polar Science</span></>) : (<>भारत के<br /><span className="heading-gradient">ध्रुवीय विज्ञान</span></>)}
               </h1>
-              <p className="text-base sm:text-lg text-slate-200/90 leading-relaxed font-normal mb-8 sm:mb-10 max-w-xl">
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal mb-8 sm:mb-10 max-w-xl">
                 {lang === 'en' ? 'Explore research, discoveries and expedition knowledge from the Arctic and Antarctic, AI-powered summaries, interactive learning and a trusted repository for a more informed world.' : 'आर्कटिक और अंटार्कटिक से अनुसंधान, खोजों और अभियान ज्ञान का अन्वेषण करें।'}
               </p>
               <div className="flex flex-wrap items-center gap-4 sm:gap-5">
-                {/* Explore Research — vivid cyan rounded rect */}
+                {/* Explore Research */}
                 <button
                   onClick={() => setCurrentTab('explore')}
                   style={{
@@ -78,8 +79,8 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                     paddingRight: '28px',
                     borderRadius: '14px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #00E5FF 0%, #00BCD4 100%)',
-                    color: '#0A0F1E',
+                    background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                    color: '#FFFFFF',
                     fontSize: '15px',
                     fontWeight: 700,
                     display: 'inline-flex',
@@ -87,19 +88,19 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                     justifyContent: 'center',
                     gap: '9px',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 20px rgba(0,229,255,0.4)',
+                    boxShadow: '0 4px 18px rgba(2, 132, 199, 0.35)',
                     transition: 'all 0.2s ease',
                     fontFamily: 'var(--font-heading)',
                     letterSpacing: '-0.01em',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, #33EEFF 0%, #00D4EE 100%)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 28px rgba(0,229,255,0.55)';
+                    (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, #0369A1 0%, #0284C7 100%)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(2, 132, 199, 0.48)';
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, #00E5FF 0%, #00BCD4 100%)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(0,229,255,0.4)';
+                    (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 18px rgba(2, 132, 199, 0.35)';
                     (e.currentTarget as HTMLElement).style.transform = 'none';
                   }}
                 >
@@ -108,7 +109,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                   <ArrowRight style={{ width: '16px', height: '16px', flexShrink: 0 }} />
                 </button>
 
-                {/* Ask DHRUVA — dark charcoal rounded rect */}
+                {/* Ask DHRUVA */}
                 <button
                   onClick={() => setCurrentTab('ask')}
                   style={{
@@ -116,9 +117,9 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                     paddingLeft: '24px',
                     paddingRight: '24px',
                     borderRadius: '14px',
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    background: 'rgba(30,40,65,0.85)',
-                    color: '#FFFFFF',
+                    border: '1px solid rgba(148, 163, 184, 0.4)',
+                    background: '#FFFFFF',
+                    color: '#0F172A',
                     fontSize: '15px',
                     fontWeight: 600,
                     display: 'inline-flex',
@@ -126,33 +127,32 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                     justifyContent: 'center',
                     gap: '9px',
                     cursor: 'pointer',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)',
                     transition: 'all 0.2s ease',
                     fontFamily: 'var(--font-heading)',
                     letterSpacing: '-0.01em',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,229,255,0.4)';
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(8,30,70,0.9)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.5)';
+                    (e.currentTarget as HTMLElement).style.color = '#0284C7';
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)';
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(30,40,65,0.85)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(148, 163, 184, 0.4)';
+                    (e.currentTarget as HTMLElement).style.color = '#0F172A';
                     (e.currentTarget as HTMLElement).style.transform = 'none';
                   }}
                 >
-                  <Sparkles style={{ width: '17px', height: '17px', flexShrink: 0, color: '#67E8F9' }} />
+                  <Sparkles style={{ width: '17px', height: '17px', flexShrink: 0, color: '#0284C7' }} />
                   <span>{lang === 'en' ? 'Ask DHRUVA' : 'ध्रुव से पूछें'}</span>
                 </button>
               </div>
             </div>
             <div className="lg:col-span-5 xl:col-span-4 hidden lg:flex flex-col justify-center">
               <div className="px-2 py-2 space-y-0">
-                <p className="text-3xl font-light tracking-normal leading-snug text-white/70" style={{ fontFamily: 'var(--font-heading)' }}>Two poles.</p>
-                <p className="text-3xl font-bold tracking-normal leading-snug text-white" style={{ fontFamily: 'var(--font-heading)' }}>One planet.</p>
-                <p className="text-3xl font-bold tracking-normal leading-snug text-white" style={{ fontFamily: 'var(--font-heading)' }}>A shared future.</p>
+                <p className="text-3xl font-light tracking-normal leading-snug text-slate-400" style={{ fontFamily: 'var(--font-heading)' }}>Two poles.</p>
+                <p className="text-3xl font-bold tracking-normal leading-snug text-slate-800" style={{ fontFamily: 'var(--font-heading)' }}>One planet.</p>
+                <p className="text-3xl font-extrabold tracking-normal leading-snug text-cyan-700" style={{ fontFamily: 'var(--font-heading)' }}>A shared future.</p>
               </div>
             </div>
           </div>
@@ -172,18 +172,18 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 <span className="eyebrow-dot" />
                 <span>{lang === 'en' ? 'EXPLORE BY THEME' : 'विषय अनुसार अन्वेषण'}</span>
               </div>
-              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
                 {lang === 'en' ? 'Explore Knowledge by Theme' : 'विषय अनुसार ज्ञान का अन्वेषण करें'}
               </h2>
-              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>
                 {lang === 'en' ? 'Discover research, media and educational resources across key polar science domains.' : 'प्रमुख ध्रुवीय विज्ञान क्षेत्रों में अनुसंधान, मीडिया और शैक्षिक संसाधनों की खोज करें।'}
               </p>
             </div>
             <button
               onClick={() => { if (onSelectTheme) onSelectTheme('All'); setCurrentTab('explore'); }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '9999px', border: '1px solid rgba(56,189,248,0.35)', background: 'rgba(8,40,90,0.4)', color: '#FFFFFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.18s', backdropFilter: 'blur(8px)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#00F0FF'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(0,240,255,0.2)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.35)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '9999px', border: '1px solid rgba(14, 116, 144, 0.25)', background: '#FFFFFF', color: '#0284C7', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.18s', boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#0284C7'; (e.currentTarget as HTMLElement).style.background = 'rgba(2, 132, 199, 0.06)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.25)'; (e.currentTarget as HTMLElement).style.background = '#FFFFFF'; }}
             >
               {lang === 'en' ? 'View All Themes' : 'सभी विषय देखें'}
               <ArrowRight size={14} />
@@ -200,16 +200,15 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                   ...cardBase,
                   display: 'flex', flexDirection: 'column', alignItems: 'stretch',
                   padding: 0, textAlign: 'center', minHeight: '160px',
-                  border: '1px solid rgba(56,189,248,0.18)',
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.55)';
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 28px rgba(0,240,255,0.22)';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.45)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(15, 23, 42, 0.1)';
                   (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px) scale(1.02)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.18)';
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.16)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(15, 23, 42, 0.06)';
                   (e.currentTarget as HTMLElement).style.transform = 'none';
                 }}
               >
@@ -217,13 +216,13 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 <div style={{ position: 'relative', height: '90px', overflow: 'hidden', flexShrink: 0 }}>
                   <img src={theme.img} alt={theme.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(4,10,24,0.1), rgba(4,10,24,0.5))' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(15,23,42,0.05), rgba(15,23,42,0.25))' }} />
                 </div>
                 {/* Card content */}
                 <div style={{ padding: '10px 8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
-                  <span style={{ color: '#38BDF8' }}>{theme.icon}</span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>{lang === 'en' ? theme.name : theme.hindiName}</span>
-                  <span style={{ fontSize: '9px', color: 'rgba(148,163,184,0.7)', lineHeight: 1.35 }}>{theme.sub}</span>
+                  <span style={{ color: '#0284C7' }}>{theme.icon}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A', lineHeight: 1.3 }}>{lang === 'en' ? theme.name : theme.hindiName}</span>
+                  <span style={{ fontSize: '9px', color: '#64748B', lineHeight: 1.35 }}>{theme.sub}</span>
                 </div>
               </button>
             ))}
@@ -244,18 +243,18 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 <span className="eyebrow-dot" />
                 <span>{lang === 'en' ? 'FEATURED' : 'प्रमुख शोध'}</span>
               </div>
-              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
                 {lang === 'en' ? 'Featured Polar Research' : 'प्रमुख ध्रुवीय अनुसंधान'}
               </h2>
-              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>
                 {lang === 'en' ? 'Explore important peer-reviewed research from Arctic and Antarctic campaigns.' : 'आर्कटिक और अंटार्कटिक अभियानों से महत्वपूर्ण अनुसंधान।'}
               </p>
             </div>
             <button
               onClick={() => setCurrentTab('explore')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.15s' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#38BDF8'; }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.15s' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0369A1'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#0284C7'; }}
             >
               {lang === 'en' ? 'View all research' : 'सभी शोध पत्र देखें'}
               <ArrowRight size={14} />
@@ -271,13 +270,13 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                   key={card.id}
                   style={{ ...cardBase, display: 'flex', flexDirection: 'column' }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.5)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 40px rgba(0,240,255,0.18)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.45)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 40px rgba(15, 23, 42, 0.1)';
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.2)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.16)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(15, 23, 42, 0.06)';
                     (e.currentTarget as HTMLElement).style.transform = 'none';
                   }}
                 >
@@ -287,7 +286,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                       onMouseEnter={(e) => { (e.target as HTMLImageElement).style.transform = 'scale(1.05)'; }}
                       onMouseLeave={(e) => { (e.target as HTMLImageElement).style.transform = 'scale(1)'; }}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(6,24,56,0.92) 100%)' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(15, 23, 42, 0.6) 100%)' }} />
                   </div>
 
                   {/* Body */}
@@ -295,41 +294,41 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                     <div>
                       {/* Badges */}
                       <div style={{ display: 'flex', gap: '7px', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px', background: isAntarctic ? 'rgba(29,78,216,0.8)' : 'rgba(30,58,138,0.8)', color: '#FFFFFF' }}>
+                        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px', background: isAntarctic ? '#EEF2FF' : '#E0F2FE', color: isAntarctic ? '#4338CA' : '#0369A1', border: `1px solid ${isAntarctic ? '#C7D2FE' : '#BAE6FD'}` }}>
                           {card.region}
                         </span>
-                        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px', background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(71,85,105,0.6)', color: '#67E8F9' }}>
+                        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px', background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#475569' }}>
                           {card.theme}
                         </span>
                       </div>
                       <h3
                         onClick={() => { setSelectedPaperId(card.id); setCurrentTab('paper-detail'); }}
-                        style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.35, marginBottom: '8px', cursor: 'pointer', fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', transition: 'color 0.15s' }}
-                        onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#67E8F9'; }}
-                        onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#FFFFFF'; }}
+                        style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, marginBottom: '8px', cursor: 'pointer', fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', transition: 'color 0.15s' }}
+                        onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#0284C7'; }}
+                        onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#0F172A'; }}
                       >
                         {card.title}
                       </h3>
                     </div>
 
                     {/* Footer */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(148, 163, 184, 0.2)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748B' }}>
-                          <Calendar size={11} style={{ color: '#475569' }} />{card.year}
+                          <Calendar size={11} style={{ color: '#94A3B8' }} />{card.year}
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748B' }}>
-                          <Eye size={11} style={{ color: '#475569' }} />{card.views}
+                          <Eye size={11} style={{ color: '#94A3B8' }} />{card.views}
                         </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#38BDF8' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0284C7' }}>
                           <MapPin size={10} />{card.location}
                         </span>
                       </div>
                       <button
                         onClick={() => { setSelectedPaperId(card.id); setCurrentTab('paper-detail'); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600, color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#38BDF8'; }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0369A1'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#0284C7'; }}
                       >
                         Read <ArrowRight size={12} />
                       </button>
@@ -355,24 +354,24 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 <span className="eyebrow-dot" />
                 <span>{lang === 'en' ? 'LEARN WITH DHRUVA' : 'ध्रुव के साथ सीखें'}</span>
               </div>
-              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
                 {lang === 'en' ? 'Interactive Polar Science' : 'इंटरैक्टिव ध्रुवीय विज्ञान'}
               </h2>
-              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>
                 {lang === 'en' ? 'Quizzes, flashcards and simple explanations for all learners grounded in peer-reviewed science.' : 'सभी शिक्षार्थियों के लिए क्विज़, फ़्लैशकार्ड और सरल व्याख्याएं।'}
               </p>
             </div>
             <button
               onClick={() => setCurrentTab('learn')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '9999px', border: '1px solid rgba(56,189,248,0.35)', background: 'rgba(8,40,90,0.4)', color: '#FFFFFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', backdropFilter: 'blur(8px)', transition: 'all 0.18s' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#00F0FF'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(0,240,255,0.2)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.35)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '9999px', border: '1px solid rgba(14, 116, 144, 0.25)', background: '#FFFFFF', color: '#0284C7', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)', transition: 'all 0.18s' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#0284C7'; (e.currentTarget as HTMLElement).style.background = 'rgba(2, 132, 199, 0.06)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.25)'; (e.currentTarget as HTMLElement).style.background = '#FFFFFF'; }}
             >
               Browse All Modules <ArrowRight size={14} />
             </button>
           </div>
 
-          {/* 3 Learning cards — text left, image right */}
+          {/* 3 Learning cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {[
               {
@@ -404,27 +403,26 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                   ...cardBase,
                   display: 'flex', flexDirection: 'row', alignItems: 'stretch',
                   overflow: 'hidden', minHeight: '160px',
-                  border: '1px solid rgba(56,189,248,0.2)',
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.5)';
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 36px rgba(0,240,255,0.18)';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.45)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 36px rgba(15, 23, 42, 0.1)';
                   (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.2)';
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.16)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(15, 23, 42, 0.06)';
                   (e.currentTarget as HTMLElement).style.transform = 'none';
                 }}
               >
                 {/* Left: text */}
                 <div style={{ flex: 1, padding: '20px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ color: '#38BDF8', marginBottom: '12px' }}>{card.icon}</div>
-                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: '8px', fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
-                    <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>{card.desc}</p>
+                    <div style={{ color: '#0284C7', marginBottom: '12px' }}>{card.icon}</div>
+                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', lineHeight: 1.3, marginBottom: '8px', fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
+                    <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.6 }}>{card.desc}</p>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 700, color: '#38BDF8', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)', transition: 'color 0.15s' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 700, color: '#0284C7', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(148, 163, 184, 0.2)', transition: 'color 0.15s' }}>
                     {card.cta} <ArrowRight size={13} />
                   </div>
                 </div>
@@ -432,7 +430,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 <div style={{ width: '110px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
                   <img src={card.img} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(6,24,56,0.6), transparent)' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(15,23,42,0.1), transparent)' }} />
                 </div>
               </div>
             ))}
@@ -453,18 +451,18 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 <span className="eyebrow-dot" />
                 <span>{lang === 'en' ? 'OUR MISSION' : 'हमारा उद्देश्य'}</span>
               </div>
-              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
                 {lang === 'en' ? 'Why DHRUVA Matters for India' : 'भारत के लिए ध्रुव क्यों महत्वपूर्ण है'}
               </h2>
-              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6, maxWidth: '560px' }}>
+              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.6, maxWidth: '560px' }}>
                 {lang === 'en' ? 'Transforming complex polar science data into open, accessible and grounded knowledge for every citizen and researcher.' : 'जटिल ध्रुवीय विज्ञान डेटा को प्रत्येक नागरिक और शोधकर्ता के लिए खुले, सुलभ और प्रामाणिक ज्ञान में बदलना।'}
               </p>
             </div>
             <button
               onClick={() => setCurrentTab('about')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.15s' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#38BDF8'; }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.15s' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0369A1'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#0284C7'; }}
             >
               Our Mission <ArrowRight size={14} />
             </button>
@@ -482,24 +480,25 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                 style={{
                   display: 'flex', alignItems: 'flex-start', gap: '16px',
                   padding: '20px', borderRadius: '14px',
-                  background: 'rgba(6,24,56,0.5)', border: '1px solid rgba(56,189,248,0.15)',
+                  background: 'rgba(255, 255, 255, 0.88)', border: '1px solid rgba(14, 116, 144, 0.16)',
+                  boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.4)';
-                  (e.currentTarget as HTMLElement).style.background = 'rgba(6,24,56,0.75)';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.45)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 36px rgba(15, 23, 42, 0.1)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.15)';
-                  (e.currentTarget as HTMLElement).style.background = 'rgba(6,24,56,0.5)';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.16)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(15, 23, 42, 0.06)';
                 }}
               >
-                <div style={{ width: '52px', height: '52px', borderRadius: '50%', border: '2px solid rgba(0,240,255,0.5)', background: 'rgba(8,40,90,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38BDF8', flexShrink: 0, boxShadow: '0 0 18px rgba(0,240,255,0.15)' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '50%', border: '2px solid rgba(2, 132, 199, 0.3)', background: 'rgba(2, 132, 199, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284C7', flexShrink: 0 }}>
                   {item.icon}
                 </div>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>{item.title}</div>
-                  <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.82)', lineHeight: 1.65 }}>{item.desc}</p>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', lineHeight: 1.3, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>{item.title}</div>
+                  <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.65 }}>{item.desc}</p>
                 </div>
               </div>
             ))}
