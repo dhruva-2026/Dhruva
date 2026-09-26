@@ -1,0 +1,512 @@
+import React from 'react';
+import { 
+  BookOpen, Sparkles, ArrowRight, Activity, Mountain, Globe,
+  Waves, Wind, Snowflake, Leaf, Calendar, Eye, MapPin,
+  FileCheck2, GraduationCap, Users, UserCheck
+} from 'lucide-react';
+import { useScrollReveal } from '../../hooks/useScrollReveal';
+
+interface HomePageProps {
+  setCurrentTab: (tab: string) => void;
+  setSelectedPaperId: (id: string) => void;
+  onSelectTheme?: (theme: string) => void;
+  lang: 'en' | 'hi';
+}
+
+const THEME_CATEGORIES = [
+  { id: 'climate-science',     name: 'Climate Science',     hindiName: 'जलवायु विज्ञान',       icon: <Activity className="w-5 h-5" />,  sub: 'Understanding a changing planet',  img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&q=60' },
+  { id: 'glaciology',          name: 'Glaciology',          hindiName: 'हिमनद विज्ञान',         icon: <Snowflake className="w-5 h-5" />, sub: 'Theory in the ice',                 img: 'https://images.unsplash.com/photo-1551582045-6ec9c11d8697?w=400&q=60' },
+  { id: 'oceanography',        name: 'Oceanography',        hindiName: 'समुद्र विज्ञान',        icon: <Waves className="w-5 h-5" />,     sub: 'Oceans that Connect',               img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=60' },
+  { id: 'atmospheric-science', name: 'Atmospheric Science', hindiName: 'वायुमंडलीय विज्ञान',   icon: <Wind className="w-5 h-5" />,      sub: 'Climate connections',               img: 'https://images.unsplash.com/photo-1530893609608-32a9af3aa95c?w=400&q=60' },
+  { id: 'polar-biology',       name: 'Polar Biology',       hindiName: 'ध्रुवीय जीव विज्ञान',  icon: <Leaf className="w-5 h-5" />,      sub: 'Unique polar environments',         img: 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=400&q=60' },
+  { id: 'geology',             name: 'Geology',             hindiName: 'भूविज्ञान',             icon: <Mountain className="w-5 h-5" />, sub: "Earth's frozen history",            img: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&q=60' },
+  { id: 'environmental-science',name:'Environmental Science',hindiName: 'पर्यावरण विज्ञान',    icon: <Globe className="w-5 h-5" />,     sub: 'People, policy and a sustainable future', img: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&q=60' },
+];
+
+export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPaperId, onSelectTheme, lang }) => {
+  useScrollReveal();
+
+  const handleThemeClick = (themeName: string) => {
+    if (onSelectTheme) onSelectTheme(themeName);
+    else setCurrentTab('explore');
+  };
+
+  const featuredCardsData = [
+    { id: 'paper-001', title: 'Seasonal Variability of Antarctic Sea Ice Extent in the Weddell Sea Sector', region: 'ANTARCTIC', theme: 'GLACIOLOGY',     year: '2024', views: '1.4K', location: 'Weddell Sea', img: 'https://images.unsplash.com/photo-1551582045-6ec9c11d8697?w=600&q=70' },
+    { id: 'paper-002', title: 'Permafrost Active-Layer Deepening and Methanogenesis in Svalbard',           region: 'ARCTIC',    theme: 'CLIMATE SCIENCE', year: '2024', views: '1.1K', location: 'Svalbard',    img: 'https://images.unsplash.com/photo-1530893609608-32a9af3aa95c?w=600&q=70' },
+    { id: 'paper-003', title: 'Phytoplankton Bloom Dynamics and Primary Productivity in Prydz Bay',         region: 'ANTARCTIC', theme: 'POLAR BIOLOGY',  year: '2023', views: '940',  location: 'Prydz Bay',  img: 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=600&q=70' },
+  ];
+
+  const cardBase: React.CSSProperties = {
+    borderRadius: '14px',
+    border: '1px solid rgba(56,189,248,0.2)',
+    background: 'rgba(6,24,56,0.75)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    overflow: 'hidden',
+    transition: 'all 0.22s ease',
+    cursor: 'pointer',
+  };
+
+  return (
+    <div className="w-full overflow-x-hidden">
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 1. HERO                                     */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className="relative min-h-[80vh] flex flex-col justify-center pt-16 sm:pt-24 pb-12 sm:pb-16 w-full">
+        <div className="site-container-wide my-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            <div className="lg:col-span-7 xl:col-span-8 max-w-2xl">
+              <div className="section-eyebrow mb-5">
+                <span className="eyebrow-dot" />
+                <span>{lang === 'en' ? 'KNOWLEDGE FOR A BRIGHTER TOMORROW' : 'उज्ज्वल कल के लिए ज्ञान'}</span>
+              </div>
+              <h1 className="text-4xl sm:text-6xl lg:text-[68px] font-extrabold tracking-tight text-white leading-[1.08] mb-6 sm:mb-7">
+                {lang === 'en' ? (<>Discover India's<br /><span className="heading-gradient">Polar Science</span></>) : (<>भारत के<br /><span className="heading-gradient">ध्रुवीय विज्ञान</span></>)}
+              </h1>
+              <p className="text-base sm:text-lg text-slate-200/90 leading-relaxed font-normal mb-8 sm:mb-10 max-w-xl">
+                {lang === 'en' ? 'Explore research, discoveries and expedition knowledge from the Arctic and Antarctic, AI-powered summaries, interactive learning and a trusted repository for a more informed world.' : 'आर्कटिक और अंटार्कटिक से अनुसंधान, खोजों और अभियान ज्ञान का अन्वेषण करें।'}
+              </p>
+              <div className="flex flex-wrap items-center gap-4 sm:gap-5">
+                {/* Explore Research — vivid cyan rounded rect */}
+                <button
+                  onClick={() => setCurrentTab('explore')}
+                  style={{
+                    height: '52px',
+                    paddingLeft: '28px',
+                    paddingRight: '28px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #00E5FF 0%, #00BCD4 100%)',
+                    color: '#0A0F1E',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '9px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 20px rgba(0,229,255,0.4)',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'var(--font-heading)',
+                    letterSpacing: '-0.01em',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, #33EEFF 0%, #00D4EE 100%)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 28px rgba(0,229,255,0.55)';
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, #00E5FF 0%, #00BCD4 100%)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(0,229,255,0.4)';
+                    (e.currentTarget as HTMLElement).style.transform = 'none';
+                  }}
+                >
+                  <BookOpen style={{ width: '18px', height: '18px', strokeWidth: 2.2, flexShrink: 0 }} />
+                  <span>{lang === 'en' ? 'Explore Research' : 'अनुसंधान खोजें'}</span>
+                  <ArrowRight style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+                </button>
+
+                {/* Ask DHRUVA — dark charcoal rounded rect */}
+                <button
+                  onClick={() => setCurrentTab('ask')}
+                  style={{
+                    height: '52px',
+                    paddingLeft: '24px',
+                    paddingRight: '24px',
+                    borderRadius: '14px',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    background: 'rgba(30,40,65,0.85)',
+                    color: '#FFFFFF',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '9px',
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'var(--font-heading)',
+                    letterSpacing: '-0.01em',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,229,255,0.4)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(8,30,70,0.9)';
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(30,40,65,0.85)';
+                    (e.currentTarget as HTMLElement).style.transform = 'none';
+                  }}
+                >
+                  <Sparkles style={{ width: '17px', height: '17px', flexShrink: 0, color: '#67E8F9' }} />
+                  <span>{lang === 'en' ? 'Ask DHRUVA' : 'ध्रुव से पूछें'}</span>
+                </button>
+              </div>
+            </div>
+            <div className="lg:col-span-5 xl:col-span-4 hidden lg:flex flex-col justify-center">
+              <div className="px-2 py-2 space-y-0">
+                <p className="text-3xl font-light tracking-normal leading-snug text-white/70" style={{ fontFamily: 'var(--font-heading)' }}>Two poles.</p>
+                <p className="text-3xl font-bold tracking-normal leading-snug text-white" style={{ fontFamily: 'var(--font-heading)' }}>One planet.</p>
+                <p className="text-3xl font-bold tracking-normal leading-snug text-white" style={{ fontFamily: 'var(--font-heading)' }}>A shared future.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 2. EXPLORE KNOWLEDGE BY THEME              */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className="w-full py-10 sm:py-14 reveal">
+        <div className="site-container-wide">
+
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <div className="section-eyebrow" style={{ marginBottom: '6px' }}>
+                <span className="eyebrow-dot" />
+                <span>{lang === 'en' ? 'EXPLORE BY THEME' : 'विषय अनुसार अन्वेषण'}</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+                {lang === 'en' ? 'Explore Knowledge by Theme' : 'विषय अनुसार ज्ञान का अन्वेषण करें'}
+              </h2>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>
+                {lang === 'en' ? 'Discover research, media and educational resources across key polar science domains.' : 'प्रमुख ध्रुवीय विज्ञान क्षेत्रों में अनुसंधान, मीडिया और शैक्षिक संसाधनों की खोज करें।'}
+              </p>
+            </div>
+            <button
+              onClick={() => { if (onSelectTheme) onSelectTheme('All'); setCurrentTab('explore'); }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '9999px', border: '1px solid rgba(56,189,248,0.35)', background: 'rgba(8,40,90,0.4)', color: '#FFFFFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.18s', backdropFilter: 'blur(8px)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#00F0FF'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(0,240,255,0.2)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.35)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+            >
+              {lang === 'en' ? 'View All Themes' : 'सभी विषय देखें'}
+              <ArrowRight size={14} />
+            </button>
+          </div>
+
+          {/* 7 theme cards with images */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '12px' }}>
+            {THEME_CATEGORIES.map((theme) => (
+              <button
+                key={theme.id}
+                onClick={() => handleThemeClick(theme.name)}
+                style={{
+                  ...cardBase,
+                  display: 'flex', flexDirection: 'column', alignItems: 'stretch',
+                  padding: 0, textAlign: 'center', minHeight: '160px',
+                  border: '1px solid rgba(56,189,248,0.18)',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.55)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 28px rgba(0,240,255,0.22)';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px) scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.18)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                  (e.currentTarget as HTMLElement).style.transform = 'none';
+                }}
+              >
+                {/* Card image */}
+                <div style={{ position: 'relative', height: '90px', overflow: 'hidden', flexShrink: 0 }}>
+                  <img src={theme.img} alt={theme.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(4,10,24,0.1), rgba(4,10,24,0.5))' }} />
+                </div>
+                {/* Card content */}
+                <div style={{ padding: '10px 8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
+                  <span style={{ color: '#38BDF8' }}>{theme.icon}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>{lang === 'en' ? theme.name : theme.hindiName}</span>
+                  <span style={{ fontSize: '9px', color: 'rgba(148,163,184,0.7)', lineHeight: 1.35 }}>{theme.sub}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 3. FEATURED POLAR RESEARCH                  */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className="w-full py-12 sm:py-16 reveal">
+        <div className="site-container-wide">
+
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <div className="section-eyebrow" style={{ marginBottom: '6px' }}>
+                <span className="eyebrow-dot" />
+                <span>{lang === 'en' ? 'FEATURED' : 'प्रमुख शोध'}</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+                {lang === 'en' ? 'Featured Polar Research' : 'प्रमुख ध्रुवीय अनुसंधान'}
+              </h2>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>
+                {lang === 'en' ? 'Explore important peer-reviewed research from Arctic and Antarctic campaigns.' : 'आर्कटिक और अंटार्कटिक अभियानों से महत्वपूर्ण अनुसंधान।'}
+              </p>
+            </div>
+            <button
+              onClick={() => setCurrentTab('explore')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.15s' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#38BDF8'; }}
+            >
+              {lang === 'en' ? 'View all research' : 'सभी शोध पत्र देखें'}
+              <ArrowRight size={14} />
+            </button>
+          </div>
+
+          {/* 3 featured cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+            {featuredCardsData.map((card) => {
+              const isAntarctic = card.region === 'ANTARCTIC';
+              return (
+                <div
+                  key={card.id}
+                  style={{ ...cardBase, display: 'flex', flexDirection: 'column' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.5)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 40px rgba(0,240,255,0.18)';
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.2)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                    (e.currentTarget as HTMLElement).style.transform = 'none';
+                  }}
+                >
+                  {/* Image */}
+                  <div style={{ position: 'relative', height: '180px', overflow: 'hidden', flexShrink: 0 }}>
+                    <img src={card.img} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                      onMouseEnter={(e) => { (e.target as HTMLImageElement).style.transform = 'scale(1.05)'; }}
+                      onMouseLeave={(e) => { (e.target as HTMLImageElement).style.transform = 'scale(1)'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(6,24,56,0.92) 100%)' }} />
+                  </div>
+
+                  {/* Body */}
+                  <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      {/* Badges */}
+                      <div style={{ display: 'flex', gap: '7px', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px', background: isAntarctic ? 'rgba(29,78,216,0.8)' : 'rgba(30,58,138,0.8)', color: '#FFFFFF' }}>
+                          {card.region}
+                        </span>
+                        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px', background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(71,85,105,0.6)', color: '#67E8F9' }}>
+                          {card.theme}
+                        </span>
+                      </div>
+                      <h3
+                        onClick={() => { setSelectedPaperId(card.id); setCurrentTab('paper-detail'); }}
+                        style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.35, marginBottom: '8px', cursor: 'pointer', fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', transition: 'color 0.15s' }}
+                        onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#67E8F9'; }}
+                        onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#FFFFFF'; }}
+                      >
+                        {card.title}
+                      </h3>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748B' }}>
+                          <Calendar size={11} style={{ color: '#475569' }} />{card.year}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748B' }}>
+                          <Eye size={11} style={{ color: '#475569' }} />{card.views}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#38BDF8' }}>
+                          <MapPin size={10} />{card.location}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => { setSelectedPaperId(card.id); setCurrentTab('paper-detail'); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600, color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#38BDF8'; }}
+                      >
+                        Read <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 4. INTERACTIVE POLAR SCIENCE               */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className="w-full py-12 sm:py-16 reveal">
+        <div className="site-container-wide">
+
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <div className="section-eyebrow" style={{ marginBottom: '6px' }}>
+                <span className="eyebrow-dot" />
+                <span>{lang === 'en' ? 'LEARN WITH DHRUVA' : 'ध्रुव के साथ सीखें'}</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+                {lang === 'en' ? 'Interactive Polar Science' : 'इंटरैक्टिव ध्रुवीय विज्ञान'}
+              </h2>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>
+                {lang === 'en' ? 'Quizzes, flashcards and simple explanations for all learners grounded in peer-reviewed science.' : 'सभी शिक्षार्थियों के लिए क्विज़, फ़्लैशकार्ड और सरल व्याख्याएं।'}
+              </p>
+            </div>
+            <button
+              onClick={() => setCurrentTab('learn')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '9999px', border: '1px solid rgba(56,189,248,0.35)', background: 'rgba(8,40,90,0.4)', color: '#FFFFFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', backdropFilter: 'blur(8px)', transition: 'all 0.18s' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#00F0FF'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(0,240,255,0.2)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.35)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+            >
+              Browse All Modules <ArrowRight size={14} />
+            </button>
+          </div>
+
+          {/* 3 Learning cards — text left, image right */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            {[
+              {
+                icon: <BookOpen size={26} strokeWidth={2} />,
+                title: lang === 'en' ? 'Study Modules' : 'अध्ययन मॉड्यूल',
+                desc: lang === 'en' ? 'Learn complex concepts in simple, accessible language' : 'सरल भाषा में जटिल अवधारणाओं को समझें',
+                cta: lang === 'en' ? 'Start Learning' : 'शुरू करें',
+                img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&q=65',
+              },
+              {
+                icon: <FileCheck2 size={26} strokeWidth={2} />,
+                title: lang === 'en' ? 'Quizzes & Flashcards' : 'क्विज़ और फ़्लैशकार्ड',
+                desc: lang === 'en' ? 'Test your knowledge with interactive, citation-backed quizzes' : 'इंटरैक्टिव क्विज़ के साथ अपने ज्ञान का परीक्षण करें',
+                cta: lang === 'en' ? 'Start Practicing' : 'शुरू करें',
+                img: 'https://images.unsplash.com/photo-1551582045-6ec9c11d8697?w=400&q=65',
+              },
+              {
+                icon: <GraduationCap size={26} strokeWidth={2} />,
+                title: lang === 'en' ? 'For Students & Researchers' : 'छात्रों व शोधकर्ताओं के लिए',
+                desc: lang === 'en' ? 'Curated learning paths tailored for academic and citizen science' : 'प्रत्येक स्तर के लिए क्यूरेटेड शिक्षण पथ',
+                cta: lang === 'en' ? 'Start Exploring' : 'शुरू करें',
+                img: 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=400&q=65',
+              },
+            ].map((card, i) => (
+              <div
+                key={i}
+                onClick={() => setCurrentTab('learn')}
+                style={{
+                  ...cardBase,
+                  display: 'flex', flexDirection: 'row', alignItems: 'stretch',
+                  overflow: 'hidden', minHeight: '160px',
+                  border: '1px solid rgba(56,189,248,0.2)',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.5)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 36px rgba(0,240,255,0.18)';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.2)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                  (e.currentTarget as HTMLElement).style.transform = 'none';
+                }}
+              >
+                {/* Left: text */}
+                <div style={{ flex: 1, padding: '20px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ color: '#38BDF8', marginBottom: '12px' }}>{card.icon}</div>
+                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: '8px', fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
+                    <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6 }}>{card.desc}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 700, color: '#38BDF8', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)', transition: 'color 0.15s' }}>
+                    {card.cta} <ArrowRight size={13} />
+                  </div>
+                </div>
+                {/* Right: image */}
+                <div style={{ width: '110px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+                  <img src={card.img} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(6,24,56,0.6), transparent)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 5. WHY DHRUVA MATTERS FOR INDIA            */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className="w-full py-12 sm:py-16 reveal">
+        <div className="site-container-wide">
+
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '28px', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <div className="section-eyebrow" style={{ marginBottom: '6px' }}>
+                <span className="eyebrow-dot" />
+                <span>{lang === 'en' ? 'OUR MISSION' : 'हमारा उद्देश्य'}</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>
+                {lang === 'en' ? 'Why DHRUVA Matters for India' : 'भारत के लिए ध्रुव क्यों महत्वपूर्ण है'}
+              </h2>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.6, maxWidth: '560px' }}>
+                {lang === 'en' ? 'Transforming complex polar science data into open, accessible and grounded knowledge for every citizen and researcher.' : 'जटिल ध्रुवीय विज्ञान डेटा को प्रत्येक नागरिक और शोधकर्ता के लिए खुले, सुलभ और प्रामाणिक ज्ञान में बदलना।'}
+              </p>
+            </div>
+            <button
+              onClick={() => setCurrentTab('about')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.15s' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#38BDF8'; }}
+            >
+              Our Mission <ArrowRight size={14} />
+            </button>
+          </div>
+
+          {/* 3 pillar cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            {[
+              { icon: <BookOpen size={22} strokeWidth={2} />, title: lang === 'en' ? 'Monsoon & Climate Connections' : 'मानसून और जलवायु संबंध', desc: lang === 'en' ? 'Linking polar cryospheric fluctuations with the Indian monsoon teleconnections.' : 'ध्रुवीय हिम आवरण का भारतीय मानसून चक्र से संबंध।' },
+              { icon: <Users size={22} strokeWidth={2} />,   title: lang === 'en' ? 'Verifiable Grounding & Integrity' : 'सत्यापित स्रोत और प्रामाणिकता', desc: lang === 'en' ? 'Zero-hallucination AI cited directly to published peer-reviewed page numbers.' : 'सहकर्मी-समीक्षित पृष्ठ संख्याओं से सीधे उद्धृत प्रामाणिक जानकारी।' },
+              { icon: <UserCheck size={22} strokeWidth={2} />,title: lang === 'en' ? 'Empowering Future Scientists' : 'भावी वैज्ञानिकों को सशक्त बनाना', desc: lang === 'en' ? 'Democratizing polar science for universities, students, and citizens nationwide.' : 'विश्वविद्यालयों, छात्रों और नागरिकों के लिए ध्रुवीय विज्ञान का लोकतंत्रीकरण।' },
+            ].map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '16px',
+                  padding: '20px', borderRadius: '14px',
+                  background: 'rgba(6,24,56,0.5)', border: '1px solid rgba(56,189,248,0.15)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,240,255,0.4)';
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(6,24,56,0.75)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.15)';
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(6,24,56,0.5)';
+                }}
+              >
+                <div style={{ width: '52px', height: '52px', borderRadius: '50%', border: '2px solid rgba(0,240,255,0.5)', background: 'rgba(8,40,90,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38BDF8', flexShrink: 0, boxShadow: '0 0 18px rgba(0,240,255,0.15)' }}>
+                  {item.icon}
+                </div>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: '6px', fontFamily: 'var(--font-heading)' }}>{item.title}</div>
+                  <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.82)', lineHeight: 1.65 }}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+    </div>
+  );
+};

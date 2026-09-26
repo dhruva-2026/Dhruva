@@ -1,0 +1,19 @@
+{
+  "backupDate": "2026-09-12T04:15:31.270Z",
+  "totalPapers": 20,
+  "tablesBackedUp": [
+    "papers",
+    "paper_sections",
+    "ai_outputs",
+    "mcqs",
+    "flashcards",
+    "claims",
+    "locations",
+    "researchers",
+    "users",
+    "media",
+    "embargoes",
+    "audit_logs"
+  ],
+  "description": "Complete backup of DHRUVA project database, papers, and knowledge assets"
+}

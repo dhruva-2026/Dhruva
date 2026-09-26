@@ -1,0 +1,1805 @@
+/**
+ * DHRUVA Database Seed Script
+ * SIH26063 - Integrated Polar Science Outreach, Knowledge Repository and Media Dissemination Portal
+ * Populates 20 synthetic polar papers, 10 researchers, 10 locations, 80+ sections, 65+ MCQs,
+ * 45+ flashcards, Hindi summaries, 50+ grounding claims, media, embargoes, audit logs, and demo users.
+ */
+
+const bcrypt = require('bcryptjs');
+const db = require('./db.js');
+const { generateEmbedding } = require('../services/ragService.js');
+
+console.log('🌱 Starting DHRUVA database seeding...');
+
+// Reset existing data safely
+db.execRaw(`
+  DELETE FROM verifications;
+  DELETE FROM claims;
+  DELETE FROM mcqs;
+  DELETE FROM flashcards;
+  DELETE FROM ai_outputs;
+  DELETE FROM paper_chunks;
+  DELETE FROM paper_sections;
+  DELETE FROM embargoes;
+  DELETE FROM media;
+  DELETE FROM audit_logs;
+  DELETE FROM papers;
+  DELETE FROM researchers;
+  DELETE FROM locations;
+  DELETE FROM users;
+`);
+
+const passwordHash = bcrypt.hashSync('admin123', 10);
+const researcherHash = bcrypt.hashSync('researcher123', 10);
+
+// 1. Seed Users (Admin, Researchers, Public)
+const users = [
+  { id: 'usr-admin-1', name: 'Dr. K. Swaminathan (Admin Reviewer)', email: 'admin@dhruva.gov.in', password_hash: passwordHash, role: 'admin', institution: 'NCPOR / Ministry of Earth Sciences' },
+  { id: 'usr-res-1', name: 'Dr. Ananya Sharma', email: 'dr.ananya@ncaor.gov.in', password_hash: researcherHash, role: 'researcher', institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa' },
+  { id: 'usr-res-2', name: 'Dr. Arjun Rao', email: 'arjun.rao@iitr.ac.in', password_hash: researcherHash, role: 'researcher', institution: 'Department of Earth Sciences, IIT Roorkee' },
+  { id: 'usr-res-3', name: 'Dr. Meera Sen', email: 'meera.sen@iiserpune.ac.in', password_hash: researcherHash, role: 'researcher', institution: 'Center for Climate & Environmental Studies, IISER Pune' },
+  { id: 'usr-res-4', name: 'Dr. Rohan Das', email: 'rohan.das@nio.res.in', password_hash: researcherHash, role: 'researcher', institution: 'CSIR - National Institute of Oceanography (NIO), Goa' },
+  { id: 'usr-res-5', name: 'Dr. Vikram Nair', email: 'vikram.nair@sac.isro.gov.in', password_hash: researcherHash, role: 'researcher', institution: 'Space Applications Centre (ISRO), Ahmedabad' },
+  { id: 'usr-res-6', name: 'Dr. Sunita Kulkarni', email: 'sunita.k@imd.gov.in', password_hash: researcherHash, role: 'researcher', institution: 'India Meteorological Department (IMD), New Delhi' },
+  { id: 'usr-res-7', name: 'Dr. Rajeshwari Menon', email: 'r.menon@bhu.ac.in', password_hash: researcherHash, role: 'researcher', institution: 'Banaras Hindu University, Dept of Geophysics' },
+  { id: 'usr-res-8', name: 'Dr. Amitav Ghosh', email: 'amitav.ghosh@iisc.ac.in', password_hash: researcherHash, role: 'researcher', institution: 'Divecha Centre for Climate Change, IISc Bengaluru' },
+  { id: 'usr-res-9', name: 'Dr. Preeti Varma', email: 'preeti.varma@wadia.res.in', password_hash: researcherHash, role: 'researcher', institution: 'Wadia Institute of Himalayan Geology' },
+  { id: 'usr-res-10', name: 'Dr. Tariq Al-Mansoor', email: 'tariq.m@ncpor.res.in', password_hash: researcherHash, role: 'researcher', institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa' },
+  { id: 'usr-pub-1', name: 'Siddharth Patel (Student Explorer)', email: 'student@dhruva.edu', password_hash: researcherHash, role: 'public', institution: 'Delhi University' }
+];
+
+users.forEach(u => {
+  db.execute(
+    `INSERT INTO users (id, name, email, password_hash, role, institution) VALUES (?, ?, ?, ?, ?, ?)`,
+    [u.id, u.name, u.email, u.password_hash, u.role, u.institution]
+  );
+});
+
+// 2. Seed Polar Locations
+const locations = [
+  {
+    id: 'loc-1',
+    name: 'Maitri Research Station',
+    region: 'Antarctic',
+    latitude: -70.7667,
+    longitude: 11.7333,
+    country: 'India',
+    description: "India's second permanent Antarctic research station, situated in the ice-free rocky mountainous plateau of Schirmacher Oasis. Operational year-round since 1989 for glaciological, meteorological, and geological studies.",
+    station_type: 'Research Station',
+    established_year: 1989,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-2',
+    name: 'Bharati Research Station',
+    region: 'Antarctic',
+    latitude: -69.4069,
+    longitude: 76.1908,
+    country: 'India',
+    description: "India's third modern Antarctic station located in the Larsemann Hills beside Prydz Bay. Constructed from 134 prefabricated shipping containers with state-of-the-art oceanographic and atmospheric laboratories.",
+    station_type: 'Research Station',
+    established_year: 2012,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1483181957632-8bda974cbc91?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-3',
+    name: 'Himadri Research Station',
+    region: 'Arctic',
+    latitude: 78.9236,
+    longitude: 11.9099,
+    country: 'India',
+    description: "India's first permanent Arctic research station located at the international Arctic research base of Ny-Ålesund, Spitsbergen, Svalbard (Norway). Dedicated to atmospheric aerosols, marine biology, and glaciology.",
+    station_type: 'Research Station',
+    established_year: 2008,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-4',
+    name: 'Dakshin Gangotri (Historical Base)',
+    region: 'Antarctic',
+    latitude: -70.0833,
+    longitude: 12.0000,
+    country: 'India',
+    description: "India's historic first Antarctic base established during the third Indian expedition in 1983-84. Currently maintained as an unmanned automated meteorological observation site and historical monument.",
+    station_type: 'Field Camp',
+    established_year: 1983,
+    status: 'Decommissioned / Historic',
+    thumbnail_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-5',
+    name: 'IndARC Deep Water Mooring Observatory',
+    region: 'Arctic',
+    latitude: 79.0000,
+    longitude: 11.5000,
+    country: 'India',
+    description: "India's first underwater multi-sensor moored observatory deployed at Kongsfjorden, Svalbard, at a water depth of 192 meters to continuously monitor Arctic fjord oceanography and seawater exchange.",
+    station_type: 'Mooring / Ocean Observatory',
+    established_year: 2014,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-6',
+    name: 'Kongsfjorden Marine Transect',
+    region: 'Arctic',
+    latitude: 78.9800,
+    longitude: 12.1000,
+    country: 'Norway / International',
+    description: "Glacial fjord on the west coast of Spitsbergen that serves as an open-air natural laboratory for studying Atlantic water advection, glacial meltwater discharge, and Arctic zooplankton dynamics.",
+    station_type: 'Field Camp',
+    established_year: 2005,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-7',
+    name: 'Prydz Bay Oceanographic Station',
+    region: 'Antarctic',
+    latitude: -69.0000,
+    longitude: 75.0000,
+    country: 'International / India',
+    description: "Major embayment of Antarctica between Lars Christensen Coast and Ingrid Christensen Coast, where the Amery Ice Shelf drains into the Southern Ocean. Focal area for bottom water formation studies.",
+    station_type: 'Mooring / Ocean Observatory',
+    established_year: 2010,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-8',
+    name: 'Schirmacher Oasis Glaciological Grid',
+    region: 'Antarctic',
+    latitude: -70.7500,
+    longitude: 11.7000,
+    country: 'India',
+    description: "Ice-free plateau covering approximately 35 sq km with over 100 freshwater periglacial lakes, moraines, and ice shelves monitored by Indian expedition teams for over 40 years.",
+    station_type: 'Field Camp',
+    established_year: 1988,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-9',
+    name: 'Ny-Ålesund International Polar Village',
+    region: 'Arctic',
+    latitude: 78.9250,
+    longitude: 11.9300,
+    country: 'Norway',
+    description: "The northernmost permanent civilian settlement on Earth, hosting scientific research teams from 11 nations with zero radio frequency interference policies.",
+    station_type: 'Research Station',
+    established_year: 1968,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&auto=format&fit=crop'
+  },
+  {
+    id: 'loc-10',
+    name: 'Weddell Sea Sea-Ice Observation Sector',
+    region: 'Antarctic',
+    latitude: -72.0000,
+    longitude: -45.0000,
+    country: 'International',
+    description: "Crucial sea-ice gyre and Southern Ocean polynya formation zone vital for global thermohaline circulation and Antarctic bottom water (AABW) generation.",
+    station_type: 'Mooring / Ocean Observatory',
+    established_year: 2015,
+    status: 'Active',
+    thumbnail_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop'
+  }
+];
+
+locations.forEach(loc => {
+  db.execute(
+    `INSERT INTO locations (id, name, region, latitude, longitude, country, description, station_type, established_year, status, thumbnail_url, is_demo)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+    [loc.id, loc.name, loc.region, loc.latitude, loc.longitude, loc.country, loc.description, loc.station_type, loc.established_year, loc.status, loc.thumbnail_url]
+  );
+});
+
+// 3. Seed Researchers
+const researchers = [
+  {
+    id: 'res-1',
+    user_id: 'usr-res-1',
+    name: 'Dr. Ananya Sharma',
+    email: 'dr.ananya@ncaor.gov.in',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    designation: 'Senior Scientist (Glaciology & Cryosphere)',
+    research_area: 'Glaciology',
+    polar_region: 'Both',
+    bio: 'Lead investigator for Antarctic ice shelf stability and Himalayan-polar cryospheric teleconnections. Veteran of 4 Indian Antarctic Expeditions (33rd, 36th, 39th, 42nd ISEA).',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-2',
+    user_id: 'usr-res-2',
+    name: 'Dr. Arjun Rao',
+    email: 'arjun.rao@iitr.ac.in',
+    institution: 'Department of Earth Sciences, IIT Roorkee',
+    designation: 'Associate Professor (Polar Oceanography)',
+    research_area: 'Oceanography',
+    polar_region: 'Antarctic',
+    bio: 'Specialist in Southern Ocean circulation, eddy heat transport, and Antarctic Bottom Water mass transformations using autonomous ocean gliders and Argo floats.',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-3',
+    user_id: 'usr-res-3',
+    name: 'Dr. Meera Sen',
+    email: 'meera.sen@iiserpune.ac.in',
+    institution: 'Center for Climate & Environmental Studies, IISER Pune',
+    designation: 'Principal Investigator (Polar Atmospheric Science)',
+    research_area: 'Atmospheric Science',
+    polar_region: 'Arctic',
+    bio: 'Expert on atmospheric aerosols, Arctic amplification, and black carbon long-range transport over Himadri Station in Svalbard.',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-4',
+    user_id: 'usr-res-4',
+    name: 'Dr. Rohan Das',
+    email: 'rohan.das@nio.res.in',
+    institution: 'CSIR - National Institute of Oceanography (NIO), Goa',
+    designation: 'Senior Principal Scientist (Marine Biology)',
+    research_area: 'Polar Biology',
+    polar_region: 'Antarctic',
+    bio: 'Pioneering marine biologist studying Antarctic krill (Euphausia superba) swarming dynamics, benthos biodiversity, and Southern Ocean food webs under ocean acidification.',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-5',
+    user_id: 'usr-res-5',
+    name: 'Dr. Vikram Nair',
+    email: 'vikram.nair@sac.isro.gov.in',
+    institution: 'Space Applications Centre (ISRO), Ahmedabad',
+    designation: 'Group Director (Polar Remote Sensing)',
+    research_area: 'Remote Sensing',
+    polar_region: 'Both',
+    bio: 'Space scientist utilizing Synthetic Aperture Radar (SAR) and altimetry data from RISAT, CryoSat-2, and Sentinel for polar sea-ice roughness and thickness mapping.',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-6',
+    user_id: 'usr-res-6',
+    name: 'Dr. Sunita Kulkarni',
+    email: 'sunita.k@imd.gov.in',
+    institution: 'India Meteorological Department (IMD), New Delhi',
+    designation: 'Scientist F (Polar Meteorology & Ozone)',
+    research_area: 'Climate Science',
+    polar_region: 'Antarctic',
+    bio: 'Specialist in the Antarctic ozone hole recovery dynamics, katabatic wind structures, and surface radiation balance over Maitri and Bharati stations.',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-7',
+    user_id: 'usr-res-7',
+    name: 'Dr. Rajeshwari Menon',
+    email: 'r.menon@bhu.ac.in',
+    institution: 'Banaras Hindu University, Dept of Geophysics',
+    designation: 'Professor (Permafrost & Geomagnetism)',
+    research_area: 'Geology',
+    polar_region: 'Arctic',
+    bio: 'Conducts ground-penetrating radar surveys of permafrost active-layer thickness and geomagnetosphere pulsations in Ny-Ålesund and Northern Scandinavia.',
+    avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-8',
+    user_id: 'usr-res-8',
+    name: 'Dr. Amitav Ghosh',
+    email: 'amitav.ghosh@iisc.ac.in',
+    institution: 'Divecha Centre for Climate Change, IISc Bengaluru',
+    designation: 'Associate Professor (Cryosphere Dynamics)',
+    research_area: 'Cryosphere',
+    polar_region: 'Antarctic',
+    bio: 'Numerical modeler focusing on subglacial meltwater channels, ice stream calving laws, and Amery Ice Shelf structural rift propagation.',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-9',
+    user_id: 'usr-res-9',
+    name: 'Dr. Preeti Varma',
+    email: 'preeti.varma@wadia.res.in',
+    institution: 'Wadia Institute of Himalayan Geology',
+    designation: 'Scientist E (Paleoclimatology & Ice Cores)',
+    research_area: 'Environmental Science',
+    polar_region: 'Both',
+    bio: 'Isotope geochemist analyzing stable water isotopes (delta-18O, delta-D) in shallow ice cores from coastal Antarctica to reconstruct past monsoon teleconnections.',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop'
+  },
+  {
+    id: 'res-10',
+    user_id: 'usr-res-10',
+    name: 'Dr. Tariq Al-Mansoor',
+    email: 'tariq.m@ncpor.res.in',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    designation: 'Scientist D (Polar Microorganisms & Genomics)',
+    research_area: 'Polar Biology',
+    polar_region: 'Arctic',
+    bio: 'Extremophile microbiologist investigating cold-active enzymes, psychrophilic bacteria, and microplastic biofilms in Arctic fjords and glacial cryoconite holes.',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop'
+  }
+];
+
+researchers.forEach(r => {
+  db.execute(
+    `INSERT INTO researchers (id, user_id, name, email, institution, designation, research_area, polar_region, bio, avatar)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [r.id, r.user_id, r.name, r.email, r.institution, r.designation, r.research_area, r.polar_region, r.bio, r.avatar]
+  );
+});
+
+// 4. Seed 20 Research Papers with Structured Sections, AI Summaries, MCQs, Flashcards, Claims
+const papers = [
+  {
+    id: 'paper-001',
+    title: 'Seasonal Variability of Antarctic Sea Ice Extent in the Weddell Sea Sector (2018–2024)',
+    abstract: 'This study investigates multi-year satellite microwave observations of seasonal sea ice dynamics across the Weddell Sea, Antarctica. Utilizing AMSR2 and Sentinel-1 SAR observations alongside autonomous ocean glider data, we analyze changes in sea ice freeze-up dates, maximum winter extent, and anomalous summer retreats. Results reveal a delayed winter freeze onset by 14.2 days and accelerated spring breakup linked to increased warm deep water upwelling driven by the positive phase of the Southern Annular Mode (SAM).',
+    authors: 'Dr. Ananya Sharma, Dr. Arjun Rao, Dr. Vikram Nair',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    research_area: 'Glaciology',
+    polar_region: 'Antarctic',
+    location_id: 'loc-10',
+    keywords: 'sea ice, Weddell Sea, AMSR2, Southern Annular Mode, Antarctic glaciology, SAR remote sensing',
+    publication_year: 2024,
+    doi: '10.1016/j.polar.2024.03.011',
+    document_url: '/uploads/sample_polar_paper_01.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-1',
+    view_count: 1420,
+    download_count: 312,
+    sections: [
+      {
+        name: 'Abstract',
+        order: 1,
+        page_start: 1,
+        page_end: 1,
+        content: 'Satellite microwave observations from 2018 to 2024 reveal substantial alterations in seasonal sea ice formation and decay within the Weddell Sea. Winter freeze-up has experienced an average delay of 14.2 days over the observational window, accompanied by accelerated spring melting.'
+      },
+      {
+        name: 'Introduction',
+        order: 2,
+        page_start: 2,
+        page_end: 3,
+        content: 'Antarctic sea ice acts as a critical thermal blanket mediating heat and gas exchange between the cold polar atmosphere and the Southern Ocean. Within the Weddell Gyre, sea ice extent governs brine rejection rates and Antarctic Bottom Water (AABW) genesis. Recent hemispheric record-low sea ice anomalies warrant detailed regional examinations.'
+      },
+      {
+        name: 'Methodology',
+        order: 3,
+        page_start: 4,
+        page_end: 5,
+        content: 'We integrated 6.25 km resolution AMSR2 brightness temperatures with dual-polarization Sentinel-1 Synthetic Aperture Radar imagery. Oceanographic data was captured using two Teledyne Webb Slocum electric gliders deployed near the continental shelf break during the 40th and 41st Indian Antarctic Research Expeditions.'
+      },
+      {
+        name: 'Study Area',
+        order: 4,
+        page_start: 6,
+        page_end: 7,
+        content: 'The investigation focuses on the Weddell Sea sector (60°S–75°S, 60°W–20°E), encompassing the Ronne-Filchner ice front and the Maud Rise region where intense polynya activity occurs periodically.'
+      },
+      {
+        name: 'Results',
+        order: 5,
+        page_start: 8,
+        page_end: 9,
+        content: 'Sea ice extent decreased during the study period by 8.4% relative to the 1991–2020 climatological baseline. In 2023, the maximum winter sea ice extent reached only 14.8 million square kilometers, the lowest recorded in 45 years of continuous satellite telemetry. Ocean glider transects revealed subsurface warming of 0.42°C at depths between 150m and 350m within the Weddell Gyre.'
+      },
+      {
+        name: 'Discussion',
+        order: 6,
+        page_start: 10,
+        page_end: 11,
+        content: 'The observed delay in autumn freeze-up directly correlates with positive SAM indices, which intensify circumpolar westerlies and elevate Circumpolar Deep Water (CDW) entrainment into the mixed layer. This thermodynamic barrier curtails rapid ice consolidation.'
+      },
+      {
+        name: 'Conclusion',
+        order: 7,
+        page_start: 12,
+        page_end: 12,
+        content: 'Antarctic sea ice in the Weddell sector is transitioning to a regime of heightened vulnerability. Sustained continuous in-situ mooring monitoring combined with high-resolution radar altimetry is imperative for forecasting polar climate feedbacks.'
+      },
+      {
+        name: 'References',
+        order: 8,
+        page_start: 13,
+        page_end: 14,
+        content: 'Comiso, J. C. (2020). Polar Oceans. Nature Climate Change. | Sharma, A. et al. (2022). Indian Antarctic Expeditions Glaciological Compendium. | Rao, A. (2023). Southern Ocean glider observations. JGR Oceans.'
+      }
+    ],
+    ai_summary: {
+      english: 'This research paper analyzes satellite and robotic ocean glider measurements from the Weddell Sea in Antarctica between 2018 and 2024. The scientists found that winter sea ice is now forming about 14 days later than in previous decades, and the total winter ice cover dropped to record-breaking lows in 2023. This is largely caused by warmer deep ocean currents being pushed upward toward the surface by changing wind patterns.',
+      hindi: 'यह शोध पत्र 2018 से 2024 के बीच अंटार्कटिका के वेडेल सागर में उपग्रह और स्वचालित महासागरीय ग्लाइडर अवलोकनों का विश्लेषण करता है। वैज्ञानिकों ने पाया कि सर्दियों में समुद्री बर्फ अब पिछले दशकों की तुलना में लगभग 14 दिन देर से जम रही है। 2023 में बर्फ का कुल फैलाव 45 वर्षों के रिकॉर्ड निचले स्तर पर पहुंच गया। इसका मुख्य कारण हवा के पैटर्न में बदलाव के कारण गहरे समुद्र से गर्म पानी का सतह की ओर ऊपर उठना है।',
+      key_findings: JSON.stringify([
+        'Winter sea ice freeze-up onset in the Weddell Sea has been delayed by an average of 14.2 days.',
+        'Total winter sea ice extent in 2023 dropped to 14.8 million sq km, marking a 45-year historical low.',
+        'Subsurface ocean temperatures between 150m and 350m warmed by 0.42°C, creating a thermal barrier to ice formation.',
+        'Positive phases of the Southern Annular Mode (SAM) intensified warm water upwelling.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Sea Ice Extent', definition: 'The total ocean area where ice concentration exceeds at least 15 percent.' },
+        { term: 'Southern Annular Mode (SAM)', definition: 'The primary pattern of climate variability in the Southern Hemisphere, describing north-south shifts in westerly winds.' },
+        { term: 'Circumpolar Deep Water (CDW)', definition: 'A relatively warm, salty ocean water mass that circulates beneath the Antarctic surface water.' },
+        { term: 'Autonomous Ocean Glider', definition: 'A robotic underwater vehicle that uses buoyancy changes and wings to glide forward without a propeller for months.' }
+      ]),
+      why_it_matters: 'Sea ice reflects up to 80% of incoming sunlight back into space. When sea ice shrinks, dark ocean water absorbs more solar heat, accelerating global climate warming and disrupting polar penguin and whale habitats.',
+      social_media_draft: '🧊 New Polar Research from NCPOR: Satellite & ocean glider data reveals Antarctic sea ice in the Weddell Sea is forming 14 days later, reaching record lows in 2023. Warmer deep water upwelling is driving this rapid transformation. Read the full paper on DHRUVA! #PolarScience #Antarctica #ClimateAction',
+      citation_text: 'Sharma, A., Rao, A., & Nair, V. (2024). Seasonal Variability of Antarctic Sea Ice Extent in the Weddell Sea Sector (2018–2024). Polar Science Review, 42(1), 1011. doi:10.1016/j.polar.2024.03.011'
+    },
+    mcqs: [
+      {
+        question: 'According to the research, by how many days has the winter sea ice freeze-up been delayed on average in the Weddell Sea?',
+        option_a: '5.6 days',
+        option_b: '14.2 days',
+        option_c: '28.1 days',
+        option_d: '45.0 days',
+        correct_option: 'B',
+        explanation: 'The paper explicitly documents in the Abstract and Results (Page 8) that winter freeze-up onset has experienced an average delay of 14.2 days over the 2018–2024 period.',
+        source_section: 'Results',
+        source_page: 8
+      },
+      {
+        question: 'What historical record was observed regarding Antarctic sea ice extent in 2023?',
+        option_a: 'Highest thickness ever recorded',
+        option_b: 'Complete absence of summer melt',
+        option_c: 'Lowest winter maximum extent in 45 years (14.8 million sq km)',
+        option_d: 'Northward expansion past 50°S',
+        correct_option: 'C',
+        explanation: 'Page 8 states that in 2023 the maximum winter extent reached only 14.8 million sq km, the lowest recorded in 45 years of continuous satellite telemetry.',
+        source_section: 'Results',
+        source_page: 8
+      },
+      {
+        question: 'Which atmospheric climate mode was directly correlated with increased warm deep water upwelling?',
+        option_a: 'El Niño-Southern Oscillation (ENSO)',
+        option_b: 'North Atlantic Oscillation (NAO)',
+        option_c: 'Positive phase of the Southern Annular Mode (SAM)',
+        option_d: 'Indian Ocean Dipole (IOD)',
+        correct_option: 'C',
+        explanation: 'Discussion (Page 10) details how positive SAM indices intensify circumpolar westerlies and elevate Circumpolar Deep Water entrainment.',
+        source_section: 'Discussion',
+        source_page: 10
+      },
+      {
+        question: 'What temperature anomaly was recorded by autonomous gliders at depths of 150m–350m?',
+        option_a: 'Cooling of 1.2°C',
+        option_b: 'Subsurface warming of 0.42°C',
+        option_c: 'No temperature change',
+        option_d: 'Warming of 4.5°C',
+        correct_option: 'B',
+        explanation: 'Results on Page 8 note an observed subsurface warming of 0.42°C at depths between 150m and 350m within the Weddell Gyre.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What is the primary role of Antarctic Sea Ice in Earth’s energy budget?', back: 'It acts as a high-albedo planetary shield, reflecting up to 80% of solar radiation back to space and controlling heat exchange between ocean and atmosphere.', source_section: 'Introduction' },
+      { front: 'How did the 2023 winter sea ice extent compare to the 45-year baseline?', back: 'It plummeted to 14.8 million square kilometers, marking the lowest winter maximum in 45 years of satellite telemetry.', source_section: 'Results' },
+      { front: 'What mechanism causes the positive Southern Annular Mode (SAM) to hinder sea ice formation?', back: 'Positive SAM strengthens westerly winds, driving upwelling of warmer Circumpolar Deep Water into the surface mixed layer.', source_section: 'Discussion' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Sea ice extent decreased during the study period by 8.4% relative to the 1991–2020 climatological baseline.',
+        source_text: 'Sea ice extent decreased during the study period by 8.4% relative to the 1991–2020 climatological baseline.',
+        source_section: 'Results',
+        source_page: 8,
+        confidence_score: 0.98,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      },
+      {
+        generated_claim: 'Winter freeze-up onset has experienced an average delay of 14.2 days over the observational window.',
+        source_text: 'Winter freeze-up has experienced an average delay of 14.2 days over the observational window, accompanied by accelerated spring melting.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.96,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      },
+      {
+        generated_claim: 'In 2023, the maximum winter sea ice extent reached only 14.8 million square kilometers, the lowest in 45 years.',
+        source_text: 'In 2023, the maximum winter sea ice extent reached only 14.8 million square kilometers, the lowest recorded in 45 years of continuous satellite telemetry.',
+        source_section: 'Results',
+        source_page: 8,
+        confidence_score: 0.99,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  {
+    id: 'paper-002',
+    title: 'Permafrost Active-Layer Deepening and Methanogenesis in Ny-Ålesund, Svalbard',
+    abstract: 'High-Arctic permafrost soils are rapidly warming under amplified Arctic climate change. In this paper, we document active-layer thickness progression, microbial metagenomics, and in-situ methane flux measurements in the Bayelva river basin near Himadri Station, Ny-Ålesund (78°55′N). Over the 2019–2023 study period, the maximum thaw depth expanded from 1.18 m to 1.46 m, triggering a 3.4-fold increase in seasonal methane emissions.',
+    authors: 'Dr. Meera Sen, Dr. Rajeshwari Menon, Dr. Tariq Al-Mansoor',
+    institution: 'Center for Climate & Environmental Studies, IISER Pune',
+    research_area: 'Climate Science',
+    polar_region: 'Arctic',
+    location_id: 'loc-3',
+    keywords: 'permafrost, methane, active layer, Svalbard, Ny-Alesund, methanogenesis, Arctic amplification',
+    publication_year: 2024,
+    doi: '10.1038/s41558-024-01994-x',
+    document_url: '/uploads/sample_polar_paper_02.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-3',
+    view_count: 1180,
+    download_count: 245,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Active-layer deepening in Svalbard permafrost was investigated from 2019 to 2023. Thaw depth reached 1.46 m in late August 2023 compared to 1.18 m in 2019. Static chamber flux measurements demonstrated a 3.4-fold rise in peak biogenic methane release.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'The Arctic is warming at nearly four times the global rate, a phenomenon designated as Arctic Amplification. The Svalbard archipelago represents a hot-spot of warming, where subterranean permafrost holds gigatons of trapped organic carbon.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Ground-penetrating radar (GPR) using 500 MHz shielded antennas was calibrated with electrical resistivity tomography (ERT) and mechanical probing grids. Automated gas flux chambers (LI-COR LI-7810) sampled CH4 and CO2 fluxes every 30 minutes.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Fieldwork occurred across the Bayelva catchment in Ny-Ålesund, approximately 1.5 km northwest of India’s Himadri Research Station, characterized by sorted patterned ground and continuous permafrost.' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Mean annual ground temperature at 1 m depth rose by 0.73°C over four years. Metagenomic 16S rRNA sequencing revealed a dramatic proliferation of psychrotolerant Methanomicrobiales and Methanosarcina in freshly thawed sub-surface horizons (1.2–1.4 m depth).' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Permafrost thaw converts previously dormant anaerobic organic carbon into microbial substrate. As active-layer depth outpaces winter refreezing rates, perennial talik formation is initiated, potentially turning Svalbard tundra from a carbon sink into a sustained greenhouse gas source.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Active-layer expansion and microbial methanogenesis are outpacing previous Earth system model projections. Long-term continuous trace gas observatories at Himadri Station are vital for constraining polar feedback parameters.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Schuur, E. A. G. (2021). Permafrost and Climate Change. Annual Reviews. | Sen, M., Menon, R. (2023). Himadri Station Arctic aerosol & soil records.' }
+    ],
+    ai_summary: {
+      english: 'This study measured how deeply the frozen Arctic ground (permafrost) thaws during summer near India’s Himadri Station in Svalbard. Between 2019 and 2023, the maximum summer thaw depth grew from 1.18 meters to 1.46 meters. As deeper layers thawed, ancient microbes woke up and produced 3.4 times more methane—a potent greenhouse gas—into the atmosphere.',
+      hindi: 'इस अध्ययन ने स्वालबार्ड में भारत के हिमाद्री स्टेशन के पास गर्मियों के दौरान जमी हुई आर्कटिक मिट्टी (पर्माफ्रॉस्ट) के पिघलने की गहराई को मापा। 2019 से 2023 के बीच, अधिकतम ग्रीष्मकालीन पिघलन की गहराई 1.18 मीटर से बढ़कर 1.46 मीटर हो गई। जैसे-जैसे गहरी परतें पिघलीं, सुप्त रोगाणुओं ने वायुमंडल में 3.4 गुना अधिक मीथेन गैस उत्सर्जित करना शुरू कर दिया।',
+      key_findings: JSON.stringify([
+        'Permafrost active-layer thaw depth expanded from 1.18 m (2019) to 1.46 m (2023) in Ny-Ålesund.',
+        'Seasonal methane gas emissions increased 3.4-fold over the 4-year study period.',
+        'Sub-surface soil temperatures at 1 m depth rose by 0.73°C.',
+        'DNA sequencing revealed a bloom of methane-producing microbes (Methanosarcina) in thawed horizons.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Permafrost', definition: 'Ground that remains completely frozen at or below 0°C for at least two consecutive years.' },
+        { term: 'Active Layer', definition: 'The uppermost layer of permafrost soil that thaws during summer and refreezes in winter.' },
+        { term: 'Methanogenesis', definition: 'The biological production of methane gas by specialized microorganisms under oxygen-free conditions.' },
+        { term: 'Arctic Amplification', definition: 'The phenomenon where the Arctic warms at more than double the global average rate due to sea ice and snow albedo feedbacks.' }
+      ]),
+      why_it_matters: 'Methane is over 28 times more effective at trapping heat than carbon dioxide over a 100-year timescale. Thawing permafrost risks creating a dangerous feedback loop: warmer temperatures thaw more soil, releasing more methane, causing even faster global warming.',
+      social_media_draft: '🔬 Arctic Alert from Himadri Station: Research published on DHRUVA reveals Svalbard permafrost thaw depth reached 1.46m in 2023, triggering a 3.4x surge in methane emissions! Explore how our scientists are tracking the thawing cryosphere: #ArcticScience #Permafrost #DHRUVA #ClimateChange',
+      citation_text: 'Sen, M., Menon, R., & Al-Mansoor, T. (2024). Permafrost Active-Layer Deepening and Methanogenesis in Ny-Ålesund, Svalbard. Nature Climate & Polar Dynamics, 14(2), 204–218. doi:10.1038/s41558-024-01994-x'
+    },
+    mcqs: [
+      {
+        question: 'By how much did the permafrost thaw depth increase between 2019 and 2023 in the study area?',
+        option_a: 'From 0.50 m to 0.65 m',
+        option_b: 'From 1.18 m to 1.46 m',
+        option_c: 'From 2.10 m to 3.40 m',
+        option_d: 'It remained unchanged at 1.00 m',
+        correct_option: 'B',
+        explanation: 'The paper explicitly specifies in the Abstract and Results that maximum thaw depth expanded from 1.18 m in 2019 to 1.46 m in late August 2023.',
+        source_section: 'Results',
+        source_page: 8
+      },
+      {
+        question: 'What fold increase in biogenic methane emissions was observed as the active layer thawed?',
+        option_a: '1.2-fold',
+        option_b: '2.0-fold',
+        option_c: '3.4-fold',
+        option_d: '10.0-fold',
+        correct_option: 'C',
+        explanation: 'Page 1 Abstract states that static chamber flux measurements demonstrated a 3.4-fold rise in peak biogenic methane release.',
+        source_section: 'Abstract',
+        source_page: 1
+      },
+      {
+        question: 'Which microbial groups were found to proliferate in the thawed subsurface horizons?',
+        option_a: 'Cyanobacteria and diatoms',
+        option_b: 'Methanomicrobiales and Methanosarcina',
+        option_c: 'Streptomyces and Bacillus',
+        option_d: 'Nematodes and tardigrades',
+        correct_option: 'B',
+        explanation: 'Page 8 (Results) identifies a dramatic proliferation of psychrotolerant Methanomicrobiales and Methanosarcina in freshly thawed horizons.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What is the "active layer" in polar soils?', back: 'The top soil layer above permafrost that undergoes seasonal summer thawing and winter refreezing.', source_section: 'Introduction' },
+      { front: 'Why does permafrost thaw release methane rather than only CO2?', back: 'Thawed waterlogged soils create oxygen-deprived (anaerobic) conditions where methanogenic archaea decompose ancient organic matter.', source_section: 'Discussion' },
+      { front: 'What was the observed temperature increase at 1m soil depth in Ny-Ålesund?', back: 'A rise of 0.73°C over four years (2019–2023).', source_section: 'Results' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Over the 2019–2023 study period, maximum permafrost thaw depth expanded from 1.18 m to 1.46 m.',
+        source_text: 'Thaw depth reached 1.46 m in late August 2023 compared to 1.18 m in 2019.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.99,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      },
+      {
+        generated_claim: 'Static chamber flux measurements demonstrated a 3.4-fold rise in seasonal methane emissions.',
+        source_text: 'Static chamber flux measurements demonstrated a 3.4-fold rise in peak biogenic methane release.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.97,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  {
+    id: 'paper-003',
+    title: 'Phytoplankton Bloom Dynamics and Primary Productivity in Prydz Bay, East Antarctica',
+    abstract: 'Prydz Bay is a biologically productive coastal embayment influenced by meltwater discharge from the Amery Ice Shelf. Here, we report in-situ chlorophyll-a fluorometry, high-performance liquid chromatography (HPLC) pigment analysis, and satellite ocean color validation conducted during the 39th to 41st Indian Antarctic Scientific Expeditions from Bharati Station. Peak blooms were dominated by diatoms (Fragilariopsis cylindrus) followed by haptophyte blooms during intense coastal stratification.',
+    authors: 'Dr. Rohan Das, Dr. Arjun Rao, Dr. Ananya Sharma',
+    institution: 'CSIR - National Institute of Oceanography (NIO), Goa',
+    research_area: 'Polar Biology',
+    polar_region: 'Antarctic',
+    location_id: 'loc-2',
+    keywords: 'Prydz Bay, phytoplankton, chlorophyll-a, Bharati station, marine ecology, diatoms, ocean color',
+    publication_year: 2023,
+    doi: '10.1016/j.dsr2.2023.105230',
+    document_url: '/uploads/sample_polar_paper_03.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-4',
+    view_count: 940,
+    download_count: 180,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Phytoplankton bloom dynamics in Prydz Bay were evaluated across three austral summers (2020–2022). Surface chlorophyll-a reached peak concentrations of 7.8 mg/m3 in mid-January, stimulated by buoyant glacial meltwater pulses and iron enrichment.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'The coastal waters of East Antarctica, particularly near the Larsemann Hills and Prydz Bay, sustain rich pelagic food webs providing sustenance to colossal swarms of Antarctic krill, Adélie penguins, and baleen whales.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Water samples were collected along 12 oceanographic CTD stations using a 24-bottle Niskin rosette aboard expedition vessel MV Vasiliy Golovnin. Photosynthetically active radiation (PAR) and nutrient concentrations were profiled.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'The sampling grid encompassed Prydz Bay from 68°S to 69.5°S and 73°E to 78°E, directly adjacent to India’s Bharati Research Station.' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Diatom biomass contributed 78% of total microalgal biomass during early summer. Dissolved iron concentrations ranged between 0.42 nM and 1.85 nM near the Amery Ice Shelf front, nearly 4 times higher than offshore open Southern Ocean waters.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Glacial meltwater supplies bioavailable micronutrients including iron and silicic acid, preventing light and nutrient co-limitation and triggering sustained carbon export into deep benthic sediments.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Prydz Bay functions as an intense seasonal biological carbon pump. Changes in Amery Ice Shelf basal melting will directly dictate future ecosystem productivity around Bharati Station.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Arrigo, K. R. (2019). Phytoplankton blooms in coastal Antarctica. Deep-Sea Research. | Das, R. (2021). Bharati Station Biological Observations.' }
+    ],
+    ai_summary: {
+      english: 'This paper examines microscopic plant life (phytoplankton) blooming in Prydz Bay near India’s Bharati Station in Antarctica. In mid-January, melting glaciers release vital nutrients like iron into the cold sea, causing huge blooms of diatoms. These microscopic plants form the foundation of the Antarctic food web, feeding krill, penguins, and whales while absorbing atmospheric carbon.',
+      hindi: 'यह शोध पत्र अंटार्कटिका में भारत के भारती स्टेशन के पास प्राइडज़ खाड़ी में सूक्ष्म वनस्पति (पादप प्लवक) के पनपने की जांच करता है। जनवरी के मध्य में, पिघलते ग्लेशियर समुद्र में लोहा जैसे महत्वपूर्ण पोषक तत्व छोड़ते हैं, जिससे डायटम की भारी वृद्धि होती है। ये सूक्ष्म पौधे अंटार्कटिक खाद्य जाल की नींव हैं, जो क्रिल, पेंगुइन और व्हेल को भोजन प्रदान करते हैं।',
+      key_findings: JSON.stringify([
+        'Surface chlorophyll-a reached peak bloom levels of 7.8 mg/m3 in mid-January.',
+        'Diatoms (especially Fragilariopsis cylindrus) accounted for 78% of total microalgal biomass.',
+        'Glacial runoff near Amery Ice Shelf enriched dissolved iron levels up to 1.85 nM, 4 times higher than offshore waters.',
+        'Prydz Bay acts as a critical biological carbon pump transferring carbon into deep marine sediments.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Phytoplankton', definition: 'Microscopic photosynthetic organisms that drift in sunlit aquatic environments and produce oxygen.' },
+        { term: 'Chlorophyll-a', definition: 'A photosynthetic green pigment used as an indicator of algal biomass and primary productivity.' },
+        { term: 'Diatoms', definition: 'A major group of microalgae encased in silica cell walls (frustules) that thrive in cold polar waters.' },
+        { term: 'Biological Carbon Pump', definition: 'The ocean process by which marine organisms capture atmospheric CO2 through photosynthesis and transport it to the deep sea floor.' }
+      ]),
+      why_it_matters: 'Polar phytoplankton blooms consume vast quantities of carbon dioxide from the atmosphere, acting as one of the Earth’s most vital natural buffers against global heating.',
+      social_media_draft: '🌿 Ocean Discovery from Bharati Station! Indian marine scientists find Prydz Bay phytoplankton blooms produce up to 7.8 mg/m3 of chlorophyll, fueled by glacial iron runoff. Discover how microscopic algae feed Antarctic giants: #PolarBiology #Bharati #OceanScience',
+      citation_text: 'Das, R., Rao, A., & Sharma, A. (2023). Phytoplankton Bloom Dynamics and Primary Productivity in Prydz Bay, East Antarctica. Deep-Sea Research Part II, 208, 105230. doi:10.1016/j.dsr2.2023.105230'
+    },
+    mcqs: [
+      {
+        question: 'What peak concentration of surface chlorophyll-a was recorded in Prydz Bay in mid-January?',
+        option_a: '1.2 mg/m3',
+        option_b: '3.5 mg/m3',
+        option_c: '7.8 mg/m3',
+        option_d: '15.4 mg/m3',
+        correct_option: 'C',
+        explanation: 'Page 1 Abstract states that surface chlorophyll-a reached peak concentrations of 7.8 mg/m3 in mid-January.',
+        source_section: 'Abstract',
+        source_page: 1
+      },
+      {
+        question: 'Which microalgal group dominated early summer blooms, accounting for 78% of biomass?',
+        option_a: 'Dinoflagellates',
+        option_b: 'Diatoms',
+        option_c: 'Coccolithophores',
+        option_d: 'Green algae',
+        correct_option: 'B',
+        explanation: 'Results on Page 8 note that diatom biomass contributed 78% of total microalgal biomass during early summer.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'Why are iron concentrations higher near the Amery Ice Shelf in Prydz Bay?', back: 'Glacial meltwater carries dissolved iron scoured from bedrock out into the bay, reaching up to 1.85 nM (4x higher than open ocean).', source_section: 'Results' },
+      { front: 'What is the dominant diatom species found during early summer in Prydz Bay?', back: 'Fragilariopsis cylindrus.', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Surface chlorophyll-a reached peak concentrations of 7.8 mg/m3 in mid-January.',
+        source_text: 'Surface chlorophyll-a reached peak concentrations of 7.8 mg/m3 in mid-January, stimulated by buoyant glacial meltwater pulses.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.97,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      },
+      {
+        generated_claim: 'Diatom biomass contributed 78% of total microalgal biomass during early summer in Prydz Bay.',
+        source_text: 'Diatom biomass contributed 78% of total microalgal biomass during early summer.',
+        source_section: 'Results',
+        source_page: 8,
+        confidence_score: 0.96,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  {
+    id: 'paper-004',
+    title: 'Aerosol Optical Depth and Black Carbon Transport over Himadri Station, Arctic',
+    abstract: 'Long-range atmospheric transport of carbonaceous aerosols significantly alters the Arctic radiation budget and accelerates snow albedo decay. In this multi-year study at Himadri Station, Ny-Ålesund, we deployed a 7-wavelength Aethalometer and Cimel Sunphotometer. Equivalent Black Carbon (eBC) concentrations exhibited marked seasonality, peaking at 74.5 ng/m3 during late winter "Arctic Haze" events originating from Eurasian industrial and agricultural burning sources.',
+    authors: 'Dr. Meera Sen, Dr. Sunita Kulkarni, Dr. Vikram Nair',
+    institution: 'Center for Climate & Environmental Studies, IISER Pune',
+    research_area: 'Atmospheric Science',
+    polar_region: 'Arctic',
+    location_id: 'loc-3',
+    keywords: 'black carbon, aerosol optical depth, Himadri station, Arctic haze, albedo, atmospheric transport',
+    publication_year: 2023,
+    doi: '10.1016/j.atmosenv.2023.119854',
+    document_url: '/uploads/sample_polar_paper_04.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-3',
+    view_count: 810,
+    download_count: 160,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Black carbon aerosol measurements at Himadri Station revealed wintertime peaks reaching 74.5 ng/m3 during Arctic Haze episodes. Lagrangian back-trajectory modeling verified transboundary transport from Northern Eurasia.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'Dark black carbon particles deposited on pristine Arctic snow reduce surface albedo, allowing snowpack to absorb more solar energy and trigger premature springtime snowmelt.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Magee Scientific AE33 Aethalometer monitored equivalent black carbon. Aerosol Optical Depth (AOD) at 500 nm was recorded by a Cimel CE318 sun photometer affiliated with AERONET.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Himadri Station located at 78°55′N, 11°56′E in Ny-Ålesund, Svalbard, within a pristine non-industrial fjord setting.' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Average annual eBC was 28.4 ng/m3, but surged to 74.5 ng/m3 in March and April. Snow sampling around the station revealed surface black carbon concentrations between 4.2 and 18.6 ppb, causing a measured albedo drop of up to 0.038.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Arctic winter meteorological inversions inhibit vertical mixing, preserving high aerosol burdens for weeks as plumes travel across the polar dome.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Mitigating mid-latitude soot emissions is vital to halt accelerated Arctic snowmelt observed at Himadri Station.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Bond, T. C. et al. (2013). Bounding black carbon. JGR Atmospheres. | Sen, M. (2022). Himadri atmospheric monitoring.' }
+    ],
+    ai_summary: {
+      english: 'This paper documents how soot and black carbon pollution travel from European and Asian factories all the way into the pristine Arctic atmosphere above India’s Himadri Station. In March and April, soot levels peak, settling onto pristine white snow. This darkens the snow, causing it to absorb more sunlight and melt weeks earlier.',
+      hindi: 'यह शोध पत्र बताता है कि कैसे दूरदराज के कारखानों और खेतों से उठने वाला कालिख और ब्लैक कार्बन प्रदूषण भारत के हिमाद्री स्टेशन के ऊपर आर्कटिक वायुमंडल में पहुंचता है। मार्च और अप्रैल में कालिख का स्तर चरम पर पहुंच जाता है और बर्फ पर जम जाता है, जिससे बर्फ का रंग गहरा हो जाता है और वह तेजी से पिघलने लगती है।',
+      key_findings: JSON.stringify([
+        'Black carbon levels at Himadri Station surged to a peak of 74.5 ng/m3 during springtime "Arctic Haze".',
+        'Snow albedo decreased by up to 0.038 due to soot deposition of 4.2 to 18.6 ppb.',
+        'Lagrangian air parcel tracking traced pollution origins to Northern Eurasian industrial corridors.',
+        'Thermal inversions in polar winter keep soot trapped close to the surface for extended periods.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Black Carbon', definition: 'Pure carbon soot particles formed by incomplete combustion of fossil fuels, biofuels, and biomass.' },
+        { term: 'Aerosol Optical Depth (AOD)', definition: 'A quantitative measure of the extinction of direct solar beam caused by airborne aerosols.' },
+        { term: 'Albedo', definition: 'The fraction of incoming solar radiation reflected by a surface (fresh snow has albedo ~0.85).' },
+        { term: 'Arctic Haze', definition: 'A reddish-brown seasonal atmospheric pollution haze occurring in spring across high Arctic latitudes.' }
+      ]),
+      why_it_matters: 'When dark soot settles on white snow, it turns a natural mirror into a solar heat collector, speeding up glacier melting across the Arctic and contributing to global sea level rise.',
+      social_media_draft: '🛰️ Atmospheric Science at Himadri: Indian researchers report black carbon peaks at 74.5 ng/m3 over Svalbard, dimming snow reflectivity. See how soot from thousands of miles away impacts the Arctic cryosphere: #Arctic #Atmosphere #Himadri #CleanAir',
+      citation_text: 'Sen, M., Kulkarni, S., & Nair, V. (2023). Aerosol Optical Depth and Black Carbon Transport over Himadri Station, Arctic. Atmospheric Environment, 298, 119854. doi:10.1016/j.atmosenv.2023.119854'
+    },
+    mcqs: [
+      {
+        question: 'What peak concentration of equivalent Black Carbon (eBC) was recorded during Arctic Haze episodes at Himadri Station?',
+        option_a: '12.3 ng/m3',
+        option_b: '35.0 ng/m3',
+        option_c: '74.5 ng/m3',
+        option_d: '150.2 ng/m3',
+        correct_option: 'C',
+        explanation: 'Page 8 Results state that black carbon surged to 74.5 ng/m3 in March and April during Arctic Haze episodes.',
+        source_section: 'Results',
+        source_page: 8
+      },
+      {
+        question: 'By how much was snow albedo reduced due to black carbon deposition?',
+        option_a: 'Up to 0.001',
+        option_b: 'Up to 0.038',
+        option_c: 'Up to 0.250',
+        option_d: 'Up to 0.500',
+        correct_option: 'B',
+        explanation: 'Page 8 states that snow sampling revealed an albedo drop of up to 0.038.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What causes the phenomenon known as "Arctic Haze"?', back: 'Accumulation of sulphate and black carbon aerosols transported from mid-latitudes trapped under polar winter atmospheric inversions.', source_section: 'Discussion' },
+      { front: 'How does black carbon deposition affect polar snow?', back: 'It darkens the surface, lowering albedo and increasing absorption of solar radiation, leading to accelerated snowpack melting.', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Equivalent Black Carbon concentrations peaked at 74.5 ng/m3 during late winter Arctic Haze events.',
+        source_text: 'Equivalent Black Carbon (eBC) concentrations exhibited marked seasonality, peaking at 74.5 ng/m3 during late winter Arctic Haze events.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.98,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  {
+    id: 'paper-005',
+    title: 'Glacier Mass Balance Fluctuations and Supraglacial Lake Evolution in the Schirmacher Oasis',
+    abstract: 'The ice sheet margin flanking the Schirmacher Oasis in Central Dronning Maud Land, East Antarctica, is experiencing localized retreat. Geodetic GNSS surveys, drone photogrammetry, and differential satellite SAR interferometry were combined to quantify surface elevation changes of the continental ice sheet near Maitri Station between 2017 and 2023. The polar margin exhibited an average thinning rate of -0.22 m/year.',
+    authors: 'Dr. Ananya Sharma, Dr. Amitav Ghosh, Dr. Preeti Varma',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    research_area: 'Glaciology',
+    polar_region: 'Antarctic',
+    location_id: 'loc-1',
+    keywords: 'glacier mass balance, Schirmacher Oasis, Maitri station, supraglacial lakes, ice sheet thinning, GNSS',
+    publication_year: 2023,
+    doi: '10.1017/jog.2023.45',
+    document_url: '/uploads/sample_polar_paper_05.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-1',
+    view_count: 730,
+    download_count: 142,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Glacier mass balance changes along the Schirmacher Oasis margin were determined through high-precision kinematic GNSS and TanDEM-X interferometry. Ice margin thinning averaged -0.22 m/year from 2017 to 2023.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'The Schirmacher Oasis hosts India’s Maitri Station. It represents one of Antarctica’s rare terrestrial ice-free rock oases, bound to the south by the inland ice sheet and to the north by the Nivlisen ice shelf.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Repeated differential GNSS profiling along three 15-km transects, combined with UAV multispectral mapping of Lake Zub and Lake Priyadarshini water levels.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Schirmacher Oasis (70°44′S–70°46′S, 11°22′E–11°54′E) in East Antarctica.' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'The inland ice margin thinned by an average of -0.22 ± 0.04 m/year. Supraglacial meltwater lake area expanded by 18.3% over the 6-year period, with episodic drainage events discharging into proglacial lakes.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Enhanced summer positive degree-days (PDDs) caused intensified surface ablation, while wind-scour on the polar plateau reduced compensatory winter firn accumulation.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Continued geodetic monitoring from Maitri Station is vital for understanding long-term stability of Dronning Maud Land ice shelves.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Rignot, E. et al. (2019). Four decades of Antarctic Ice Sheet mass balance. PNAS. | Sharma, A. (2021). Maitri Station cryospheric surveys.' }
+    ],
+    ai_summary: {
+      english: 'This research paper tracks glacier ice changes near India’s Maitri Station in East Antarctica. Using satellite radar and drones, Indian scientists found that the edge of the continental ice sheet is thinning at an average rate of 22 centimeters per year, while blue meltwater lakes on top of the ice expanded by 18%.',
+      hindi: 'यह शोध पत्र पूर्वी अंटार्कटिका में भारत के मैत्री स्टेशन के पास ग्लेशियर बर्फ के परिवर्तनों पर नजर रखता है। उपग्रह रडार और ड्रोन का उपयोग करते हुए, भारतीय वैज्ञानिकों ने पाया कि महाद्वीपीय बर्फ की चादर का किनारा प्रति वर्ष औसतन 22 सेंटीमीटर पतला हो रहा है, जबकि बर्फ के ऊपर नीले पिघले पानी की झीलों का क्षेत्रफल 18% तक बढ़ गया है।',
+      key_findings: JSON.stringify([
+        'Continental ice sheet margin thinned at an average rate of -0.22 m/year between 2017 and 2023.',
+        'Supraglacial meltwater lake area expanded by 18.3% across the oasis.',
+        'Summer surface ablation was driven by an increase in positive degree-day temperature anomalies.',
+        'Lake Priyadarshini received episodic meltwater influx from retreating ice tongues.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Glacier Mass Balance', definition: 'The net difference between mass gained by a glacier (snowfall) and mass lost (melting and calving).' },
+        { term: 'Supraglacial Lake', definition: 'A body of liquid meltwater that collects on top of a glacier or ice sheet during summer warmth.' },
+        { term: 'Schirmacher Oasis', definition: 'An ice-free rocky plateau in East Antarctica spanning ~35 sq km that houses India’s Maitri Station.' }
+      ]),
+      why_it_matters: 'Even in East Antarctica, considered the most stable part of the continent, glaciers are showing measurable thinning and increased summer melting due to rising polar temperatures.',
+      social_media_draft: '❄️ Field Data from Maitri Station: Indian glaciologists report a -0.22 m/yr thinning rate along the Schirmacher Oasis ice margin and an 18% increase in meltwater lakes. Explore the geodetic data on DHRUVA: #Maitri #Antarctica #Glaciology',
+      citation_text: 'Sharma, A., Ghosh, A., & Varma, P. (2023). Glacier Mass Balance Fluctuations and Supraglacial Lake Evolution in the Schirmacher Oasis. Journal of Glaciology, 69(276), 450–462. doi:10.1017/jog.2023.45'
+    },
+    mcqs: [
+      {
+        question: 'What was the measured average thinning rate of the continental ice margin near Maitri Station?',
+        option_a: '-0.02 m/year',
+        option_b: '-0.22 m/year',
+        option_c: '-1.45 m/year',
+        option_d: '+0.50 m/year (thickening)',
+        correct_option: 'B',
+        explanation: 'The paper notes in Abstract and Results that ice margin thinning averaged -0.22 ± 0.04 m/year.',
+        source_section: 'Results',
+        source_page: 8
+      },
+      {
+        question: 'By what percentage did supraglacial meltwater lake area expand over the 6-year study period?',
+        option_a: '3.1%',
+        option_b: '18.3%',
+        option_c: '45.0%',
+        option_d: '92.4%',
+        correct_option: 'B',
+        explanation: 'Results on Page 8 state that supraglacial meltwater lake area expanded by 18.3% over the 6-year period.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What is a supraglacial lake?', back: 'A pool of liquid water that forms on the surface of an ice sheet or glacier due to solar melting during polar summer.', source_section: 'Results' },
+      { front: 'Where is India’s Maitri Station situated?', back: 'In the Schirmacher Oasis, an ice-free rocky plateau in Central Dronning Maud Land, East Antarctica.', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'The polar ice margin exhibited an average thinning rate of -0.22 m/year from 2017 to 2023.',
+        source_text: 'The inland ice margin thinned by an average of -0.22 ± 0.04 m/year.',
+        source_section: 'Results',
+        source_page: 8,
+        confidence_score: 0.98,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  // Paper 6: Oceanography IndARC
+  {
+    id: 'paper-006',
+    title: 'Atlantic Water Inflow and Deep-Water Mooring Observations at IndARC Observatory, Kongsfjorden',
+    abstract: 'Moored oceanographic records collected continuously by India’s IndARC observatory at 192 m depth in Kongsfjorden, Svalbard, demonstrate substantial multi-seasonal variations in warm Atlantic Water (AW) intrusion. Analysis of temperature, salinity, and current velocity records from 2018 to 2023 reveals sustained winter warming events where bottom temperatures exceeded +2.8°C, hindering winter fjord sea-ice formation.',
+    authors: 'Dr. Arjun Rao, Dr. Rohan Das, Dr. Meera Sen',
+    institution: 'Department of Earth Sciences, IIT Roorkee',
+    research_area: 'Oceanography',
+    polar_region: 'Arctic',
+    location_id: 'loc-5',
+    keywords: 'IndARC, Kongsfjorden, Atlantic water, mooring, Arctic oceanography, Svalbard, fjord dynamics',
+    publication_year: 2024,
+    doi: '10.1029/2023JC020412',
+    document_url: '/uploads/sample_polar_paper_06.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-2',
+    view_count: 650,
+    download_count: 120,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'IndARC mooring records show Atlantic Water intrusions penetrating deeply into Kongsfjorden. Winter temperatures reached +2.8°C at 192m depth, preventing fast-ice consolidation.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'IndARC is India’s flagship underwater ocean observatory deployed in the Arctic. Deployed at 79°N, it collects year-round time-series data crucial for understanding how the Arctic Ocean is transforming.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'A subsurface mooring carrying Seabird CTDs, Nortek acoustic Doppler current profilers (ADCP), dissolved oxygen optodes, and photosynthetic radiometers.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Kongsfjorden inner fjord trough, Svalbard (depth ~192 m).' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Salinity spikes above 34.90 PSU coincided with pulses of warm Atlantic Water. Fjord winter sea-ice duration has declined from 95 days in 2010 to fewer than 18 days in 2023.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: '"Atlantification" of the European Arctic is transferring substantial ocean heat poleward, shifting Kongsfjorden from an Arctic glacial fjord into an Atlantic-dominated marine regime.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Year-round multi-depth observatories like IndARC provide irreplaceable data for deciphering the impacts of ocean warming on polar glaciers.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Cottier, F. et al. (2019). Arctic fjords. Progress in Oceanography. | Rao, A. (2022). IndARC observatory operations report.' }
+    ],
+    ai_summary: {
+      english: 'This paper shares results from IndARC, India’s underwater scientific observatory anchored at a depth of 192 meters in the Arctic Ocean. The underwater sensors recorded warm Atlantic currents rushing into the fjord, raising winter water temperatures to 2.8°C and reducing the time the fjord remains frozen from 95 days down to under 18 days.',
+      hindi: 'यह शोध पत्र आर्कटिक महासागर में 192 मीटर की गहराई पर स्थित भारत की पानी के नीचे की वेधशाला इंदार्क (IndARC) के परिणाम साझा करता है। पानी के भीतर के सेंसरों ने गर्म अटलांटिक धाराओं को रिकॉर्ड किया, जिसने सर्दियों के पानी का तापमान 2.8°C तक बढ़ा दिया और खाड़ी के जमे रहने के समय को 95 दिनों से घटाकर 18 दिनों से भी कम कर दिया।',
+      key_findings: JSON.stringify([
+        'IndARC moored sensors recorded warm Atlantic Water intrusions keeping bottom temperatures at +2.8°C in mid-winter.',
+        'Winter fast-ice cover in Kongsfjorden has collapsed from 95 days (2010) to fewer than 18 days (2023).',
+        'Salinity values above 34.90 PSU confirm persistent advection of salty, warm Atlantic water masses.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'IndARC', definition: 'India’s first underwater moored observatory deployed in 2014 in Kongsfjorden, Svalbard, at a water depth of 192 meters.' },
+        { term: 'Atlantification', definition: 'The progressive encroachment of warm, salty Atlantic waters into the colder, fresher Arctic Ocean basin.' }
+      ]),
+      why_it_matters: 'As warm ocean water floods Arctic fjords, it melts marine-terminating glaciers from underneath, leading to faster ice collapse and rising global sea levels.',
+      social_media_draft: '🌊 Beneath the Arctic Ice: India’s IndARC underwater observatory records unprecedented Atlantic water intrusions, causing fjord freeze days to drop from 95 to 18. Dive into the data on DHRUVA: #IndARC #ArcticOcean #Oceanography',
+      citation_text: 'Rao, A., Das, R., & Sen, M. (2024). Atlantic Water Inflow and Deep-Water Mooring Observations at IndARC Observatory, Kongsfjorden. Journal of Geophysical Research: Oceans, 129(4), e2023JC020412.'
+    },
+    mcqs: [
+      {
+        question: 'At what water depth is India’s IndARC mooring observatory deployed in Kongsfjorden?',
+        option_a: '25 meters',
+        option_b: '192 meters',
+        option_c: '1,500 meters',
+        option_d: '4,000 meters',
+        correct_option: 'B',
+        explanation: 'Page 1 explicitly states that IndARC is deployed at a depth of 192 meters in Kongsfjorden.',
+        source_section: 'Abstract',
+        source_page: 1
+      },
+      {
+        question: 'How did the duration of winter fjord sea-ice cover change between 2010 and 2023?',
+        option_a: 'Increased from 20 to 180 days',
+        option_b: 'Declined from 95 days to fewer than 18 days',
+        option_c: 'Remained steady at 60 days',
+        option_d: 'No change observed',
+        correct_option: 'B',
+        explanation: 'Results on Page 8 confirm fjord winter sea-ice duration declined from 95 days in 2010 to fewer than 18 days in 2023.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What does IndARC stand for?', back: 'India’s Arctic Moored Observatory, deployed in Kongsfjorden, Svalbard.', source_section: 'Introduction' },
+      { front: 'What is meant by the term "Atlantification" of the Arctic?', back: 'The process where warmer, saltier Atlantic water invades Arctic basins, displacing colder, fresher polar water.', source_section: 'Discussion' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Winter fast-ice cover in Kongsfjorden declined from 95 days in 2010 to fewer than 18 days in 2023.',
+        source_text: 'Fjord winter sea-ice duration has declined from 95 days in 2010 to fewer than 18 days in 2023.',
+        source_section: 'Results',
+        source_page: 8,
+        confidence_score: 0.97,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  // Paper 7: Microplastics
+  {
+    id: 'paper-007',
+    title: 'Microplastic Contamination in Cryoconite Holes and Surface Snow across Ny-Ålesund, Svalbard',
+    abstract: 'Microplastic pollution has breached even remote polar wildernesses. In this study, we collected cryoconite sediment and seasonal snowpack samples along a 10 km transect from Kongsvegen Glacier to Ny-Ålesund. Micro-Fourier Transform Infrared Spectroscopy (µ-FTIR) identified an average microplastic burden of 34.2 particles/kg in surface snow and 126.8 particles/kg in cryoconite granules, predominantly polyethylene and polyester fibers.',
+    authors: 'Dr. Tariq Al-Mansoor, Dr. Meera Sen, Dr. Ananya Sharma',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    research_area: 'Environmental Science',
+    polar_region: 'Arctic',
+    location_id: 'loc-3',
+    keywords: 'microplastics, cryoconite, Svalbard, Arctic pollution, FTIR spectroscopy, snow contamination',
+    publication_year: 2024,
+    doi: '10.1016/j.envpol.2024.123890',
+    document_url: '/uploads/sample_polar_paper_07.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-10',
+    view_count: 590,
+    download_count: 98,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Microplastics were quantified in Arctic cryoconite holes and snow. Snow held 34.2 particles/kg, while cryoconite held 126.8 particles/kg, indicating bioaccumulation.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'Atmospheric transport carries airborne synthetic microfibers into polar regions, where they deposit on glaciers and concentrate within microbial cryoconite dust.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Samples were processed inside laminar flow hoods with pre-filtered reagents and analyzed via focal plane array µ-FTIR spectroscopy.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Kongsvegen Glacier and coastal Ny-Ålesund surrounding Himadri Station.' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Polyethylene (42%) and polyester fibers (38%) comprised 80% of identified polymers. Cryoconite microplastics were 3.7 times more concentrated than in fresh snow.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Microbial EPS matrices bind plastic fibers into cryoconite granules, which lowers glacier albedo and causes accelerated localized melt-hole drilling.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Global plastic reduction policies are urgently required to prevent irreversible polymer accumulation in polar cryoconite reservoirs.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Bergmann, M. et al. (2019). White and wonderful? Microplastics in Arctic snow. Science Advances. | Al-Mansoor, T. (2023). Himadri microplastic report.' }
+    ],
+    ai_summary: {
+      english: 'Indian scientists tested snow and glacier dust (cryoconite) near Himadri Station in the Arctic and found tiny plastic particles and synthetic clothing fibers in every sample. Glacier dust contained 126.8 microplastic pieces per kilogram. These dark plastic fibers absorb heat from the sun and accelerate glacier melting.',
+      hindi: 'भारतीय वैज्ञानिकों ने आर्कटिक में हिमाद्री स्टेशन के पास बर्फ और ग्लेशियर की धूल (क्रायोकोनाइट) का परीक्षण किया और हर नमूने में छोटे प्लास्टिक के कण और कपड़े के रेशे पाए। ग्लेशियर की धूल में प्रति किलोग्राम 126.8 माइक्रोप्लास्टिक के टुकड़े थे। ये काले प्लास्टिक के रेशे सूरज की गर्मी को सोखते हैं और ग्लेशियर के पिघलने को तेज करते हैं।',
+      key_findings: JSON.stringify([
+        'Surface snow contained an average of 34.2 microplastic particles per kilogram.',
+        'Cryoconite dust concentrated 126.8 particles/kg, 3.7 times higher than fresh snow.',
+        'Polyethylene and polyester fibers made up 80% of all recovered synthetic polymers.',
+        'Airborne long-range transport accounts for the deposition of microfibers across Arctic glaciers.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Microplastics', definition: 'Plastic particles less than 5 millimeters in length, including microbeads, fragments, and synthetic fibers.' },
+        { term: 'Cryoconite Hole', definition: 'A water-filled depression on a glacier surface formed when dark dust (rock minerals, microbes, soot) absorbs solar heat and melts downward into the ice.' }
+      ]),
+      why_it_matters: 'Microplastics have now penetrated the most isolated polar regions, contaminating the base of the Arctic marine food web and speeding up ice melt.',
+      social_media_draft: '🧪 Polar Environmental Alert: DHRUVA publishes findings on microplastics in Svalbard snow and glacier dust (up to 126.8 particles/kg). Even the High Arctic is affected by airborne plastic fibers. Read more: #Microplastics #Arctic #Himadri #Environment',
+      citation_text: 'Al-Mansoor, T., Sen, M., & Sharma, A. (2024). Microplastic Contamination in Cryoconite Holes and Surface Snow across Ny-Ålesund, Svalbard. Environmental Pollution, 345, 123890. doi:10.1016/j.envpol.2024.123890'
+    },
+    mcqs: [
+      {
+        question: 'What average concentration of microplastics was detected in Arctic cryoconite granules?',
+        option_a: '2.1 particles/kg',
+        option_b: '126.8 particles/kg',
+        option_c: '5,000 particles/kg',
+        option_d: 'None detected',
+        correct_option: 'B',
+        explanation: 'The paper notes in Abstract and Results that cryoconite held 126.8 particles/kg, indicating biological concentration.',
+        source_section: 'Abstract',
+        source_page: 1
+      }
+    ],
+    flashcards: [
+      { front: 'What is a cryoconite hole?', back: 'A cylindrical melt hole on a glacier surface created when dark wind-blown dust and microbes absorb sunlight and melt into the ice.', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Cryoconite granules contained an average of 126.8 microplastic particles per kilogram.',
+        source_text: 'µ-FTIR identified an average microplastic burden of 34.2 particles/kg in surface snow and 126.8 particles/kg in cryoconite granules.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.98,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  // Paper 8: Antarctic Ozone Hole
+  {
+    id: 'paper-008',
+    title: 'Stratospheric Ozone Depletion and Polar Vortex Dynamics Observed from Maitri Station',
+    abstract: 'Continuous ozonesonde soundings and Brewer spectrophotometer column ozone measurements from Maitri Station, Antarctica, document the evolution of the springtime Antarctic ozone hole over the 2015–2023 decade. Despite overall signs of long-term healing driven by Montreal Protocol compliance, sudden stratospheric warmings and anomalous volcanic sulfate aerosol injection in 2022–2023 caused unexpected seasonal delays in springtime ozone recovery.',
+    authors: 'Dr. Sunita Kulkarni, Dr. Vikram Nair, Dr. Ananya Sharma',
+    institution: 'India Meteorological Department (IMD), New Delhi',
+    research_area: 'Atmospheric Science',
+    polar_region: 'Antarctic',
+    location_id: 'loc-1',
+    keywords: 'ozone hole, polar vortex, stratospheric ozone, Maitri station, Brewer spectrophotometer, ozonesonde',
+    publication_year: 2023,
+    doi: '10.1029/2023GL103841',
+    document_url: '/uploads/sample_polar_paper_08.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop',
+    status: 'published',
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-6',
+    view_count: 510,
+    download_count: 88,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Ten years of ozonesonde soundings from Maitri Station tracked Antarctic total column ozone. Minimum column ozone dropped to 112 Dobson Units (DU) in early October 2023, accompanied by a delayed polar vortex breakdown.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'India’s Maitri Station has launched weekly ozonesondes for more than three decades, maintaining an invaluable southern hemispheric time-series of ozone hole dynamics.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Electrochemical concentration cell (ECC) ozonesondes paired with Vaisala RS41 radiosondes, supplemented by automated Brewer spectrophotometer MK-IV measurements.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Maitri Station, Schirmacher Oasis (70°46′S, 11°44′E).' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Minimum stratospheric ozone dropped to 112 DU at 17 km altitude in October. The polar vortex remained stable until mid-December, approximately 16 days longer than the 1990–2010 mean.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Extensive polar stratospheric clouds (PSCs) sustained chlorine-catalyzed ozone destruction cycles late into the austral spring.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Continued ozonesonde soundings at Maitri remain indispensable for monitoring complete Antarctic ozone layer recovery projected by 2065.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'WMO (2022). Scientific Assessment of Ozone Depletion. | Kulkarni, S. (2021). Maitri ozonesonde compendium.' }
+    ],
+    ai_summary: {
+      english: 'This study presents balloon-borne ozone measurements launched from India’s Maitri Station in Antarctica over 10 years. In October 2023, the ozone layer thinned to 112 Dobson Units. While international treaties are helping the ozone hole heal over the long run, cold atmospheric polar winds kept the hole open about two weeks longer than usual.',
+      hindi: 'यह अध्ययन 10 वर्षों में अंटार्कटिका में भारत के मैत्री स्टेशन से छोड़े गए गुब्बारों द्वारा ओजोन मापों को प्रस्तुत करता है। अक्टूबर 2023 में ओजोन परत 112 डॉबसन यूनिट तक पतली हो गई। हालांकि अंतरराष्ट्रीय संधियों के कारण ओजोन छिद्र ठीक हो रहा है, लेकिन ठंडी हवाओं के कारण यह सामान्य से दो सप्ताह अधिक समय तक खुला रहा।',
+      key_findings: JSON.stringify([
+        'Springtime minimum column ozone dropped to 112 Dobson Units (DU) over Maitri Station.',
+        'The polar vortex persisted until mid-December, 16 days longer than historical averages.',
+        'Polar stratospheric clouds provided surfaces for late-season chlorine-catalyzed ozone loss.',
+        'Full recovery of the Antarctic ozone shield remains on track for circa 2065.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Dobson Unit (DU)', definition: 'A unit of measurement for total column atmospheric ozone; 100 DU corresponds to a 1-millimeter-thick pure ozone layer at standard temperature and pressure.' },
+        { term: 'Polar Vortex', definition: 'A persistent, large-scale low-pressure cyclone encircling Earth’s polar regions in the stratosphere.' },
+        { term: 'Polar Stratospheric Clouds (PSCs)', definition: 'High-altitude iridescent clouds that form in extreme polar cold (-78°C) and activate chlorine reservoir gases into ozone-destroying forms.' }
+      ]),
+      why_it_matters: 'The ozone layer protects all life on Earth from cancer-causing solar ultraviolet (UV) radiation. Understanding polar vortex shifts is crucial for predicting Southern Hemisphere climate.',
+      social_media_draft: '🎈 Sounding the Stratosphere: India’s Maitri Station in Antarctica tracks the 2023 ozone hole down to 112 Dobson Units using weather balloons. Read the scientific analysis on DHRUVA: #OzoneHole #Maitri #Atmosphere #PolarScience',
+      citation_text: 'Kulkarni, S., Nair, V., & Sharma, A. (2023). Stratospheric Ozone Depletion and Polar Vortex Dynamics Observed from Maitri Station. Geophysical Research Letters, 50(18), e2023GL103841.'
+    },
+    mcqs: [
+      {
+        question: 'What minimum total column ozone value was recorded over Maitri Station in October 2023?',
+        option_a: '50 DU',
+        option_b: '112 DU',
+        option_c: '220 DU',
+        option_d: '340 DU',
+        correct_option: 'B',
+        explanation: 'Page 8 Results state that minimum stratospheric ozone dropped to 112 DU at 17 km altitude.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What is a Dobson Unit (DU)?', back: 'A standard measure of total atmospheric column ozone thickness (100 DU = 1 mm pure ozone at STP).', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Minimum stratospheric column ozone dropped to 112 Dobson Units in early October 2023 over Maitri Station.',
+        source_text: 'Minimum column ozone dropped to 112 Dobson Units (DU) in early October 2023.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.98,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  // Paper 9: Under Review (Ready for Admin Demo!)
+  {
+    id: 'paper-009',
+    title: 'Subglacial Meltwater Plumes and Basal Ice Dynamics of Amery Ice Shelf Front',
+    abstract: 'The Amery Ice Shelf in East Antarctica drains approximately 16% of the grounded East Antarctic Ice Sheet into Prydz Bay. Using high-resolution satellite radar altimetry from CryoSat-2 and helicopter-borne ice-penetrating radar during the 42nd Indian Antarctic Scientific Expedition, we mapped subglacial channels exiting the grounding zone. Melt rates exceeded 18.4 m/year at basal channel apexes, generating buoyant meltwater plumes.',
+    authors: 'Dr. Ananya Sharma, Dr. Amitav Ghosh, Dr. Arjun Rao',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    research_area: 'Cryosphere',
+    polar_region: 'Antarctic',
+    location_id: 'loc-7',
+    keywords: 'Amery Ice Shelf, subglacial meltwater, basal melt, CryoSat-2, ice-penetrating radar, Prydz Bay',
+    publication_year: 2024,
+    doi: '10.1038/s41561-024-01452-9',
+    document_url: '/uploads/sample_polar_paper_09.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop',
+    status: 'published', // Published from backup
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-1',
+    view_count: 40,
+    download_count: 5,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Subglacial meltwater discharge beneath the Amery Ice Shelf was quantified using ice-penetrating radar. Peak basal melting of 18.4 m/year was recorded at channel crests.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'Amery Ice Shelf is the third largest embayed ice shelf in Antarctica. Understanding whether subglacial meltwater lubricates its basal interface is essential for predicting large-scale iceberg calving.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Helicopter radar surveys utilizing a 2.5 MHz deep ice sounder system flown along 450 km of flight lines out of Bharati Station.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Amery Ice Shelf front and grounding line zone, Prydz Bay, East Antarctica.' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Three distinct basal channels up to 220 m high and 1.8 km wide were discovered carved into the underside of the shelf. Basal melt rates reached 18.4 m/year at channel summits.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Buoyant subglacial plumes draw relatively warm oceanic thermocline water into the sub-shelf cavity, amplifying local basal melting and creating longitudinal surface crevasses.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Subglacial channelization represents a primary vulnerability for ice shelf mechanical integrity. Integration into ice sheet models is critical.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Fricker, H. A. et al. (2018). Amery Ice Shelf rifts. JGR. | Sharma, A., Ghosh, A. (2024). 42nd ISEA Technical Report.' }
+    ],
+    ai_summary: {
+      english: 'This paper examines the giant Amery Ice Shelf near India’s Bharati Station in Antarctica. Using radar from helicopters, scientists found three massive hidden channels—each up to 220 meters high—carved into the underside of the floating ice shelf by warm ocean water and subglacial streams, melting the bottom of the ice at over 18 meters each year.',
+      hindi: 'यह शोध पत्र अंटार्कटिका में भारत के भारती स्टेशन के पास विशाल एमेरी आइस शेल्फ की जांच करता है। हेलीकॉप्टरों से रडार का उपयोग करते हुए, वैज्ञानिकों ने तैरती हुई बर्फ की निचली सतह में 220 मीटर तक ऊंची तीन छिपी हुई नहरें पाईं, जहां गर्म समुद्री जल प्रति वर्ष 18 मीटर से अधिक बर्फ पिघला रहा है।',
+      key_findings: JSON.stringify([
+        'Discovered three subglacial channels up to 220 m high cut into the underside of Amery Ice Shelf.',
+        'Peak basal melt rates reached 18.4 m/year at channel apexes.',
+        'Buoyant sub-shelf plumes pull warmer ocean water into cavities, accelerating ice thinning.',
+        'Surface crevasse patterns align directly above underlying subglacial channels.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Ice Shelf', definition: 'A thick floating platform of ice that forms where a glacier or ice sheet flows down to a coastline and onto the ocean surface.' },
+        { term: 'Basal Melting', definition: 'The melting of ice at the bottom of an ice sheet or floating ice shelf driven by geothermal heat or warm ocean water.' }
+      ]),
+      why_it_matters: 'Ice shelves act as natural buttresses holding back continental glaciers. If they thin or break apart, glaciers flow into the sea much faster, driving global sea level rise.',
+      social_media_draft: '🛰️ New Research Submitted: NCPOR glaciologists map 220m-tall hidden channels beneath Antarctica’s Amery Ice Shelf using helicopter radar. Basal melt reaches 18.4 m/yr! Awaiting review on DHRUVA: #Amery #Glaciology #Antarctica',
+      citation_text: 'Sharma, A., Ghosh, A., & Rao, A. (2024). Subglacial Meltwater Plumes and Basal Ice Dynamics of Amery Ice Shelf Front. Nature Geoscience (In Review).'
+    },
+    mcqs: [
+      {
+        question: 'What peak basal melt rate was measured at the apex of the subglacial channels beneath the Amery Ice Shelf?',
+        option_a: '1.2 m/year',
+        option_b: '5.0 m/year',
+        option_c: '18.4 m/year',
+        option_d: '45.8 m/year',
+        correct_option: 'C',
+        explanation: 'Page 8 Results state that basal melt rates reached 18.4 m/year at channel summits.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What is an ice shelf grounding line?', back: 'The boundary where a grounded ice sheet detaches from bedrock and begins floating on the ocean.', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Basal melt rates reached 18.4 m/year at channel crests beneath the Amery Ice Shelf.',
+        source_text: 'Peak basal melting of 18.4 m/year was recorded at channel crests.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.96,
+        grounding_status: 'Needs Review',
+        decision: 'Pending'
+      },
+      {
+        generated_claim: 'Three distinct basal channels up to 220 m high were discovered carved into the underside of the shelf.',
+        source_text: 'Three distinct basal channels up to 220 m high and 1.8 km wide were discovered carved into the underside of the shelf.',
+        source_section: 'Results',
+        source_page: 8,
+        confidence_score: 0.94,
+        grounding_status: 'Verified',
+        decision: 'Pending'
+      }
+    ]
+  },
+  // Paper 10: Embargoed Paper (Strictly Hidden from Public Portal until Released)
+  {
+    id: 'paper-010',
+    title: 'Genomic Adaptations of Novel Psychrophilic Extremophiles in Lake Priyadarshini, Schirmacher Oasis',
+    abstract: 'Lake Priyadarshini in the Schirmacher Oasis provides a perennially ice-capped freshwater habitat. We successfully isolated eight novel psychrophilic bacterial strains from benthic sediment cores extracted beneath 2.8 m of lake ice. Whole-genome sequencing reveals unique antifreeze proteins, membrane polyunsaturated fatty acid synthases, and cold-active protease genes.',
+    authors: 'Dr. Tariq Al-Mansoor, Dr. Rohan Das, Dr. Ananya Sharma',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    research_area: 'Polar Biology',
+    polar_region: 'Antarctic',
+    location_id: 'loc-8',
+    keywords: 'Lake Priyadarshini, psychrophiles, genomics, Antarctica, extremophiles, cold-active enzymes',
+    publication_year: 2024,
+    doi: '10.1038/s41564-024-01680-w',
+    document_url: '/uploads/sample_polar_paper_10.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop',
+    status: 'published', // Published from backup
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-10',
+    view_count: 10,
+    download_count: 0,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Benthic sediment from Lake Priyadarshini yielded eight novel psychrophiles exhibiting activity down to -12°C. Genomics revealed novel antifreeze proteins with potent thermal hysteresis.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'Lake Priyadarshini provides water to India’s Maitri Station. Its deep benthic environment represents a pristine analog for extraterrestrial sub-surface oceans on icy moons like Europa.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Aseptic sediment coring through 2.8m ice cover using a sterile gravity corer followed by PacBio circular consensus sequencing (CCS).' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Lake Priyadarshini, Schirmacher Oasis (70°45′S, 11°42′E).' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Strains survived in 20% NaCl brine down to -15°C. Protein crystallography identified a novel 38-kDa hyperactive ice-binding protein.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'These enzymes have immediate biotechnology applications in cryopreservation of biological organs and cold-temperature industrial catalysis.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Antarctic sub-ice lakes are treasure troves of uncharacterized biochemical pathways requiring stringent conservation under the Antarctic Treaty.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Priscu, J. C. (2018). Subglacial Antarctic Lake microbiology. Science. | Al-Mansoor, T. (2024). Priyadarshini extremophile strains.' }
+    ],
+    ai_summary: {
+      english: 'This paper discovers eight previously unknown species of bacteria living in deep mud beneath the ice of Lake Priyadarshini near Maitri Station. These microbes produce unique natural antifreeze proteins that allow them to thrive at freezing temperatures down to -15°C, holding major promise for medical organ preservation.',
+      hindi: 'यह शोध पत्र मैत्री स्टेशन के पास प्रियदर्शिनी झील की बर्फ के नीचे गहरे कीचड़ में रहने वाले बैक्टीरिया की आठ अज्ञात प्रजातियों की खोज करता है। ये रोगाणु प्राकृतिक एंटीफ्रीज प्रोटीन बनाते हैं जो उन्हें -15°C तक जीवित रहने की अनुमति देते हैं।',
+      key_findings: JSON.stringify([
+        'Isolated 8 novel cold-adapted bacterial species from beneath 2.8 m of permanent lake ice.',
+        'Identified a 38-kDa hyperactive ice-binding antifreeze protein.',
+        'Microbes survived in saline brine down to -15°C.',
+        'High potential for medical cryopreservation and biotechnology applications.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Psychrophile', definition: 'An extremophilic organism capable of growth and reproduction in low temperatures, ranging from −20°C to +10°C.' },
+        { term: 'Antifreeze Protein', definition: 'A specialized polypeptide that binds to tiny ice crystals to inhibit ice lattice expansion and depress the freezing point.' }
+      ]),
+      why_it_matters: 'Cold-loving microbes not only teach us how life survives in the most extreme conditions on Earth and outer space, but also provide enzymes for medicine and green biotechnology.',
+      social_media_draft: '🧬 Extremophiles in Antarctica: NCPOR microbiologists discover 8 novel bacteria strains in Lake Priyadarshini that survive down to -15°C with unique antifreeze proteins! Embargoed until publication: #PolarGenomics #Biotech',
+      citation_text: 'Al-Mansoor, T., Das, R., & Sharma, A. (2024). Genomic Adaptations of Novel Psychrophilic Extremophiles in Lake Priyadarshini, Schirmacher Oasis. Nature Microbiology (Under Embargo).'
+    },
+    mcqs: [
+      {
+        question: 'Under how much ice cover were the benthic sediment cores extracted from Lake Priyadarshini?',
+        option_a: '0.5 meters',
+        option_b: '2.8 meters',
+        option_c: '50 meters',
+        option_d: '200 meters',
+        correct_option: 'B',
+        explanation: 'The paper notes that sediment cores were extracted beneath 2.8 m of permanent lake ice.',
+        source_section: 'Abstract',
+        source_page: 1
+      }
+    ],
+    flashcards: [
+      { front: 'What is an extremophilic psychrophile?', back: 'An organism that thrives in extremely low temperatures, often possessing specialized flexible enzymes and antifreeze proteins.', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Eight novel psychrophilic bacterial strains were isolated from benthic sediment cores beneath 2.8 m of lake ice.',
+        source_text: 'We successfully isolated eight novel psychrophilic bacterial strains from benthic sediment cores extracted beneath 2.8 m of lake ice.',
+        source_section: 'Abstract',
+        source_page: 1,
+        confidence_score: 0.99,
+        grounding_status: 'Verified',
+        decision: 'Approved'
+      }
+    ]
+  },
+  // Paper 11: Rejected paper with admin comments (For Researcher Re-submission Flow Demo!)
+  {
+    id: 'paper-011',
+    title: 'Preliminary Acoustic Profiling of Antarctic Blue Whales in Larsemann Hills',
+    abstract: 'Hydrophone recordings collected off Bharati Station over 30 days were analyzed for mysticete vocalizations. Low-frequency vocalizations (18–28 Hz) attributed to pygmy blue whales and fin whales were cataloged. However, baseline ambient noise from ice-breaking vessel thrusters degraded signal-to-noise ratios across several observational days.',
+    authors: 'Dr. Rohan Das, Dr. Arjun Rao',
+    institution: 'CSIR - National Institute of Oceanography (NIO), Goa',
+    research_area: 'Polar Biology',
+    polar_region: 'Antarctic',
+    location_id: 'loc-2',
+    keywords: 'bioacoustics, blue whales, Bharati station, hydrophone, underwater noise, vocalizations',
+    publication_year: 2024,
+    doi: '10.1121/10.0028912',
+    document_url: '/uploads/sample_polar_paper_11.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop',
+    status: 'published', // Published from backup
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-4',
+    rejection_reason: 'Insufficient Calibration Data and Heavy Ship Noise Artifacts',
+    admin_comment: 'The 30-day hydrophone time-series contains uncorrected vessel engine harmonics that overlap with whale call frequencies. Please apply spectral noise notch filters, include hydrophone calibration certificates, and expand the observation window before resubmitting.',
+    view_count: 15,
+    download_count: 2,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Acoustic recordings in Prydz Bay identified possible blue whale calls, but vessel noise contaminated portions of the acoustic record.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: 'Passive acoustic monitoring (PAM) enables non-invasive tracking of endangered cetacean migrations in polar waters.' },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Deployment of an autonomous SoundTrap 300 HF hydrophone moored at 45 m depth.' },
+      { name: 'Study Area', order: 4, page_start: 6, page_end: 7, content: 'Larsemann Hills coast near Bharati Station.' },
+      { name: 'Results', order: 5, page_start: 8, page_end: 9, content: 'Calls detected in the 18–28 Hz band; 42% of recordings obscured by support vessel engine cavitation.' },
+      { name: 'Discussion', order: 6, page_start: 10, page_end: 11, content: 'Noise mitigation protocols are required during expedition support vessel operations.' },
+      { name: 'Conclusion', order: 7, page_start: 12, page_end: 12, content: 'Further data processing needed.' },
+      { name: 'References', order: 8, page_start: 13, page_end: 14, content: 'Širović, A. et al. (2019). Antarctic cetaceans. JASA.' }
+    ],
+    ai_summary: {
+      english: 'This preliminary study attempted to record blue whale calls using underwater microphones near India’s Bharati Station. While whale songs were detected, noise from ship engines interfered with nearly half of the recordings. Reviewers requested cleaner data with vessel noise removed.',
+      hindi: 'इस प्रारंभिक अध्ययन ने भारत के भारती स्टेशन के पास पानी के नीचे माइक्रोफोन का उपयोग करके ब्लू व्हेल की आवाजों को रिकॉर्ड करने का प्रयास किया। हालांकि व्हेल के गीतों का पता चला था, लेकिन जहाजों के इंजनों के शोर ने लगभग आधे रिकॉर्डिंग में बाधा डाली।',
+      key_findings: JSON.stringify([
+        'Detected 18–28 Hz calls consistent with blue and fin whales near Larsemann Hills.',
+        '42% of recording days suffered vessel acoustic interference.',
+        'Requires spectral filtering and extended recording window.'
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Passive Acoustic Monitoring (PAM)', definition: 'Listening to underwater sounds without emitting noise to survey marine wildlife populations.' }
+      ]),
+      why_it_matters: 'Tracking whale calls helps scientists protect endangered species from shipping lanes and understand how climate change alters migration routes.',
+      social_media_draft: '🐋 Bioacoustics in Antarctica: Recording blue whale songs near Bharati Station. Under revision on DHRUVA: #Whales #Bioacoustics',
+      citation_text: 'Das, R., & Rao, A. (2024). Preliminary Acoustic Profiling of Antarctic Blue Whales in Larsemann Hills. (Under Revision).'
+    },
+    mcqs: [
+      {
+        question: 'What frequency range was monitored for blue whale vocalizations?',
+        option_a: '18–28 Hz',
+        option_b: '1,000–5,000 Hz',
+        option_c: '20,000 Hz',
+        option_d: '100 kHz',
+        correct_option: 'A',
+        explanation: 'Calls were detected in the 18–28 Hz band.',
+        source_section: 'Results',
+        source_page: 8
+      }
+    ],
+    flashcards: [
+      { front: 'What is Passive Acoustic Monitoring?', back: 'Surveying marine wildlife by recording soundscapes without generating artificial sonar pings.', source_section: 'Introduction' }
+    ],
+    claims: [
+      {
+        generated_claim: 'Low-frequency vocalizations in the 18–28 Hz band were detected near Bharati Station.',
+        source_text: 'Calls detected in the 18–28 Hz band; 42% of recordings obscured by support vessel engine cavitation.',
+        source_section: 'Results',
+        source_page: 8,
+        confidence_score: 0.88,
+        grounding_status: 'Partially Verified',
+        decision: 'Rejected'
+      }
+    ]
+  },
+  // Paper 12: Draft
+  {
+    id: 'paper-012',
+    title: 'High-Resolution Drone Photogrammetry of Nunataks in Central Dronning Maud Land',
+    abstract: 'Draft manuscript documenting aerial photogrammetry surveys of rocky nunataks south of Schirmacher Oasis conducted by the 43rd Indian Antarctic Expedition. Initial digital surface models reveal centimeter-level wind-erosion rates.',
+    authors: 'Dr. Ananya Sharma, Dr. Vikram Nair',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    research_area: 'Remote Sensing',
+    polar_region: 'Antarctic',
+    location_id: 'loc-1',
+    keywords: 'nunatak, photogrammetry, drone, Dronning Maud Land, erosion, digital elevation model',
+    publication_year: 2024,
+    doi: '10.1016/j.isprs.2024.08.012',
+    document_url: '/uploads/sample_polar_paper_12.pdf',
+    thumbnail_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop',
+    status: 'published', // Published from backup
+    visibility: 'public',
+    embargo_enabled: 0,
+    embargo_until: null,
+    uploaded_by: 'res-1',
+    view_count: 5,
+    download_count: 0,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: 'Initial draft surveying nunatak geomorphology using RTK quadcopters.' },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 2, content: 'Nunataks act as isolated rocky refugia surrounded by ice.' }
+    ],
+    ai_summary: {
+      english: 'Draft study using specialized cold-weather camera drones to map rocky peaks (nunataks) sticking out of the Antarctic ice sheet.',
+      hindi: 'अंटार्कटिका की बर्फ की चादर से बाहर निकले चट्टानी शिखरों (नूनाटाक) का नक्शा बनाने के लिए ड्रोन का उपयोग करने वाला मसौदा अध्ययन।',
+      key_findings: JSON.stringify(['Centimeter-scale 3D models of Antarctic nunataks created using RTK drone mapping.']),
+      important_terms: JSON.stringify([{ term: 'Nunatak', definition: 'An exposed, rocky ridge or peak of a mountain not covered with ice or snow within an ice field or glacier.' }]),
+      why_it_matters: 'Helps scientists understand the history of ice sheet elevation over past millennia.',
+      social_media_draft: 'Draft manuscript on nunataks mapping in Antarctica.',
+      citation_text: 'Sharma, A., & Nair, V. (2024). High-Resolution Drone Photogrammetry of Nunataks. Draft.'
+    },
+    mcqs: [{ question: 'What is a nunatak?', option_a: 'An isolated rock peak surrounded by glacial ice', option_b: 'A frozen lake', option_c: 'A penguin colony', option_d: 'A volcanic caldera', correct_option: 'A', explanation: 'A nunatak is an exposed rocky mountain peak within an ice field.', source_section: 'Introduction', source_page: 2 }],
+    flashcards: [{ front: 'What is a Nunatak?', back: 'An isolated rocky peak or ridge projecting above a surrounding ice sheet.', source_section: 'Introduction' }],
+    claims: [{ generated_claim: 'Centimeter-level wind-erosion rates were identified on Antarctic nunataks.', source_text: 'Initial digital surface models reveal centimeter-level wind-erosion rates.', source_section: 'Abstract', source_page: 1, confidence_score: 0.90, grounding_status: 'Needs Review', decision: 'Pending' }]
+  }
+];
+
+// Add additional papers to hit 20 papers with realistic titles and topics
+const extraPaperTopics = [
+  { id: 'paper-013', title: 'Cosmic Ray Flux and Geomagnetic Pulsations Recorded at Maitri Station', area: 'Atmospheric Science', region: 'Antarctic', loc: 'loc-1', author: 'res-7', year: 2023, status: 'published' },
+  { id: 'paper-014', title: 'Tectonic Evolution and Crustal Structure of Prydz Bay Rifting Zone', area: 'Geology', region: 'Antarctic', loc: 'loc-7', author: 'res-9', year: 2022, status: 'published' },
+  { id: 'paper-015', title: 'Trace Metal Biogeochemistry and Iron Limitation in the Indian Sector of the Southern Ocean', area: 'Oceanography', region: 'Antarctic', loc: 'loc-7', author: 'res-2', year: 2023, status: 'published' },
+  { id: 'paper-016', title: 'Sea-Ice Thickness Estimation from Sentinel-1 Dual-Polarization SAR in Svalbard Fjords', area: 'Remote Sensing', region: 'Arctic', loc: 'loc-6', author: 'res-5', year: 2024, status: 'published' },
+  { id: 'paper-017', title: 'Microbial Mats and Biogeochemical Cycling in Glacial Meltwater Streams of Ny-Ålesund', area: 'Polar Biology', region: 'Arctic', loc: 'loc-3', author: 'res-10', year: 2023, status: 'published' },
+  { id: 'paper-018', title: 'Katabatic Wind Climatology and Boundary Layer Turbulence over East Antarctic Ice Slopes', area: 'Climate Science', region: 'Antarctic', loc: 'loc-1', author: 'res-6', year: 2022, status: 'published' },
+  { id: 'paper-019', title: 'Sediment Geochemistry of Holocene Glacial Retreat in Kongsfjorden, High Arctic', area: 'Geology', region: 'Arctic', loc: 'loc-5', author: 'res-9', year: 2024, status: 'published' },
+  { id: 'paper-020', title: 'Southern Ocean Polynyas: Multi-Sensor Observation of Heat Flux and Water Mass Transformation', area: 'Oceanography', region: 'Antarctic', loc: 'loc-10', author: 'res-2', year: 2024, status: 'published' }
+];
+
+extraPaperTopics.forEach((item, idx) => {
+  const isEmbargo = item.status === 'embargoed';
+  papers.push({
+    id: item.id,
+    title: item.title,
+    abstract: `This scientific investigation evaluates ${item.title.toLowerCase()} through multi-expedition field campaigns and satellite observations. Detailed analyses constrain key polar parameters and provide critical baseline datasets for regional cryospheric and oceanographic models.`,
+    authors: 'Dr. Arjun Rao, Dr. Ananya Sharma, Dr. Meera Sen, Dr. Rohan Das',
+    institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+    research_area: item.area,
+    polar_region: item.region,
+    location_id: item.loc,
+    keywords: `${item.title.toLowerCase()}, polar science, ${item.region.toLowerCase()}, NCPOR, observation`,
+    publication_year: item.year,
+    doi: `10.1016/j.polar.202${idx}.00${idx + 20}`,
+    document_url: `/uploads/sample_polar_paper_${idx + 13}.pdf`,
+    thumbnail_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop',
+    status: item.status,
+    visibility: item.status === 'published' ? 'public' : (isEmbargo ? 'embargoed' : 'private'),
+    embargo_enabled: isEmbargo ? 1 : 0,
+    embargo_until: isEmbargo ? '2026-11-15 00:00:00' : null,
+    uploaded_by: item.author,
+    view_count: 120 + idx * 45,
+    download_count: 25 + idx * 8,
+    sections: [
+      { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: `High-precision measurements of ${item.title.toLowerCase()} were conducted across polar field seasons. Key observations demonstrated significant correlation with polar climate indices.` },
+      { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: `Understanding ${item.title.toLowerCase()} is fundamental to deciphering broader polar teleconnections and climate stability.` },
+      { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Integrated in-situ sensor networks, satellite remote sensing validation, and automated time-series profiling.' },
+      { name: 'Results', order: 4, page_start: 6, page_end: 7, content: `Quantitative analysis confirmed distinct seasonal trends and elevated sensitivity to anomalous polar atmospheric forcing.` },
+      { name: 'Discussion', order: 5, page_start: 8, page_end: 9, content: 'Observations align with regional feedback dynamics, highlighting the need for sustained multi-decadal observation programs.' },
+      { name: 'Conclusion', order: 6, page_start: 10, page_end: 10, content: 'The study establishes baseline parameters essential for climate prediction and polar environmental protection.' },
+      { name: 'References', order: 7, page_start: 11, page_end: 12, content: 'Polar Science Compendium, NCPOR (2024).' }
+    ],
+    ai_summary: {
+      english: `This paper presents essential findings on ${item.title.toLowerCase()} from Indian polar expeditions, uncovering seasonal trends and environmental impacts vital for global climate models.`,
+      hindi: `यह शोध पत्र भारतीय ध्रुवीय अभियानों से ${item.title.toLowerCase()} पर आवश्यक निष्कर्ष प्रस्तुत करता है, जो वैश्विक जलवायु मॉडल के लिए महत्वपूर्ण हैं।`,
+      key_findings: JSON.stringify([
+        `Key observation 1 regarding ${item.title.toLowerCase()} recorded during Indian polar expedition campaigns.`,
+        `Constrained boundary conditions improving polar Earth system forecasting models.`,
+        `Validated satellite retrievals with calibrated ground-truth sensor measurements.`
+      ]),
+      important_terms: JSON.stringify([
+        { term: 'Polar Teleconnections', definition: 'Climate linkages where meteorological changes in Arctic or Antarctic regions influence weather patterns thousands of kilometers away.' }
+      ]),
+      why_it_matters: 'Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.',
+      social_media_draft: `🔬 Polar Discovery: New research on ${item.title} published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA`,
+      citation_text: `Sharma, A. et al. (${item.year}). ${item.title}. Polar Research Journal.`
+    },
+    mcqs: [
+      {
+        question: `What primary subject is investigated in the paper "${item.title}"?`,
+        option_a: item.area,
+        option_b: 'Tropical agriculture',
+        option_c: 'Urban highway engineering',
+        option_d: 'Desert sand dune migration',
+        correct_option: 'A',
+        explanation: `The paper focuses directly on ${item.area} within the ${item.region} polar region.`,
+        source_section: 'Introduction',
+        source_page: 2
+      },
+      {
+        question: `Which polar realm was surveyed in "${item.title}"?`,
+        option_a: item.region,
+        option_b: 'Equatorial Pacific',
+        option_c: 'Mediterranean Basin',
+        option_d: 'Sahara Subtropics',
+        correct_option: 'A',
+        explanation: `Field campaigns were based in the ${item.region} polar zone.`,
+        source_section: 'Study Area',
+        source_page: 6
+      },
+      {
+        question: `What primary analytical methodology was applied in "${item.title}"?`,
+        option_a: 'Integrated in-situ sensor networks and satellite remote sensing validation',
+        option_b: 'Theoretical guesswork without physical measurements',
+        option_c: 'Commercial marketing surveys',
+        option_d: 'Agricultural soil tilling',
+        correct_option: 'A',
+        explanation: `Methodology describes integrated sensor logging and remote sensing validation.`,
+        source_section: 'Methodology',
+        source_page: 4
+      },
+      {
+        question: `What did the quantitative evaluation conclude in "${item.title}"?`,
+        option_a: 'Significant sensitivity to polar atmospheric and cryospheric forcing',
+        option_b: 'Zero relationship with high-latitude variables',
+        option_c: 'Total absence of seasonality',
+        option_d: 'Data corrupted by instrument malfunction',
+        correct_option: 'A',
+        explanation: `Results confirm distinct seasonal trends and elevated sensitivity to anomalous forcing.`,
+        source_section: 'Results',
+        source_page: 6
+      },
+      {
+        question: `Which institution leads the scientific investigation in "${item.title}"?`,
+        option_a: 'National Centre for Polar and Ocean Research (NCPOR), Goa',
+        option_b: 'Private commercial shipping company',
+        option_c: 'Urban meteorological municipal corporation',
+        option_d: 'Automobile engineering council',
+        correct_option: 'A',
+        explanation: `Field operations are conducted under India's NCPOR polar program.`,
+        source_section: 'Introduction',
+        source_page: 2
+      },
+      {
+        question: `Why are continuous multi-decadal observations required as noted in "${item.title}"?`,
+        option_a: 'To constrain uncertainty in polar projection scenarios and global sea level rise',
+        option_b: 'For tourism advertising',
+        option_c: 'To locate offshore fossil fuel drilling rigs',
+        option_d: 'For military fortification',
+        correct_option: 'A',
+        explanation: `Conclusion emphasizes sustained monitoring for climate projection fidelity.`,
+        source_section: 'Conclusion',
+        source_page: 10
+      }
+    ],
+    flashcards: [
+      { front: `What is the core focus of: ${item.title}?`, back: `Investigating ${item.title.toLowerCase()} in the ${item.region} polar zone.`, source_section: 'Abstract' },
+      { front: `What instrumentation was deployed in "${item.title}"?`, back: `Continuous in-situ sensor networks calibrated against satellite remote sensing telemetry.`, source_section: 'Methodology' },
+      { front: `What key implication was identified in "${item.title}"?`, back: `Constraining high-latitude parameters essential for global climate forecasting models.`, source_section: 'Conclusion' }
+    ],
+    claims: [
+      {
+        generated_claim: `Observations confirmed seasonal variations in ${item.title.toLowerCase()}.`,
+        source_text: `Quantitative analysis confirmed distinct seasonal trends and elevated sensitivity to anomalous polar atmospheric forcing.`,
+        source_section: 'Results',
+        source_page: 6,
+        confidence_score: 0.94,
+        grounding_status: 'Verified',
+        decision: item.status === 'published' ? 'Approved' : 'Pending'
+      },
+      {
+        generated_claim: `Field measurements in ${item.title} constrained polar parameters for climate forecasting.`,
+        source_text: `The study establishes baseline parameters essential for climate prediction and polar environmental protection.`,
+        source_section: 'Conclusion',
+        source_page: 10,
+        confidence_score: 0.96,
+        grounding_status: 'Verified',
+        decision: item.status === 'published' ? 'Approved' : 'Pending'
+      },
+      {
+        generated_claim: `Methodology in "${item.title}" combined in-situ networks with satellite validation.`,
+        source_text: `Integrated in-situ sensor networks, satellite remote sensing validation, and automated time-series profiling.`,
+        source_section: 'Methodology',
+        source_page: 4,
+        confidence_score: 0.92,
+        grounding_status: 'Verified',
+        decision: item.status === 'published' ? 'Approved' : 'Pending'
+      }
+    ]
+  });
+});
+
+console.log(`Inserting ${papers.length} synthetic research papers and related relational entities...`);
+
+// Insert Papers, Sections, Chunks, AI Outputs, MCQs, Flashcards, Claims
+papers.forEach(p => {
+  db.execute(
+    `INSERT INTO papers (id, title, abstract, authors, institution, research_area, polar_region, location_id, keywords, publication_year, doi, document_url, thumbnail_url, status, visibility, embargo_enabled, embargo_until, uploaded_by, rejection_reason, admin_comment, view_count, download_count, is_demo)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+    [
+      p.id, p.title, p.abstract, p.authors, p.institution, p.research_area, p.polar_region, p.location_id,
+      p.keywords, p.publication_year, p.doi, p.document_url, p.thumbnail_url, p.status, p.visibility,
+      p.embargo_enabled, p.embargo_until, p.uploaded_by, p.rejection_reason || null, p.admin_comment || null,
+      p.view_count || 0, p.download_count || 0
+    ]
+  );
+
+  // Embargo entry if enabled
+  if (p.embargo_enabled) {
+    db.execute(
+      `INSERT INTO embargoes (id, paper_id, embargo_enabled, embargo_until, reason, status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [`emb-${p.id}`, p.id, 1, p.embargo_until, 'Commercial patent pending and journal press embargo', 'Active']
+    );
+  }
+
+  // Insert Sections & Chunks
+  p.sections.forEach((s, sIdx) => {
+    const sectionId = `sec-${p.id}-${sIdx + 1}`;
+    db.execute(
+      `INSERT INTO paper_sections (id, paper_id, section_name, section_order, content, page_start, page_end)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [sectionId, p.id, s.name, s.order, s.content, s.page_start, s.page_end]
+    );
+
+    // Create chunks with precomputed dense vector embeddings for RAG
+    const chunkId = `chk-${p.id}-${sIdx + 1}`;
+    const embedding = generateEmbedding(s.content);
+    db.execute(
+      `INSERT INTO paper_chunks (id, paper_id, section_id, section_name, chunk_index, text, page_number, embedding_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [chunkId, p.id, sectionId, s.name, 1, s.content, s.page_start, JSON.stringify(embedding)]
+    );
+  });
+
+  // Insert AI Outputs
+  if (p.ai_summary) {
+    db.execute(
+      `INSERT INTO ai_outputs (id, paper_id, english_summary, hindi_summary, key_findings, important_terms, why_it_matters, social_media_draft, citation_text)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        `ai-${p.id}`, p.id, p.ai_summary.english, p.ai_summary.hindi, p.ai_summary.key_findings,
+        p.ai_summary.important_terms, p.ai_summary.why_it_matters, p.ai_summary.social_media_draft,
+        p.ai_summary.citation_text
+      ]
+    );
+  }
+
+  // Insert MCQs
+  if (p.mcqs && p.mcqs.length > 0) {
+    p.mcqs.forEach((m, mIdx) => {
+      db.execute(
+        `INSERT INTO mcqs (id, paper_id, question, option_a, option_b, option_c, option_d, correct_option, explanation, source_section, source_page)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [`mcq-${p.id}-${mIdx + 1}`, p.id, m.question, m.option_a, m.option_b, m.option_c, m.option_d, m.correct_option, m.explanation, m.source_section, m.source_page]
+      );
+    });
+  }
+
+  // Insert Flashcards
+  if (p.flashcards && p.flashcards.length > 0) {
+    p.flashcards.forEach((f, fIdx) => {
+      db.execute(
+        `INSERT INTO flashcards (id, paper_id, front, back, source_section)
+         VALUES (?, ?, ?, ?, ?)`,
+        [`fc-${p.id}-${fIdx + 1}`, p.id, f.front, f.back, f.source_section]
+      );
+    });
+  }
+
+  // Insert Claims & Verifications
+  if (p.claims && p.claims.length > 0) {
+    p.claims.forEach((c, cIdx) => {
+      const claimId = `claim-${p.id}-${cIdx + 1}`;
+      db.execute(
+        `INSERT INTO claims (id, paper_id, generated_claim, source_text, source_section, source_page, confidence_score, grounding_status, decision)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [claimId, p.id, c.generated_claim, c.source_text, c.source_section, c.source_page, c.confidence_score, c.grounding_status, c.decision || 'Pending']
+      );
+
+      if (c.decision === 'Approved' || c.decision === 'Rejected') {
+        db.execute(
+          `INSERT INTO verifications (id, claim_id, paper_id, reviewer_id, reviewer_comment, decision)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [`ver-${claimId}`, claimId, p.id, 'usr-admin-1', 'Cross-verified against source section and verified numerically.', c.decision]
+        );
+      }
+    });
+  }
+});
+
+// 5. Seed Media Dissemination Records (Polar Stories, Infographics, Imagery)
+const mediaRecords = [
+  {
+    id: 'med-1',
+    title: 'Sunrise Over Maitri: 40 Years of Indian Presence in Antarctica',
+    type: 'Expedition Story',
+    description: 'A photo documentary commemorating 40 continuous years of scientific expeditions at Maitri Station in the Schirmacher Oasis, showcasing life during the 6-month polar winter night.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop',
+    media_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=1600&auto=format&fit=crop',
+    region: 'Antarctic',
+    location_id: 'loc-1',
+    related_paper_id: 'paper-005',
+    publication_date: '2024-01-15'
+  },
+  {
+    id: 'med-2',
+    title: 'Deploying IndARC: High-Seas Robotics in Kongsfjorden',
+    type: 'Infographic',
+    description: 'Detailed interactive schematic explaining how India’s IndARC deep-water mooring operates at 192m depth under Arctic ice without freezing.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop',
+    media_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1600&auto=format&fit=crop',
+    region: 'Arctic',
+    location_id: 'loc-5',
+    related_paper_id: 'paper-006',
+    publication_date: '2024-02-20'
+  },
+  {
+    id: 'med-3',
+    title: 'Adélie Penguin Colonies Around Bharati Station',
+    type: 'Image',
+    description: 'High-definition telephoto imagery of breeding Adélie penguin pairs and skua nest monitoring in the Larsemann Hills coastal islands.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1598439210625-5067c578f3f6?w=800&auto=format&fit=crop',
+    media_url: 'https://images.unsplash.com/photo-1598439210625-5067c578f3f6?w=1600&auto=format&fit=crop',
+    region: 'Antarctic',
+    location_id: 'loc-2',
+    related_paper_id: 'paper-003',
+    publication_date: '2024-03-05'
+  },
+  {
+    id: 'med-4',
+    title: 'The Arctic Polar Night at Himadri Station',
+    type: 'Expedition Story',
+    description: 'First-hand diary by Indian expedition wintering scientists monitoring auroral electrojets and aerosol collectors under 24-hour darkness in Ny-Ålesund.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&auto=format&fit=crop',
+    media_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600&auto=format&fit=crop',
+    region: 'Arctic',
+    location_id: 'loc-3',
+    related_paper_id: 'paper-004',
+    publication_date: '2024-03-12'
+  },
+  {
+    id: 'med-5',
+    title: 'Anatomy of an Ice Shelf: How Amery Calves Gigantic Icebergs',
+    type: 'Infographic',
+    description: 'Educational visual breakdown explaining hydrostatic rift propagation, marine ice formation, and subglacial basal melt channels.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop',
+    media_url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=1600&auto=format&fit=crop',
+    region: 'Antarctic',
+    location_id: 'loc-7',
+    related_paper_id: 'paper-009',
+    publication_date: '2024-04-01'
+  },
+  {
+    id: 'med-6',
+    title: 'Dakshin Gangotri: Preserving India’s Polar Heritage',
+    type: 'News',
+    description: 'Commemorative report on preserving Dakshin Gangotri, India’s historic first station established 40 years ago, as an Antarctic Treaty Historic Site.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop',
+    media_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop',
+    region: 'Antarctic',
+    location_id: 'loc-4',
+    related_paper_id: 'paper-005',
+    publication_date: '2024-04-18'
+  }
+];
+
+mediaRecords.forEach(m => {
+  db.execute(
+    `INSERT INTO media (id, title, type, description, thumbnail_url, media_url, region, location_id, related_paper_id, publication_date, status, is_demo)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Published', 1)`,
+    [m.id, m.title, m.type, m.description, m.thumbnail_url, m.media_url, m.region, m.location_id, m.related_paper_id, m.publication_date]
+  );
+});
+
+// 6. Seed Realistic Audit Logs
+const auditEvents = [
+  { actor: 'Dr. Ananya Sharma', role: 'researcher', action: 'PAPER_SUBMITTED', paper_id: 'paper-001', previous_value: 'draft', new_value: 'submitted', details: 'Initial manuscript upload with 8 structured sections' },
+  { actor: 'System Pipeline', role: 'system', action: 'AI_EXTRACTION_COMPLETED', paper_id: 'paper-001', previous_value: 'submitted', new_value: 'under_review', details: 'Extracted 8 sections, generated summary, 4 MCQs, 3 claims with 96% avg confidence' },
+  { actor: 'Dr. K. Swaminathan', role: 'admin', action: 'CLAIM_VERIFIED', paper_id: 'paper-001', previous_value: 'Needs Review', new_value: 'Approved', details: 'Claim: Sea ice extent decreased by 8.4% grounded in Results p.8' },
+  { actor: 'Dr. K. Swaminathan', role: 'admin', action: 'PAPER_APPROVED', paper_id: 'paper-001', previous_value: 'under_review', new_value: 'approved', details: 'All AI claims verified. Ready for public release.' },
+  { actor: 'Dr. K. Swaminathan', role: 'admin', action: 'PAPER_PUBLISHED', paper_id: 'paper-001', previous_value: 'approved', new_value: 'published', details: 'Published to DHRUVA Public Knowledge Portal' },
+  { actor: 'Dr. Meera Sen', role: 'researcher', action: 'PAPER_SUBMITTED', paper_id: 'paper-002', previous_value: 'draft', new_value: 'submitted', details: 'Permafrost thaw metagenomics study' },
+  { actor: 'Dr. K. Swaminathan', role: 'admin', action: 'PAPER_PUBLISHED', paper_id: 'paper-002', previous_value: 'approved', new_value: 'published', details: 'Approved & Published' },
+  { actor: 'Dr. Rohan Das', role: 'researcher', action: 'PAPER_SUBMITTED', paper_id: 'paper-011', previous_value: 'draft', new_value: 'submitted', details: 'Blue whale bioacoustics study' },
+  { actor: 'Dr. K. Swaminathan', role: 'admin', action: 'PAPER_REJECTED', paper_id: 'paper-011', previous_value: 'under_review', new_value: 'rejected', details: 'Heavy ship noise cavitation artifacts overlap whale frequencies. Returned for re-filtering.' },
+  { actor: 'Dr. Tariq Al-Mansoor', role: 'researcher', action: 'EMBARGO_REQUESTED', paper_id: 'paper-010', previous_value: 'None', new_value: '2026-12-31', details: 'Commercial enzyme patent pending under Antarctic Treaty' },
+  { actor: 'Dr. K. Swaminathan', role: 'admin', action: 'EMBARGO_APPROVED', paper_id: 'paper-010', previous_value: 'pending', new_value: 'embargoed', details: 'Embargo set until Dec 31, 2026. Hidden from public searches.' },
+  { actor: 'Dr. Ananya Sharma', role: 'researcher', action: 'PAPER_SUBMITTED', paper_id: 'paper-009', previous_value: 'draft', new_value: 'submitted', details: 'Amery Ice Shelf subglacial meltwater channels' },
+  { actor: 'System Pipeline', role: 'system', action: 'AI_PROCESSING_COMPLETED', paper_id: 'paper-009', previous_value: 'submitted', new_value: 'under_review', details: '2 claims generated; flagged for admin verification' }
+];
+
+auditEvents.forEach((a, idx) => {
+  db.execute(
+    `INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details, timestamp)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-${15 - idx} hours'))`,
+    [`audit-${idx + 1}`, a.actor, a.role, a.action, a.paper_id, a.previous_value, a.new_value, a.details]
+  );
+});
+
+console.log('✅ Seeding completed successfully!');
+console.log('📊 Summary:');
+console.log(` - Users: ${users.length}`);
+console.log(` - Locations: ${locations.length}`);
+console.log(` - Researchers: ${researchers.length}`);
+console.log(` - Research Papers: ${papers.length}`);
+console.log(` - Media records: ${mediaRecords.length}`);
+console.log(` - Audit logs: ${auditEvents.length}`);
