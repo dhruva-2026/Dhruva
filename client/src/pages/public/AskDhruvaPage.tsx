@@ -2,36 +2,43 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sparkles, 
   Send, 
-  BookOpen, 
   ShieldCheck, 
   User, 
-  HelpCircle, 
   ChevronRight, 
-  Plus, 
-  MessageSquare, 
-  MoreVertical, 
-  Trash2, 
-  Edit3, 
-  Menu, 
-  X, 
-  LogIn, 
-  Clock
+  Compass, 
+  Waves, 
+  Thermometer, 
+  Ship, 
+  Snowflake, 
+  Leaf, 
+  Mountain, 
+  Image as ImageIcon, 
+  Paperclip, 
+  FileText, 
+  Lock, 
+  ArrowRight,
+  RotateCcw,
+  Clock,
+  Trash2,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus
 } from 'lucide-react';
-import { 
-  apiAskRAG, 
-  apiFetchChatSessions, 
-  apiCreateChatSession, 
-  apiRenameChatSession, 
-  apiDeleteChatSession, 
-  apiFetchChatMessages, 
-  apiSendChatMessage, 
-  getAuthToken 
-} from '../../services/api';
+import { apiAskRAG } from '../../services/api';
+
+interface StoredAttachment {
+  name: string;
+  size: number;
+  type: string;
+  dataUrl?: string;
+}
 
 interface ChatMessage {
   id?: string;
   role: 'user' | 'assistant';
   content: string;
+  attachment?: StoredAttachment;
   sources?: Array<{
     paperId: string;
     paperTitle: string;
@@ -40,14 +47,14 @@ interface ChatMessage {
     confidenceScore: number;
     snippet: string;
   }>;
-  createdAt?: string;
 }
 
-interface ChatSession {
+interface SearchHistoryItem {
   id: string;
-  title: string;
-  updated_at: string;
-  created_at: string;
+  query: string;
+  timestamp: string;
+  messages: ChatMessage[];
+  attachment?: StoredAttachment;
 }
 
 interface AskDhruvaPageProps {
@@ -57,53 +64,38 @@ interface AskDhruvaPageProps {
   onNavigate?: (tab: string) => void;
 }
 
-const SAMPLE_QUESTIONS = [
-  'What causes seasonal changes in Antarctic sea ice in the Weddell Sea?',
-  'How does permafrost thaw in Svalbard affect methane emissions?',
-  'What did India’s IndARC mooring observatory observe in Kongsfjorden at 192m depth?',
-  'What did research find regarding microplastics in Arctic snow around Himadri Station?',
-  'What role do phytoplankton blooms in Prydz Bay play near Bharati Station?'
+const RESEARCH_INQUIRIES = [
+  {
+    id: 1,
+    icon: <Waves className="w-3.5 h-3.5 text-sky-600" />,
+    text: 'What causes seasonal changes in Antarctic sea ice in the Weddell Sea?'
+  },
+  {
+    id: 2,
+    icon: <Thermometer className="w-3.5 h-3.5 text-sky-600" />,
+    text: 'How does permafrost thaw in Svalbard affect methane emissions?'
+  },
+  {
+    id: 3,
+    icon: <Ship className="w-3.5 h-3.5 text-sky-600" />,
+    text: "What did India's IndARC mooring observatory observe in Kongsfjorden at 192m depth?"
+  },
+  {
+    id: 4,
+    icon: <Snowflake className="w-3.5 h-3.5 text-sky-600" />,
+    text: 'What did research find regarding microplastics in Arctic snow around Himadri Station?'
+  },
+  {
+    id: 5,
+    icon: <Leaf className="w-3.5 h-3.5 text-sky-600" />,
+    text: 'What role do phytoplankton blooms in Prydz Bay play near Bharati Station?'
+  },
+  {
+    id: 6,
+    icon: <Mountain className="w-3.5 h-3.5 text-sky-600" />,
+    text: 'How is climate change affecting polar ecosystems in the Arctic and Antarctic?'
+  }
 ];
-
-const INITIAL_WELCOME: ChatMessage = {
-  role: 'assistant',
-  content: "Namaste! I am DHRUVA (ध्रुव), the AI Research Assistant for India's Polar Science expeditions.\n\nI answer questions strictly grounded in our peer-reviewed polar science knowledge repository, providing verified section and page citations. Try selecting one of the suggested scientific queries below or ask your own question!"
-};
-
-function groupSessions(sessions: ChatSession[]) {
-  const now = new Date();
-  const today: ChatSession[] = [];
-  const yesterday: ChatSession[] = [];
-  const prev7Days: ChatSession[] = [];
-  const older: ChatSession[] = [];
-
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
-  const startOf7Days = startOfToday - 7 * 24 * 60 * 60 * 1000;
-
-  sessions.forEach(session => {
-    const time = new Date(session.updated_at || session.created_at || Date.now()).getTime();
-    if (time >= startOfToday) {
-      today.push(session);
-    } else if (time >= startOfYesterday) {
-      yesterday.push(session);
-    } else if (time >= startOf7Days) {
-      prev7Days.push(session);
-    } else {
-      older.push(session);
-    }
-  });
-
-  return { today, yesterday, prev7Days, older };
-}
-
-function generateShortTitle(query: string): string {
-  if (!query) return 'New Discussion';
-  const clean = query.replace(/[?.,!]/g, '').trim();
-  const words = clean.split(/\s+/);
-  if (words.length <= 5) return words.join(' ');
-  return words.slice(0, 5).join(' ') + '...';
-}
 
 export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({ 
   onReadPaper, 
@@ -111,723 +103,938 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
   currentUser, 
   onNavigate 
 }) => {
-  const isAuthenticated = !!(getAuthToken() && currentUser && currentUser.role !== 'guest');
-  
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_WELCOME]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [menuOpenSessionId, setMenuOpenSessionId] = useState<string | null>(null);
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [currentAttachment, setCurrentAttachment] = useState<StoredAttachment | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Load search history from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('dhruva_search_history');
+      if (stored) {
+        setSearchHistory(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Error loading search history from localStorage:', e);
+    }
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  useEffect(() => {
-    loadSessions();
-  }, [isAuthenticated, currentUser]);
-
-  const loadSessions = async () => {
-    if (isAuthenticated) {
-      try {
-        const res = await apiFetchChatSessions();
-        setSessions(res.sessions || []);
-      } catch (err) {
-        console.error('Error fetching sessions:', err);
-        loadGuestSessions();
-      }
-    } else {
-      loadGuestSessions();
-    }
-  };
-
-  const loadGuestSessions = () => {
+  // Save history to localStorage
+  const saveHistory = (items: SearchHistoryItem[]) => {
+    setSearchHistory(items);
     try {
-      const stored = localStorage.getItem('dhruva_guest_chats');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setSessions(parsed.sessions || []);
-      }
+      // Save items without huge raw data URLs if needed to prevent quota exhaustion
+      const safeItems = items.map(item => ({
+        ...item,
+        attachment: item.attachment ? {
+          name: item.attachment.name,
+          size: item.attachment.size,
+          type: item.attachment.type
+        } : undefined,
+        messages: item.messages.map(m => ({
+          ...m,
+          attachment: m.attachment ? {
+            name: m.attachment.name,
+            size: m.attachment.size,
+            type: m.attachment.type
+          } : undefined
+        }))
+      }));
+      localStorage.setItem('dhruva_search_history', JSON.stringify(safeItems));
     } catch (e) {
-      console.warn('Failed to parse guest sessions:', e);
+      console.error('Error saving search history to localStorage:', e);
     }
   };
 
-  const saveGuestSessions = (updatedSessions: ChatSession[], updatedMessages?: Record<string, ChatMessage[]>) => {
-    try {
-      const stored = localStorage.getItem('dhruva_guest_chats');
-      const parsed = stored ? JSON.parse(stored) : { sessions: [], messages: {} };
-      parsed.sessions = updatedSessions;
-      if (updatedMessages) {
-        parsed.messages = { ...parsed.messages, ...updatedMessages };
-      }
-      localStorage.setItem('dhruva_guest_chats', JSON.stringify(parsed));
-    } catch (e) {
-      console.warn('Failed to save guest sessions:', e);
+  // Handle file attachment via file/image pickers and save in localStorage
+  const processSelectedFile = (file: File) => {
+    // 5MB safety limit
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds the 5MB limit.');
+      return;
     }
-  };
 
-  const handleNewChat = () => {
-    setActiveSessionId(null);
-    setMessages([INITIAL_WELCOME]);
-    setQuery('');
-    setSidebarOpen(false);
-    setMobileDrawerOpen(false);
-    inputRef.current?.focus();
-  };
+    const reader = new FileReader();
+    reader.onload = () => {
+      const attachment: StoredAttachment = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        dataUrl: reader.result as string
+      };
+      setCurrentAttachment(attachment);
 
-  const handleSelectSession = async (session: ChatSession) => {
-    setActiveSessionId(session.id);
-    setSidebarOpen(false);
-    setMobileDrawerOpen(false);
-
-    if (isAuthenticated) {
+      // Cache metadata in localStorage
       try {
-        setLoading(true);
-        const res = await apiFetchChatMessages(session.id);
-        if (res.messages && res.messages.length > 0) {
-          setMessages(res.messages);
-        } else {
-          setMessages([INITIAL_WELCOME]);
-        }
+        localStorage.setItem('dhruva_latest_attachment', JSON.stringify({
+          name: attachment.name,
+          size: attachment.size,
+          type: attachment.type,
+          timestamp: new Date().toISOString()
+        }));
       } catch (err) {
-        console.error('Error fetching messages:', err);
-        setMessages([INITIAL_WELCOME]);
-      } finally {
-        setLoading(false);
+        console.warn('Could not cache attachment in localStorage:', err);
       }
-    } else {
-      try {
-        const stored = localStorage.getItem('dhruva_guest_chats');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const sessMessages = parsed.messages?.[session.id];
-          setMessages(sessMessages && sessMessages.length > 0 ? sessMessages : [INITIAL_WELCOME]);
-        } else {
-          setMessages([INITIAL_WELCOME]);
-        }
-      } catch (e) {
-        setMessages([INITIAL_WELCOME]);
-      }
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleStartRename = (session: ChatSession, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingSessionId(session.id);
-    setEditingTitle(session.title);
-    setMenuOpenSessionId(null);
+  const handleDocumentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processSelectedFile(file);
+    e.target.value = '';
   };
 
-  const handleSaveRename = async (sessionId: string, e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingTitle.trim()) return;
-
-    if (isAuthenticated) {
-      try {
-        await apiRenameChatSession(sessionId, editingTitle.trim());
-        setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: editingTitle.trim() } : s));
-      } catch (err) {
-        console.error('Error renaming session:', err);
-      }
-    } else {
-      const updated = sessions.map(s => s.id === sessionId ? { ...s, title: editingTitle.trim() } : s);
-      setSessions(updated);
-      saveGuestSessions(updated);
-    }
-
-    setEditingSessionId(null);
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processSelectedFile(file);
+    e.target.value = '';
   };
 
-  const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isAuthenticated) {
-      try {
-        await apiDeleteChatSession(sessionId);
-        setSessions(prev => prev.filter(s => s.id !== sessionId));
-      } catch (err) {
-        console.error('Error deleting session:', err);
-      }
-    } else {
-      const updated = sessions.filter(s => s.id !== sessionId);
-      setSessions(updated);
-      saveGuestSessions(updated);
-    }
-
-    if (activeSessionId === sessionId) {
-      handleNewChat();
-    }
-    setMenuOpenSessionId(null);
+  const handleRemoveAttachment = () => {
+    setCurrentAttachment(null);
   };
 
-  const handleSubmit = async (e?: React.FormEvent, customQ?: string) => {
+  const handleSubmit = async (e?: React.FormEvent, customQuery?: string) => {
     if (e) e.preventDefault();
-    const q = (customQ || query).trim();
-    if (!q || loading) return;
+    const q = (customQuery || query).trim();
+    if (!q && !currentAttachment) return;
+    if (loading) return;
 
+    const attachedFile = currentAttachment;
+    const userMessage: ChatMessage = { 
+      role: 'user', 
+      content: q || (attachedFile ? `[Attached Document: ${attachedFile.name}]` : ''),
+      attachment: attachedFile || undefined
+    };
+
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setQuery('');
-    const userMsg: ChatMessage = { role: 'user', content: q, createdAt: new Date().toISOString() };
-    setMessages(prev => [...prev, userMsg]);
+    setCurrentAttachment(null);
     setLoading(true);
 
     try {
       const res = await apiAskRAG({ query: q });
-      
-      const assistantMsg: ChatMessage = {
+      const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: res.answer,
-        sources: res.sources,
-        createdAt: new Date().toISOString()
+        content: res.answer || 'No direct synthesis available.',
+        sources: res.sources || []
+      };
+      
+      const finalMessages = [...newMessages, assistantMessage];
+      setMessages(finalMessages);
+
+      // Save to Search History in localStorage
+      const historyItem: SearchHistoryItem = {
+        id: 'hist_' + Date.now(),
+        query: q || (attachedFile ? attachedFile.name : 'Polar Inquiry'),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        messages: finalMessages,
+        attachment: attachedFile || undefined
       };
 
-      setMessages(prev => [...prev, assistantMsg]);
-
-      let currentSessionId = activeSessionId;
-
-      if (!currentSessionId) {
-        const title = generateShortTitle(q);
-        if (isAuthenticated) {
-          const sRes = await apiCreateChatSession(title);
-          const newSessionId: string = sRes.session.id;
-          currentSessionId = newSessionId;
-          setSessions(prev => [sRes.session, ...prev]);
-          setActiveSessionId(newSessionId);
-
-          await apiSendChatMessage(newSessionId, { role: 'user', content: userMsg.content });
-          await apiSendChatMessage(newSessionId, { 
-            role: 'assistant', 
-            content: assistantMsg.content, 
-            sources: assistantMsg.sources 
-          });
-        } else {
-          const guestSessionId = `guest-sess-${Date.now()}`;
-          currentSessionId = guestSessionId;
-          const newSession: ChatSession = {
-            id: guestSessionId,
-            title,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          const updatedSessions = [newSession, ...sessions];
-          setSessions(updatedSessions);
-          setActiveSessionId(guestSessionId);
-          saveGuestSessions(updatedSessions, {
-            [guestSessionId]: [INITIAL_WELCOME, userMsg, assistantMsg]
-          });
-        }
-      } else {
-        const validSessionId: string = currentSessionId;
-        if (isAuthenticated) {
-          await apiSendChatMessage(validSessionId, { role: 'user', content: userMsg.content });
-          await apiSendChatMessage(validSessionId, { 
-            role: 'assistant', 
-            content: assistantMsg.content, 
-            sources: assistantMsg.sources 
-          });
-          setSessions(prev => prev.map(s => s.id === validSessionId ? { ...s, updated_at: new Date().toISOString() } : s));
-        } else {
-          const stored = localStorage.getItem('dhruva_guest_chats');
-          const parsed = stored ? JSON.parse(stored) : { sessions: [], messages: {} };
-          const existing = parsed.messages?.[validSessionId] || [INITIAL_WELCOME];
-          existing.push(userMsg, assistantMsg);
-          parsed.messages[validSessionId] = existing;
-          const updated = sessions.map(s => s.id === validSessionId ? { ...s, updated_at: new Date().toISOString() } : s);
-          setSessions(updated);
-        }
-      }
+      const updatedHistory = [historyItem, ...searchHistory.filter(h => h.query !== historyItem.query)].slice(0, 25);
+      saveHistory(updatedHistory);
     } catch (err: any) {
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Error consulting polar science knowledge repository: ' + (err.message || 'Unknown network error.')
-        }
-      ]);
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: 'Error consulting polar science knowledge repository: ' + (err.message || 'Unknown network error.')
+      };
+      setMessages([...newMessages, errorMessage]);
     } finally {
       setLoading(false);
     }
   };
 
-  const grouped = groupSessions(sessions);
+  const handleSelectHistoryItem = (item: SearchHistoryItem) => {
+    setMessages(item.messages || [{ role: 'user', content: item.query }]);
+    setQuery('');
+  };
 
-  const renderSidebar = () => (
-    <div className="h-full flex flex-col" style={{ background: '#FFFFFF' }}>
+  const handleDeleteHistoryItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = searchHistory.filter(h => h.id !== id);
+    saveHistory(updated);
+  };
 
-      {/* Header */}
-      <div className="px-4 pt-5 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: 'rgba(2, 132, 199, 0.1)', border: '1px solid rgba(2, 132, 199, 0.25)' }}>
-              <MessageSquare className="w-3.5 h-3.5 text-cyan-700" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-900" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>Chat History</div>
-              <div className="text-[10px] text-slate-500 font-mono">{sessions.length} saved</div>
-            </div>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-800 transition-colors"
-            style={{ background: '#F1F5F9' }}
-            title="Collapse sidebar"
-          >
-            <X size={13} />
-          </button>
-          <button
-            onClick={() => setMobileDrawerOpen(false)}
-            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-800 transition-colors"
-            style={{ background: '#F1F5F9' }}
-          >
-            <X size={13} />
-          </button>
-        </div>
-
-        <button
-          onClick={handleNewChat}
-          className="w-full h-[40px] px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all cursor-pointer"
-          style={{
-            background: 'linear-gradient(135deg, #0284C7, #0369A1)',
-            color: '#FFFFFF',
-            boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
-          }}
-        >
-          <Plus size={14} />
-          <span>New Conversation</span>
-        </button>
-      </div>
-
-      {/* Sessions List */}
-      <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 text-xs"
-        style={{ scrollbarWidth: 'thin' }}>
-        {sessions.length === 0 ? (
-          <div className="text-center py-12 px-4 space-y-3">
-            <div className="w-11 h-11 rounded-2xl mx-auto flex items-center justify-center"
-              style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
-              <MessageSquare className="w-5 h-5 text-slate-400" />
-            </div>
-            <p className="text-xs text-slate-500 leading-relaxed">No conversations yet.<br />Ask a polar science question!</p>
-          </div>
-        ) : (
-          <>
-            {grouped.today.length > 0 && (
-              <div className="space-y-0.5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-cyan-700 px-2 pb-1.5">Today</div>
-                {grouped.today.map(renderSessionItem)}
-              </div>
-            )}
-            {grouped.yesterday.length > 0 && (
-              <div className="space-y-0.5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 pb-1.5">Yesterday</div>
-                {grouped.yesterday.map(renderSessionItem)}
-              </div>
-            )}
-            {grouped.prev7Days.length > 0 && (
-              <div className="space-y-0.5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 pb-1.5">Previous 7 Days</div>
-                {grouped.prev7Days.map(renderSessionItem)}
-              </div>
-            )}
-            {grouped.older.length > 0 && (
-              <div className="space-y-0.5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 pb-1.5">Older</div>
-                {grouped.older.map(renderSessionItem)}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Guest sign-in */}
-      {!isAuthenticated && (
-        <div className="p-3 m-3 rounded-2xl space-y-2.5"
-          style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-          <div className="flex items-start gap-2">
-            <Clock size={12} className="text-cyan-600 shrink-0 mt-0.5" />
-            <p className="text-[10.5px] text-slate-600 leading-snug">Guest mode — chats stored locally in your browser.</p>
-          </div>
-          {onNavigate && (
-            <button
-              onClick={() => onNavigate('login')}
-              className="w-full h-[34px] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              style={{ background: 'rgba(2, 132, 199, 0.1)', border: '1px solid rgba(2, 132, 199, 0.3)', color: '#0284C7' }}
-            >
-              <LogIn size={12} />
-              <span>Sign In to Sync</span>
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderSessionItem = (session: ChatSession) => {
-    const isActive = activeSessionId === session.id;
-    const isEditing = editingSessionId === session.id;
-    const isMenuOpen = menuOpenSessionId === session.id;
-
-    if (isEditing) {
-      return (
-        <form key={session.id} onSubmit={(e) => handleSaveRename(session.id, e)} className="p-1">
-          <input
-            type="text"
-            autoFocus
-            value={editingTitle}
-            onChange={(e) => setEditingTitle(e.target.value)}
-            onBlur={() => setEditingSessionId(null)}
-            className="w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none"
-            style={{ background: '#FFFFFF', border: '1px solid #0284C7' }}
-          />
-        </form>
-      );
+  const handleClearAllHistory = () => {
+    if (window.confirm('Are you sure you want to clear all search history?')) {
+      saveHistory([]);
     }
+  };
 
-    return (
-      <div
-        key={session.id}
-        onClick={() => handleSelectSession(session)}
-        className="group relative flex items-center justify-between px-2.5 py-2 rounded-xl cursor-pointer transition-all"
-        style={isActive ? {
-          background: 'rgba(2, 132, 199, 0.09)',
-          border: '1px solid rgba(2, 132, 199, 0.3)',
-        } : {
-          border: '1px solid transparent'
-        }}
-      >
-        <div className="flex items-center gap-2 min-w-0 pr-1">
-          <div className="w-6 h-6 rounded-md shrink-0 flex items-center justify-center"
-            style={{ background: isActive ? 'rgba(2, 132, 199, 0.15)' : '#F1F5F9' }}>
-            <MessageSquare className={`w-3 h-3 ${isActive ? 'text-cyan-700' : 'text-slate-500'}`} />
-          </div>
-          <span className={`truncate text-xs leading-snug ${isActive ? 'text-cyan-800 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>
-            {session.title}
-          </span>
-        </div>
-
-        <div className="relative shrink-0">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setMenuOpenSessionId(isMenuOpen ? null : session.id); }}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-800 opacity-0 group-hover:opacity-100 transition cursor-pointer"
-            aria-label="Conversation actions"
-          >
-            <MoreVertical size={13} />
-          </button>
-
-          {isMenuOpen && (
-            <div
-              className="absolute right-0 top-7 w-28 rounded-xl shadow-xl py-1 z-30"
-              style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button type="button" onClick={(e) => handleStartRename(session, e)}
-                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-cyan-700 flex items-center gap-2 cursor-pointer">
-                <Edit3 size={12} /><span>Rename</span>
-              </button>
-              <button type="button" onClick={(e) => handleDeleteSession(session.id, e)}
-                className="w-full px-3 py-1.5 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer">
-                <Trash2 size={12} /><span>Delete</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  const handleResetChat = () => {
+    setMessages([]);
+    setQuery('');
+    setCurrentAttachment(null);
+    inputRef.current?.focus();
   };
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100dvh - 80px)', background: 'transparent' }}>
+    <div 
+      style={{ 
+        width: '100%', 
+        height: 'calc(100vh - 80px)', 
+        maxHeight: 'calc(100vh - 80px)',
+        display: 'flex', 
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Hidden file inputs for attachment handling */}
+      <input 
+        ref={fileInputRef} 
+        type="file" 
+        style={{ display: 'none' }} 
+        accept=".pdf,.doc,.docx,.txt,.csv,image/*"
+        onChange={handleDocumentSelect} 
+      />
+      <input 
+        ref={imageInputRef} 
+        type="file" 
+        style={{ display: 'none' }} 
+        accept="image/*"
+        onChange={handleImageSelect} 
+      />
 
-      {/* CHAT HISTORY SIDEBAR */}
-      <aside
-        className="hidden md:flex flex-col fixed top-[80px] left-0 bottom-0 z-40 overflow-hidden transition-transform duration-300 ease-in-out"
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* LEFT SIDEBAR: Search History (backed by localStorage)         */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <aside 
         style={{
-          width: '272px',
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-          borderRight: '1px solid rgba(14, 116, 144, 0.16)',
-          boxShadow: sidebarOpen ? '4px 0 32px rgba(15, 23, 42, 0.12)' : 'none',
+          width: sidebarOpen ? '260px' : '0px',
+          minWidth: sidebarOpen ? '260px' : '0px',
+          transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+          height: '100%',
+          background: '#FFFFFF',
+          borderRight: sidebarOpen ? '1px solid #E2E8F0' : 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 20,
+          overflow: 'hidden'
         }}
       >
-        {renderSidebar()}
-      </aside>
-      {sidebarOpen && (
-        <div
-          className="hidden md:block fixed inset-0 z-30 top-[80px]"
-          style={{ background: 'rgba(15, 23, 42, 0.25)' }}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      {mobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setMobileDrawerOpen(false)} />
-          <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10">{renderSidebar()}</div>
-        </div>
-      )}
-
-      {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-        <div style={{ width: '100%', maxWidth: '1200px', marginLeft: 'auto', marginRight: 'auto', paddingLeft: 'clamp(1rem, 3vw, 2rem)', paddingRight: 'clamp(1rem, 3vw, 2rem)' }}>
-
-          {/* HERO HEADER */}
-          <div style={{ paddingTop: '2rem', paddingBottom: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-
-              {/* Left: sidebar toggle + New Chat */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button
-                  onClick={() => setSidebarOpen(v => !v)}
-                  className="hidden md:flex p-2 rounded-xl transition-all items-center cursor-pointer"
-                  style={{
-                    background: sidebarOpen ? 'rgba(2, 132, 199, 0.1)' : '#FFFFFF',
-                    border: `1px solid ${sidebarOpen ? '#0284C7' : '#CBD5E1'}`,
-                    color: sidebarOpen ? '#0284C7' : '#475569',
-                  }}
-                  title={sidebarOpen ? 'Collapse history' : 'Show history'}
-                >
-                  <Menu size={15} />
-                </button>
-                <button
-                  onClick={() => setMobileDrawerOpen(true)}
-                  className="md:hidden flex p-2 rounded-xl items-center gap-1.5 text-xs font-semibold cursor-pointer"
-                  style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0284C7' }}
-                >
-                  <Menu size={15} />
-                  <span>History</span>
-                </button>
-                <button
-                  onClick={handleNewChat}
-                  className="flex p-2 rounded-xl items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer"
-                  style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#475569' }}
-                  title="New conversation"
-                >
-                  <Plus size={14} />
-                  <span className="hidden sm:inline">New Chat</span>
-                </button>
-              </div>
-
-              {/* Right: Repository Grounded status */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px' }}>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-slate-600 font-semibold hidden sm:inline">Repository Grounded</span>
-                <span className="text-slate-300 hidden sm:inline">|</span>
-                <span className="flex items-center gap-1 text-cyan-700 font-bold font-mono">
-                  <BookOpen className="w-3 h-3" />
-                  <span>20 Papers</span>
+        {sidebarOpen && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '12px' }}>
+            {/* Sidebar Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Clock size={14} style={{ color: '#0284C7' }} />
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Search History
                 </span>
               </div>
+              <button 
+                onClick={() => setSidebarOpen(false)} 
+                style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                title="Collapse history"
+              >
+                <PanelLeftClose size={15} />
+              </button>
             </div>
 
-            {/* Centered title block */}
-            <div className="flex items-center gap-4 mb-3">
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(99, 102, 241, 0.15))',
-                  border: '1px solid rgba(2, 132, 199, 0.35)',
-                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.15)',
-                }}
-              >
-                <Sparkles className="w-6 h-6 text-cyan-600" />
+            {/* New Inquiry Action Button */}
+            <button
+              onClick={handleResetChat}
+              style={{
+                marginTop: '10px',
+                marginBottom: '10px',
+                width: '100%',
+                padding: '7px 12px',
+                borderRadius: '8px',
+                background: '#F0F9FF',
+                border: '1px solid #BAE6FD',
+                color: '#0284C7',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              <Plus size={13} />
+              <span>New Inquiry</span>
+            </button>
+
+            {/* History Items Scroll List */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '2px' }}>
+              {searchHistory.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94A3B8', fontSize: '11px', lineHeight: 1.5 }}>
+                  No previous searches.<br />Your queries will be saved here automatically.
+                </div>
+              ) : (
+                searchHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleSelectHistoryItem(item)}
+                    style={{
+                      padding: '7px 10px',
+                      borderRadius: '8px',
+                      background: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = '#F0F9FF';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#BAE6FD';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = '#F8FAFC';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0';
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.query}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px' }}>
+                        {item.timestamp}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                      style={{ background: 'none', border: 'none', color: '#CBD5E1', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                      title="Delete inquiry"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Clear All History Button */}
+            {searchHistory.length > 0 && (
+              <div style={{ paddingTop: '8px', borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
+                <button
+                  onClick={handleClearAllHistory}
+                  style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '10.5px', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Clear history
+                </button>
               </div>
-              <h1
-                className="text-4xl sm:text-5xl font-extrabold text-slate-900"
-                style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em' }}
+            )}
+          </div>
+        )}
+      </aside>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* MAIN VIEWPORT: Compact, Centered, Fits Screen Without Scroll  */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div 
+        style={{ 
+          flex: 1, 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          overflowY: 'auto',
+          padding: '10px 20px',
+          position: 'relative'
+        }}
+      >
+        {/* Toggle Button to reopen sidebar when closed */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              left: '16px',
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: '8px',
+              padding: '5px 9px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#475569',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+              zIndex: 10
+            }}
+            title="Open history sidebar"
+          >
+            <PanelLeftOpen size={14} style={{ color: '#0284C7' }} />
+            <span>History</span>
+          </button>
+        )}
+
+
+        {/* ── TOP SECTION (HERO + BANNER + INQUIRIES + GREETING) ── */}
+        <div 
+          style={{ 
+            width: '100%', 
+            maxWidth: '1020px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          {/* 1. HERO HEADER (Horizontal alignment matching reference image) */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '2px' }}>
+            <div 
+              style={{ 
+                width: '46px', 
+                height: '46px', 
+                borderRadius: '14px', 
+                background: 'rgba(224, 242, 254, 0.85)', 
+                border: '1.5px solid #BAE6FD', 
+                color: '#0284C7', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.1)',
+                flexShrink: 0
+              }}
+            >
+              <Sparkles size={24} />
+            </div>
+
+            <div style={{ textAlign: 'left' }}>
+              <h1 
+                style={{ 
+                  fontSize: 'clamp(28px, 3.4vw, 38px)', 
+                  fontWeight: 800, 
+                  color: '#0F172A', 
+                  letterSpacing: '-0.03em', 
+                  lineHeight: 1.1, 
+                  margin: 0, 
+                  fontFamily: 'var(--font-heading)' 
+                }}
               >
                 Ask DHRUVA
               </h1>
+
+              <p 
+                style={{ 
+                  fontSize: '10px', 
+                  fontWeight: 700, 
+                  letterSpacing: '0.22em', 
+                  textTransform: 'uppercase', 
+                  color: '#64748B', 
+                  marginTop: '3px', 
+                  marginBottom: 0 
+                }}
+              >
+                AI POLAR RESEARCH ASSISTANT
+              </p>
             </div>
-            <p className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold" style={{ letterSpacing: '0.2em' }}>
-              AI Polar Research Assistant
+          </div>
+
+          {/* 2. HERO BANNER CARD */}
+          <div 
+            style={{ 
+              width: '100%', 
+              maxWidth: '820px', 
+              background: '#FFFFFF', 
+              border: '1px solid rgba(2, 132, 199, 0.18)', 
+              borderRadius: '16px', 
+              padding: '11px 24px', 
+              textAlign: 'center', 
+              boxShadow: '0 2px 14px rgba(2, 132, 199, 0.04)' 
+            }}
+          >
+            <h2 
+              style={{ 
+                fontSize: 'clamp(18px, 2vw, 23px)', 
+                fontWeight: 800, 
+                color: '#0F172A', 
+                margin: 0, 
+                lineHeight: 1.25, 
+                fontFamily: 'var(--font-heading)' 
+              }}
+            >
+              Ask any <span style={{ color: '#0284C7' }}>polar</span> <span style={{ color: '#2563EB' }}>science</span> question
+            </h2>
+            <p 
+              style={{ 
+                fontSize: '11.5px', 
+                color: '#64748B', 
+                marginTop: '4px', 
+                marginBottom: 0, 
+                lineHeight: 1.4 
+              }}
+            >
+              Strictly grounded in peer-reviewed NCPOR research — Arctic &amp; Antarctic expeditions — with section &amp; page citations.
             </p>
           </div>
 
-          {/* INTRO CARD */}
-          {messages.length <= 1 && (
-            <div
-              className="rounded-2xl px-8 py-8 text-center mb-5"
-              style={{
-                background: 'rgba(255, 255, 255, 0.92)',
-                border: '1px solid rgba(14, 116, 144, 0.18)',
-                boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
-              }}
-            >
-              <h2 className="text-2xl font-bold text-slate-900 mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
-                Ask any polar science question
-              </h2>
-              <p className="text-sm text-slate-600 leading-relaxed max-w-xl mx-auto">
-                Strictly grounded in peer-reviewed NCPOR research — Arctic &amp; Antarctic expeditions — with section &amp; page citations.
-              </p>
-            </div>
-          )}
-
-          {/* SUGGESTED QUESTIONS */}
-          {messages.length <= 1 && (
-            <div className="mb-8">
-              <div className="text-[10.5px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-1.5">
-                <HelpCircle className="w-3.5 h-3.5 text-cyan-600" />
-                <span>Suggested Research Inquiries</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                {SAMPLE_QUESTIONS.map((sq, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSubmit(undefined, sq)}
-                    className="min-h-[56px] p-4 rounded-xl text-left transition-all flex items-start justify-between gap-3 group cursor-pointer"
-                    style={{ background: 'rgba(255, 255, 255, 0.92)', border: '1px solid rgba(14, 116, 144, 0.16)', boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.5)';
-                      (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(2, 132, 199, 0.12)';
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.16)';
-                      (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(15, 23, 42, 0.04)';
+          {/* 3. SUGGESTED RESEARCH INQUIRIES (Initial State) */}
+          {messages.length === 0 && (
+            <div style={{ width: '100%' }}>
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  marginBottom: '6px' 
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div 
+                    style={{ 
+                      width: '17px', 
+                      height: '17px', 
+                      borderRadius: '9999px', 
+                      background: '#E0F2FE', 
+                      color: '#0284C7', 
+                      fontSize: '10.5px', 
+                      fontWeight: 700, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
                     }}
                   >
-                    <span className="leading-relaxed flex-1 text-xs text-slate-700 font-medium group-hover:text-cyan-700 transition-colors">{sq}</span>
-                    <ChevronRight className="w-4 h-4 shrink-0 mt-0.5 text-slate-400 group-hover:text-cyan-600 transition-colors" />
+                    ?
+                  </div>
+                  <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                    Suggested Research Inquiries
+                  </h3>
+                </div>
+
+                <button 
+                  onClick={() => handleSubmit(undefined, RESEARCH_INQUIRIES[0].text)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  <span>View All Suggestions</span>
+                  <ArrowRight size={11} />
+                </button>
+              </div>
+
+              {/* 3 Columns × 2 Rows Compact Grid */}
+              <div 
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
+                style={{ width: '100%' }}
+              >
+                {RESEARCH_INQUIRIES.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSubmit(undefined, item.text)}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '12px',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 3px 10px rgba(2, 132, 199, 0.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+                    }}
+                  >
+                    <div 
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '8px',
+                        background: '#F0F9FF',
+                        border: '1px solid #E0F2FE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#1E293B', lineHeight: 1.35, flex: 1 }}>
+                      {item.text}
+                    </span>
+                    <ArrowRight size={13} style={{ color: '#0284C7', flexShrink: 0 }} />
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* MESSAGE STREAM */}
-          <div className="space-y-5 pb-4">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div
-                  className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
-                  style={msg.role === 'user'
-                    ? { background: '#E0F2FE', border: '1px solid #BAE6FD' }
-                    : { background: '#EEF2FF', border: '1px solid #C7D2FE' }}
-                >
-                  {msg.role === 'user' ? <User className="w-4 h-4 text-cyan-700" /> : <Sparkles className="w-4 h-4 text-indigo-700" />}
+          {/* 4. DHRUVA ASSISTANT WELCOME CARD */}
+          {messages.length === 0 && (
+            <div 
+              style={{ 
+                width: '100%', 
+                background: '#FFFFFF', 
+                border: '1px solid #E2E8F0', 
+                borderRadius: '14px', 
+                padding: '10px 18px', 
+                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.02)', 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '12px' 
+              }}
+            >
+              <div 
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '9999px',
+                  background: '#EEF2FF',
+                  border: '1px solid #C7D2FE',
+                  color: '#6366F1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  marginTop: '2px'
+                }}
+              >
+                <Sparkles size={16} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748B', marginBottom: '2px' }}>
+                  DHRUVA ASSISTANT
                 </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, marginBottom: '2px' }}>
+                  Namaste! I am DHRUVA (ध्रुव), the AI Research Assistant for India's Polar Science expeditions.
+                </div>
+                <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.45, margin: 0 }}>
+                  I answer questions strictly grounded in our peer-reviewed polar science knowledge repository, providing verified section and page citations. Try selecting one of the suggested scientific queries below or ask your own question!
+                </p>
+              </div>
+            </div>
+          )}
 
-                <div className="flex-1 min-w-0 max-w-[90%] space-y-1.5">
-                  <div className={`text-[10.5px] font-bold uppercase tracking-widest flex items-center gap-2 ${msg.role === 'user' ? 'justify-end text-cyan-700' : 'text-indigo-700'}`}>
-                    {msg.role === 'user' ? 'You' : 'DHRUVA Assistant'}
-                    {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
-                        style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857' }}>
-                        {msg.sources.length} cited
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    className={`rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
-                    style={msg.role === 'user'
-                      ? { background: '#E0F2FE', border: '1px solid #BAE6FD', color: '#0369A1' }
-                      : { background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(14, 116, 144, 0.16)', color: '#1E293B' }}
+          {/* 5. ACTIVE CHAT THREAD (When conversation has started) */}
+          {messages.length > 0 && (
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: 'calc(100vh - 270px)', overflowY: 'auto', paddingRight: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleResetChat}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#64748B', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
+                >
+                  <RotateCcw size={11} />
+                  <span>New Inquiry</span>
+                </button>
+              </div>
+
+              {messages.map((msg, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: '10px', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  {msg.role === 'assistant' && (
+                    <div style={{ width: '28px', height: '28px', borderRadius: '9999px', background: '#EEF2FF', border: '1px solid #C7D2FE', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                      <Sparkles size={14} />
+                    </div>
+                  )}
+
+                  <div 
+                    style={{
+                      maxWidth: '82%',
+                      borderRadius: '14px',
+                      padding: '10px 14px',
+                      fontSize: '12.5px',
+                      lineHeight: 1.55,
+                      background: msg.role === 'user' ? '#0284C7' : '#FFFFFF',
+                      color: msg.role === 'user' ? '#FFFFFF' : '#1E293B',
+                      border: msg.role === 'user' ? 'none' : '1px solid #E2E8F0',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                    }}
                   >
-                    <div className="whitespace-pre-line">{msg.content}</div>
+                    {msg.role === 'assistant' && (
+                      <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Sparkles size={10} />
+                        <span>DHRUVA AI · GROUNDED SYNTHESIS</span>
+                      </div>
+                    )}
+
+                    {/* Attachment preview inside message */}
+                    {msg.attachment && (
+                      <div style={{ marginBottom: '6px', padding: '6px 10px', borderRadius: '8px', background: msg.role === 'user' ? 'rgba(255,255,255,0.18)' : '#F1F5F9', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', border: '1px solid rgba(255,255,255,0.3)' }}>
+                        <Paperclip size={12} />
+                        <span style={{ fontWeight: 600 }}>{msg.attachment.name}</span>
+                        <span style={{ opacity: 0.8 }}>({(msg.attachment.size / 1024).toFixed(0)} KB)</span>
+                      </div>
+                    )}
+
+                    <div style={{ whiteSpace: 'pre-line' }}>{msg.content}</div>
+
+                    {/* Verified Sources Citations */}
                     {msg.sources && msg.sources.length > 0 && (
-                      <div className="mt-4 pt-4 space-y-2" style={{ borderTop: '1px solid rgba(148, 163, 184, 0.2)' }}>
-                        <div className="text-[10.5px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-emerald-700">
-                          <ShieldCheck className="w-3.5 h-3.5" />Verified Citations
+                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #F1F5F9' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <ShieldCheck size={12} />
+                          <span>Verified Citations ({msg.sources.length})</span>
                         </div>
-                        <div className="space-y-1.5">
-                          {msg.sources.map((s, sIdx) => (
-                            <div
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {msg.sources.map((src, sIdx) => (
+                            <div 
                               key={sIdx}
-                              onClick={() => onReadPaper(s.paperId)}
-                              className="p-3 rounded-xl cursor-pointer transition-all bg-slate-50 border border-slate-200 hover:border-cyan-500/50 hover:bg-cyan-50/30"
+                              onClick={() => onReadPaper(src.paperId)}
+                              style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', cursor: 'pointer' }}
                             >
-                              <div className="flex items-start justify-between gap-2 mb-1">
-                                <span className="text-xs font-bold text-slate-900 hover:text-cyan-700 transition-colors line-clamp-1">📄 {s.paperTitle}</span>
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                  {s.confidenceScore}%
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <span style={{ fontWeight: 700, color: '#0284C7' }}>📄 {src.paperTitle}</span>
+                                <span style={{ fontSize: '9px', fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '1px 5px', borderRadius: '4px' }}>
+                                  {(src.confidenceScore * 100).toFixed(0)}% Conf
                                 </span>
                               </div>
-                              <div className="text-[10.5px] font-mono mb-1.5 text-cyan-700 font-semibold">§ {s.sectionName} · p.{s.pageNumber}</div>
-                              <div className="text-[10.5px] text-slate-600 line-clamp-2 italic pl-2.5 border-l-2 border-cyan-500">"{s.snippet}"</div>
+                              <div style={{ fontSize: '9.5px', color: '#64748B', fontFamily: 'var(--font-mono)' }}>
+                                § {src.sectionName} · Page {src.pageNumber}
+                              </div>
+                              <div style={{ fontStyle: 'italic', color: '#475569', borderLeft: '2px solid #0284C7', paddingLeft: '6px', marginTop: '2px' }}>
+                                "{src.snippet}"
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-            ))}
 
-            {loading && (
-              <div className="flex gap-3">
-                <div className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-50 border border-indigo-200">
-                  <Sparkles className="w-4 h-4 text-indigo-600 animate-spin" />
+                  {msg.role === 'user' && (
+                    <div style={{ width: '28px', height: '28px', borderRadius: '9999px', background: '#E0F2FE', border: '1px solid #BAE6FD', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                      <User size={14} />
+                    </div>
+                  )}
                 </div>
-                <div className="rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-3 bg-white border border-cyan-200 shadow-sm">
-                  <span className="text-xs text-cyan-700 font-semibold">Consulting polar research repository</span>
-                  <span className="flex gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </span>
+              ))}
+
+              {loading && (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '9999px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkles size={14} className="animate-spin text-indigo-600" />
+                  </div>
+                  <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 14px', fontSize: '11.5px', color: '#64748B' }}>
+                    Searching polar scientific knowledge repository &amp; validating page citations...
+                  </div>
                 </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="h-28" />
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* STICKY INPUT BAR */}
-      <div
-        className="shrink-0 w-full"
-        style={{ background: 'rgba(255, 255, 255, 0.95)', borderTop: '1px solid rgba(14, 116, 144, 0.16)', backdropFilter: 'blur(20px)' }}
-      >
-        <div style={{ width: '100%', maxWidth: '1200px', marginLeft: 'auto', marginRight: 'auto', paddingLeft: 'clamp(1rem, 3vw, 2rem)', paddingRight: 'clamp(1rem, 3vw, 2rem)', paddingTop: '1rem', paddingBottom: '1rem' }}>
-          <form onSubmit={handleSubmit}>
-            <div className="flex gap-3 items-center">
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask a polar science question..."
-                className="flex-1 h-[52px] px-5 text-sm text-slate-900 placeholder-slate-400 rounded-2xl focus:outline-none transition-all"
-                style={{
-                  background: '#FFFFFF',
-                  border: `1px solid ${query ? '#0284C7' : 'rgba(14, 116, 144, 0.22)'}`,
-                  boxShadow: query ? '0 0 0 3px rgba(2, 132, 199, 0.12)' : 'none',
-                }}
-              />
-              <button
-                type="submit"
-                disabled={loading || !query.trim()}
-                className="h-[52px] px-7 rounded-2xl text-sm font-bold flex items-center gap-2 shrink-0 transition-all disabled:opacity-40 cursor-pointer"
-                style={{
-                  background: query.trim() ? 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)' : '#F1F5F9',
-                  color: query.trim() ? '#FFFFFF' : '#94A3B8',
-                  boxShadow: query.trim() ? '0 4px 14px rgba(2, 132, 199, 0.35)' : 'none',
-                  minWidth: '108px',
-                }}
+        {/* ── BOTTOM DOCKED SECTION (SEARCH INPUT + ATTACHMENTS + TRUST BADGES) ── */}
+        <div 
+          style={{ 
+            width: '100%', 
+            maxWidth: '1020px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            paddingTop: '4px'
+          }}
+        >
+          {/* Active Attachment Pill Preview (if selected via paperclip/image) */}
+          {currentAttachment && (
+            <div 
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '5px 12px',
+                borderRadius: '8px',
+                background: '#F0F9FF',
+                border: '1px solid #BAE6FD',
+                marginBottom: '6px',
+                fontSize: '11.5px',
+                color: '#0284C7'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {currentAttachment.type.startsWith('image/') ? <ImageIcon size={13} /> : <Paperclip size={13} />}
+                <span style={{ fontWeight: 600 }}>Attached: {currentAttachment.name}</span>
+                <span style={{ color: '#64748B', fontSize: '10px' }}>({(currentAttachment.size / 1024).toFixed(0)} KB)</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={handleRemoveAttachment}
+                style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                title="Remove attachment"
               >
-                <Send className="w-4 h-4" />
-                <span>Send</span>
+                <X size={14} />
               </button>
             </div>
-            <p className="text-[10.5px] text-slate-500 text-center mt-2 font-medium">
-              Grounded in NCPOR peer-reviewed research · Section &amp; page citations provided
-            </p>
-          </form>
-        </div>
-      </div>
+          )}
 
+          {/* Floating Rounded-Full Query Input Bar */}
+          <form 
+            onSubmit={handleSubmit}
+            style={{
+              width: '100%',
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: '9999px',
+              boxShadow: '0 4px 18px rgba(15, 23, 42, 0.05)',
+              padding: '4px 6px 4px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '8px'
+            }}
+          >
+            {/* Image icon button (workable - triggers image file picker & saves in localStorage) */}
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              style={{ color: currentAttachment?.type.startsWith('image/') ? '#0284C7' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+              title="Attach polar research photo or diagram"
+            >
+              <ImageIcon size={16} />
+            </button>
+
+            {/* Query input field */}
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ask a polar science question..."
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontSize: '13px',
+                color: '#0F172A',
+                fontFamily: 'var(--font-body)'
+              }}
+              disabled={loading}
+            />
+
+            {/* Paperclip icon button (workable - triggers document file picker & saves in localStorage) */}
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()}
+              style={{ color: currentAttachment && !currentAttachment.type.startsWith('image/') ? '#0284C7' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+              title="Attach research document or dataset"
+            >
+              <Paperclip size={16} />
+            </button>
+
+            {/* Send Pill Button */}
+            <button
+              type="submit"
+              disabled={loading || (!query.trim() && !currentAttachment)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 18px',
+                borderRadius: '9999px',
+                background: '#0284C7',
+                color: '#FFFFFF',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.28)',
+                opacity: loading || (!query.trim() && !currentAttachment) ? 0.5 : 1
+              }}
+            >
+              <Send size={12} />
+              <span>Send</span>
+            </button>
+          </form>
+
+          {/* 7. THREE FOOTER TRUST BADGES */}
+          <div 
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '24px',
+              fontSize: '11.5px',
+              color: '#475569',
+              fontWeight: 500
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div 
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '9999px',
+                  background: '#E0F2FE',
+                  color: '#0284C7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <ShieldCheck size={12} />
+              </div>
+              <span>Grounded in NCPOR research</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div 
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '9999px',
+                  background: '#E0F2FE',
+                  color: '#0284C7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <FileText size={12} />
+              </div>
+              <span>Section &amp; page citations provided</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div 
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '9999px',
+                  background: '#E0F2FE',
+                  color: '#0284C7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Lock size={11} />
+              </div>
+              <span>Scientific &amp; verified information</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
     </div>
   );
 };

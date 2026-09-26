@@ -17,8 +17,18 @@ router.get('/', (req, res) => {
   const params = [];
 
   if (type && type !== 'All') {
-    sql += ` AND m.type = ?`;
-    params.push(type);
+    if (type === 'Video' || type === 'Videos & Documentaries') {
+      sql += ` AND (m.type = 'Video' OR m.type = 'Expedition Story')`;
+    } else if (type === 'Photo Galleries' || type === 'Image' || type === 'Photo Gallery' || type === 'Image Gallery') {
+      sql += ` AND (m.type = 'Image' OR m.type = 'Photo Gallery')`;
+    } else if (type === 'Infographics' || type === 'Infographic') {
+      sql += ` AND m.type = 'Infographic'`;
+    } else if (type === 'News & Updates' || type === 'News') {
+      sql += ` AND m.type = 'News'`;
+    } else {
+      sql += ` AND m.type = ?`;
+      params.push(type);
+    }
   }
 
   if (region && region !== 'All') {

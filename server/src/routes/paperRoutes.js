@@ -4,7 +4,7 @@ const db = require('../db/db.js');
 
 // GET /api/papers - Public Research Search with rich filtering
 router.get('/', (req, res) => {
-  const { search, region, area, year, locationId, sort = 'latest' } = req.query;
+  const { search, region, area, year, locationId, sort = 'latest', author, institution, peerReviewed, openAccess } = req.query;
 
   // Base query: Only published and non-embargoed papers appear in public portal
   let sql = `
@@ -50,6 +50,28 @@ router.get('/', (req, res) => {
   if (locationId && locationId !== 'All') {
     sql += ` AND p.location_id = ?`;
     params.push(locationId);
+  }
+
+  // Author filter (Advanced)
+  if (author && author.trim()) {
+    sql += ` AND p.authors LIKE ?`;
+    params.push(`%${author.trim()}%`);
+  }
+
+  // Institution filter (Advanced)
+  if (institution && institution !== 'All' && institution.trim()) {
+    sql += ` AND p.institution LIKE ?`;
+    params.push(`%${institution.trim()}%`);
+  }
+
+  // Peer-reviewed (has DOI)
+  if (peerReviewed === 'true' || peerReviewed === true) {
+    sql += ` AND p.doi IS NOT NULL AND p.doi != ''`;
+  }
+
+  // Open Access
+  if (openAccess === 'true' || openAccess === true) {
+    sql += ` AND p.visibility = 'public' AND p.embargo_enabled = 0`;
   }
 
   // Sorting

@@ -53,6 +53,11 @@ export function App() {
     }
   }, []);
 
+  // Scroll to top whenever tab changes (ensures Ask DHRUVA and other pages start at top without scroll)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentTab]);
+
   // Instant Portal & Role Switcher Helper
   const handleRoleSwitch = async (role: 'public' | 'researcher' | 'admin', email?: string) => {
     if (role === 'public') {
@@ -104,10 +109,10 @@ export function App() {
       />
 
       {/* Main Content Area — keyed by tab so each tab gets entry animation */}
-      <main className="flex-1">
+      <main className="flex-1 w-full relative z-[1]">
         {/* PUBLIC PORTAL */}
         {currentTab === 'home' && (
-          <div className="animate-fadeIn" key="home">
+          <div className="animate-fadeIn w-full" key="home">
             <HomePage
               setCurrentTab={setCurrentTab}
               setSelectedPaperId={handleReadPaper}
@@ -121,7 +126,7 @@ export function App() {
         )}
 
         {currentTab === 'explore' && (
-          <div className="animate-fadeIn" key="explore">
+          <div className="animate-fadeIn w-full" key="explore">
             <ExploreResearchPage
               onReadPaper={handleReadPaper}
               onAskPaper={(paper) => {
@@ -135,7 +140,7 @@ export function App() {
         )}
 
         {currentTab === 'paper-detail' && (
-          <div className="animate-fadeIn" key="paper-detail">
+          <div className="animate-fadeIn w-full" key="paper-detail">
             <PaperDetailPage
               paperId={selectedPaperId}
               onBack={() => setCurrentTab('explore')}
@@ -146,7 +151,7 @@ export function App() {
 
         {/* AUTHENTICATION PORTAL */}
         {currentTab === 'login' && (
-          <div className="animate-fadeIn" key="login">
+          <div className="animate-fadeIn w-full" key="login">
             <LoginPage
               onNavigate={setCurrentTab}
               currentUser={currentUser}
@@ -159,7 +164,7 @@ export function App() {
         )}
 
         {currentTab === 'learn' && (
-          <div className="animate-fadeIn" key="learn">
+          <div className="animate-fadeIn w-full" key="learn">
             <LearnPortalPage
               onOpenPaper={handleReadPaper}
               lang={lang}
@@ -168,7 +173,7 @@ export function App() {
         )}
 
         {currentTab === 'media' && (
-          <div className="animate-fadeIn" key="media">
+          <div className="animate-fadeIn w-full" key="media">
             <MediaDisseminationPage
               onReadPaper={handleReadPaper}
               lang={lang}
@@ -177,7 +182,7 @@ export function App() {
         )}
 
         {currentTab === 'ask' && (
-          <div className="animate-fadeIn" key="ask">
+          <div className="animate-fadeIn w-full" key="ask">
             <AskDhruvaPage
               onReadPaper={handleReadPaper}
               lang={lang}
@@ -397,8 +402,8 @@ export function App() {
         )}
       </main>
 
-      {/* Global Footer */}
-      <Footer lang={lang} onNavigate={setCurrentTab} />
+      {/* Global Footer (Hidden on Ask DHRUVA page to match reference design and avoid scrolling) */}
+      {currentTab !== 'ask' && <Footer lang={lang} onNavigate={setCurrentTab} />}
 
     </div>
   );

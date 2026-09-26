@@ -35,14 +35,12 @@
   --transition-slow: 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* {
+*, ::before, ::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Removed scroll-behavior: smooth to prevent mousewheel momentum lag and stutter on Windows */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -907,16 +905,15 @@ textarea:focus {
   background: rgba(2, 132, 199, 0.05);
 }
 
-/* ─── REVEAL ON SCROLL ─── */
+/* ─── REVEAL ON SCROLL (Fluid, hardware-accelerated, zero layout-shift) ─── */
 .reveal {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 1;
+  transform: none;
 }
 
 .reveal.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 /* ─── POLAR CARD GLOW RING ─── */

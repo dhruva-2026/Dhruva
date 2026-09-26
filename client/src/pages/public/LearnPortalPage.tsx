@@ -128,7 +128,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(2, 132, 199, 0.05), transparent 70%), linear-gradient(180deg, rgba(240, 249, 255, 0.6) 0%, rgba(255, 255, 255, 0.9) 100%)',
+            background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(2, 132, 199, 0.08), transparent 70%), linear-gradient(180deg, rgba(240, 249, 255, 0.4) 0%, transparent 100%)',
             pointerEvents: 'none',
             zIndex: 1,
           }}

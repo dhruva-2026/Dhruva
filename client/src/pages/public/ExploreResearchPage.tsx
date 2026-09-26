@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, RefreshCw, SlidersHorizontal, ChevronLeft, ChevronRight, MapPin, Eye, Calendar } from 'lucide-react';
+import {
+  Search, BookOpen, RefreshCw, SlidersHorizontal, ChevronLeft, ChevronRight,
+  MapPin, Eye, Calendar, RotateCcw, ChevronDown, User, Building2, Check, X, Filter
+} from 'lucide-react';
 import { apiFetchPapers } from '../../services/api';
 import { BACKUP_PAPERS, type BackupPaper } from '../../data/backupPapers';
 
@@ -16,12 +19,51 @@ const RESEARCH_AREAS = [
   'Geology', 'Cryosphere', 'Environmental Science'
 ];
 
+const RESEARCH_INSTITUTIONS = [
+  'All Institutions',
+  'National Centre for Polar and Ocean Research (NCPOR), Goa',
+  'Department of Earth Sciences, IIT Roorkee',
+  'Center for Climate & Environmental Studies, IISER Pune',
+  'CSIR - National Institute of Oceanography (NIO), Goa',
+  'Space Applications Centre (ISRO), Ahmedabad',
+  'India Meteorological Department (IMD), New Delhi',
+  'Banaras Hindu University, Dept of Geophysics',
+  'Divecha Centre for Climate Change, IISc Bengaluru',
+  'Wadia Institute of Himalayan Geology'
+];
+
+const POLAR_LOCATIONS = [
+  { id: 'All', name: 'All Stations & Expeditions' },
+  { id: 'loc-1', name: 'Maitri Research Station (Antarctic)' },
+  { id: 'loc-2', name: 'Bharati Research Station (Antarctic)' },
+  { id: 'loc-3', name: 'Himadri Research Station (Arctic)' },
+  { id: 'loc-4', name: 'Dakshin Gangotri Base (Historical Antarctic)' },
+  { id: 'loc-5', name: 'IndARC Deep Water Mooring (Arctic)' },
+  { id: 'loc-6', name: 'Kongsfjorden Marine Transect (Arctic)' },
+  { id: 'loc-7', name: 'Prydz Bay Oceanographic Station (Antarctic)' },
+  { id: 'loc-8', name: 'Schirmacher Oasis Glaciological Grid (Antarctic)' },
+  { id: 'loc-9', name: 'Ny-Ålesund International Polar Village (Arctic)' },
+  { id: 'loc-10', name: 'Weddell Sea Sea-Ice Observation Sector (Antarctic)' }
+];
+
+// All publication years from 2026 down to 2000
+const CURRENT_YEAR = new Date().getFullYear();
+const PUBLICATION_YEARS = Array.from(
+  { length: CURRENT_YEAR - 2000 + 1 },
+  (_, i) => String(CURRENT_YEAR - i)
+);
+
 function getFilteredBackupPapers(params: {
   search?: string;
   region?: string;
   area?: string;
   year?: string;
   sort?: string;
+  author?: string;
+  institution?: string;
+  locationId?: string;
+  peerReviewed?: boolean;
+  openAccess?: boolean;
 }): BackupPaper[] {
   let list = [...BACKUP_PAPERS];
 
@@ -49,6 +91,28 @@ function getFilteredBackupPapers(params: {
     list = list.filter(p => p.publication_year === y);
   }
 
+  if (params.author && params.author.trim()) {
+    const a = params.author.trim().toLowerCase();
+    list = list.filter(p => p.authors && p.authors.toLowerCase().includes(a));
+  }
+
+  if (params.institution && params.institution !== 'All') {
+    const inst = params.institution.trim().toLowerCase();
+    list = list.filter(p => p.institution && p.institution.toLowerCase().includes(inst));
+  }
+
+  if (params.locationId && params.locationId !== 'All') {
+    list = list.filter(p => p.location_id === params.locationId);
+  }
+
+  if (params.peerReviewed) {
+    list = list.filter(p => Boolean(p.doi && p.doi.trim().length > 0));
+  }
+
+  if (params.openAccess) {
+    list = list.filter(p => p.visibility === 'public' && (!p.embargo_enabled || p.embargo_enabled === 0));
+  }
+
   if (params.sort === 'views') {
     list.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
   } else if (params.sort === 'oldest') {
@@ -72,6 +136,14 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
   const [sortBy, setSortBy] = useState('latest');
   const [page, setPage] = useState(1);
 
+  // Advanced Filters State
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [authorQuery, setAuthorQuery] = useState('');
+  const [selectedInstitution, setSelectedInstitution] = useState('All');
+  const [selectedLocation, setSelectedLocation] = useState('All');
+  const [peerReviewedOnly, setPeerReviewedOnly] = useState(false);
+  const [openAccessOnly, setOpenAccessOnly] = useState(false);
+
   useEffect(() => {
     if (initialArea) {
       setSelectedArea(initialArea);
@@ -80,18 +152,31 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
 
   const loadPapers = async () => {
     setLoading(true);
+    const filterParams: Record<string, any> = {
+      search: searchTerm,
+      region: selectedRegion,
+      area: selectedArea,
+      year: selectedYear,
+      sort: sortBy,
+    };
+    if (authorQuery.trim()) filterParams.author = authorQuery.trim();
+    if (selectedInstitution !== 'All') filterParams.institution = selectedInstitution;
+    if (selectedLocation !== 'All') filterParams.locationId = selectedLocation;
+    if (peerReviewedOnly) filterParams.peerReviewed = true;
+    if (openAccessOnly) filterParams.openAccess = true;
+
     try {
-      const res = await apiFetchPapers({ search: searchTerm, region: selectedRegion, area: selectedArea, year: selectedYear, sort: sortBy });
+      const res = await apiFetchPapers(filterParams);
       if (res && Array.isArray(res.papers) && res.papers.length > 0) {
         setPapers(res.papers);
       } else {
-        const fallback = getFilteredBackupPapers({ search: searchTerm, region: selectedRegion, area: selectedArea, year: selectedYear, sort: sortBy });
+        const fallback = getFilteredBackupPapers(filterParams);
         setPapers(fallback);
       }
       setPage(1);
     } catch (e) {
       console.warn('API fetch failed, loading fallback research papers:', e);
-      const fallback = getFilteredBackupPapers({ search: searchTerm, region: selectedRegion, area: selectedArea, year: selectedYear, sort: sortBy });
+      const fallback = getFilteredBackupPapers(filterParams);
       setPapers(fallback);
       setPage(1);
     } finally {
@@ -99,13 +184,62 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
     }
   };
 
-  useEffect(() => { loadPapers(); }, [selectedRegion, selectedArea, selectedYear, sortBy]);
+  useEffect(() => {
+    loadPapers();
+  }, [
+    selectedRegion,
+    selectedArea,
+    selectedYear,
+    sortBy,
+    selectedInstitution,
+    selectedLocation,
+    peerReviewedOnly,
+    openAccessOnly,
+  ]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => { e.preventDefault(); loadPapers(); };
+  // Debounced search on author
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadPapers();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [authorQuery]);
 
-  const handleReset = () => {
-    setSearchTerm(''); setSelectedRegion('All'); setSelectedArea('All'); setSelectedYear('All'); setSortBy('latest');
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadPapers();
   };
+
+  // Full reset clears all primary and advanced filters
+  const handleReset = () => {
+    setSearchTerm('');
+    setSelectedRegion('All');
+    setSelectedArea('All');
+    setSelectedYear('All');
+    setSortBy('latest');
+    setAuthorQuery('');
+    setSelectedInstitution('All');
+    setSelectedLocation('All');
+    setPeerReviewedOnly(false);
+    setOpenAccessOnly(false);
+    setPage(1);
+  };
+
+  // Count active filters
+  const advancedFiltersActiveCount =
+    (authorQuery.trim() ? 1 : 0) +
+    (selectedInstitution !== 'All' ? 1 : 0) +
+    (selectedLocation !== 'All' ? 1 : 0) +
+    (peerReviewedOnly ? 1 : 0) +
+    (openAccessOnly ? 1 : 0);
+
+  const totalFiltersActiveCount =
+    (searchTerm.trim() ? 1 : 0) +
+    (selectedRegion !== 'All' ? 1 : 0) +
+    (selectedArea !== 'All' ? 1 : 0) +
+    (selectedYear !== 'All' ? 1 : 0) +
+    (sortBy !== 'latest' ? 1 : 0) +
+    advancedFiltersActiveCount;
 
   const totalPages = Math.max(1, Math.ceil(papers.length / ITEMS_PER_PAGE));
   const pagedPapers = papers.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -136,7 +270,7 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
         {/* Background gradient overlay */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, rgba(240,249,255,0.6) 0%, rgba(255,255,255,0.85) 60%, #FFFFFF 100%)',
+          background: 'linear-gradient(180deg, rgba(240,249,255,0.4) 0%, rgba(240,249,255,0.12) 60%, transparent 100%)',
           zIndex: 1,
         }} />
         <img
@@ -185,8 +319,8 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
         }}>
 
           {/* Search row */}
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: '1 1 280px', minWidth: '240px' }}>
               <Search size={17} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', pointerEvents: 'none' }} />
               <input
                 type="text"
@@ -202,34 +336,261 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
                 onBlur={(e) => { e.target.style.borderColor = 'rgba(14, 116, 144, 0.22)'; }}
               />
             </div>
+
             {/* Search button */}
             <button type="submit" style={{
               display: 'flex', alignItems: 'center', gap: '7px', padding: '0 22px',
               borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 700,
               background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
               color: '#FFFFFF', boxShadow: '0 4px 14px rgba(2,132,199,0.3)', whiteSpace: 'nowrap',
-              fontFamily: 'var(--font-heading)',
+              fontFamily: 'var(--font-heading)', height: '44px'
             }}>
               <Search size={15} />
               Search
             </button>
-            {/* Advanced Filters button */}
-            <button type="button" style={{
-              display: 'flex', alignItems: 'center', gap: '7px', padding: '0 18px',
-              borderRadius: '10px', border: '1px solid #CBD5E1', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 600, background: '#F8FAFC', color: '#475569',
-              whiteSpace: 'nowrap', transition: 'all 0.18s',
-            }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#0284C7'; (e.currentTarget as HTMLElement).style.color = '#0284C7'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#CBD5E1'; (e.currentTarget as HTMLElement).style.color = '#475569'; }}
+
+            {/* Workable Advanced Filters button */}
+            <button
+              type="button"
+              id="btn-advanced-filters"
+              onClick={() => setShowAdvanced(prev => !prev)}
+              aria-expanded={showAdvanced}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '7px', padding: '0 18px',
+                borderRadius: '10px',
+                border: showAdvanced || advancedFiltersActiveCount > 0 ? '1px solid #0284C7' : '1px solid #CBD5E1',
+                cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600,
+                background: showAdvanced ? '#E0F2FE' : (advancedFiltersActiveCount > 0 ? '#F0F9FF' : '#F8FAFC'),
+                color: showAdvanced || advancedFiltersActiveCount > 0 ? '#0284C7' : '#475569',
+                whiteSpace: 'nowrap', transition: 'all 0.18s ease',
+                height: '44px'
+              }}
+              onMouseEnter={(e) => {
+                if (!showAdvanced) {
+                  (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
+                  (e.currentTarget as HTMLElement).style.color = '#0284C7';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!showAdvanced) {
+                  (e.currentTarget as HTMLElement).style.borderColor = advancedFiltersActiveCount > 0 ? '#0284C7' : '#CBD5E1';
+                  (e.currentTarget as HTMLElement).style.color = advancedFiltersActiveCount > 0 ? '#0284C7' : '#475569';
+                }
+              }}
             >
-              <SlidersHorizontal size={15} />
-              Advanced Filters
+              <SlidersHorizontal size={15} style={{ color: showAdvanced || advancedFiltersActiveCount > 0 ? '#0284C7' : '#64748B' }} />
+              <span>Advanced Filters</span>
+              {advancedFiltersActiveCount > 0 && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  minWidth: '20px', height: '20px', borderRadius: '10px',
+                  background: '#0284C7', color: '#FFFFFF', fontSize: '11px', fontWeight: 700,
+                  padding: '0 5px'
+                }}>
+                  {advancedFiltersActiveCount}
+                </span>
+              )}
+              <ChevronDown
+                size={14}
+                style={{
+                  transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease',
+                  color: showAdvanced ? '#0284C7' : '#94A3B8'
+                }}
+              />
             </button>
           </form>
 
-          {/* Filter row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr', gap: '20px', alignItems: 'start', paddingTop: '14px', borderTop: '1px solid rgba(148, 163, 184, 0.2)' }}>
+          {/* ═══ ADVANCED FILTERS EXPANDABLE DRAWER ═══ */}
+          {showAdvanced && (
+            <div
+              id="advanced-filters-panel"
+              style={{
+                background: '#F8FAFC',
+                border: '1px solid rgba(2, 132, 199, 0.25)',
+                borderRadius: '12px',
+                padding: '16px 20px',
+                marginBottom: '16px',
+                boxShadow: 'inset 0 2px 6px rgba(15, 23, 42, 0.02)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Filter size={15} style={{ color: '#0284C7' }} />
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>
+                    Advanced Polar Scientific Filters
+                  </span>
+                  {advancedFiltersActiveCount > 0 && (
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#0284C7', background: '#E0F2FE', padding: '2px 8px', borderRadius: '999px' }}>
+                      {advancedFiltersActiveCount} active
+                    </span>
+                  )}
+                </div>
+
+                {advancedFiltersActiveCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthorQuery('');
+                      setSelectedInstitution('All');
+                      setSelectedLocation('All');
+                      setPeerReviewedOnly(false);
+                      setOpenAccessOnly(false);
+                    }}
+                    style={{
+                      fontSize: '12px', color: '#64748B', background: 'none', border: 'none',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', padding: 0
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#EF4444'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#64748B'; }}
+                  >
+                    <RotateCcw size={12} />
+                    Reset Advanced Parameters
+                  </button>
+                )}
+              </div>
+
+              {/* Advanced Inputs Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '14px' }}>
+                {/* Author Search */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#64748B', marginBottom: '6px' }}>
+                    Author / Lead Scientist
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <User size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                    <input
+                      type="text"
+                      value={authorQuery}
+                      onChange={(e) => setAuthorQuery(e.target.value)}
+                      placeholder="e.g. Dr. Ananya Sharma, Arjun Rao..."
+                      style={{
+                        width: '100%', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px',
+                        padding: '8px 12px 8px 32px', fontSize: '13px', color: '#0F172A', outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                      onFocus={(e) => { e.target.style.borderColor = '#0284C7'; }}
+                      onBlur={(e) => { e.target.style.borderColor = '#CBD5E1'; }}
+                    />
+                    {authorQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setAuthorQuery('')}
+                        style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: '2px' }}
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Research Institution */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#64748B', marginBottom: '6px' }}>
+                    Affiliated Institution
+                  </div>
+                  <select
+                    value={selectedInstitution}
+                    onChange={(e) => setSelectedInstitution(e.target.value)}
+                    style={selectStyle}
+                  >
+                    {RESEARCH_INSTITUTIONS.map(inst => (
+                      <option key={inst} value={inst === 'All Institutions' ? 'All' : inst}>{inst}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Station / Location */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#64748B', marginBottom: '6px' }}>
+                    Polar Station / Observatory
+                  </div>
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    style={selectStyle}
+                  >
+                    {POLAR_LOCATIONS.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Toggles & Quick Presets */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', paddingTop: '12px', borderTop: '1px solid #E2E8F0', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={peerReviewedOnly}
+                      onChange={(e) => setPeerReviewedOnly(e.target.checked)}
+                      style={{ accentColor: '#0284C7', width: '15px', height: '15px', cursor: 'pointer' }}
+                    />
+                    <span>Peer-Reviewed (DOI Verified)</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={openAccessOnly}
+                      onChange={(e) => setOpenAccessOnly(e.target.checked)}
+                      style={{ accentColor: '#0284C7', width: '15px', height: '15px', cursor: 'pointer' }}
+                    />
+                    <span>Open Access Full-Text</span>
+                  </label>
+                </div>
+
+                {/* Quick Station Presets */}
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Quick Station:</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedRegion('Antarctic'); setSelectedLocation('loc-2'); }}
+                    style={{
+                      fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '6px',
+                      border: selectedLocation === 'loc-2' ? '1px solid #0284C7' : '1px solid #CBD5E1',
+                      background: selectedLocation === 'loc-2' ? '#E0F2FE' : '#FFFFFF',
+                      color: selectedLocation === 'loc-2' ? '#0284C7' : '#475569',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Bharati Station
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedRegion('Antarctic'); setSelectedLocation('loc-1'); }}
+                    style={{
+                      fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '6px',
+                      border: selectedLocation === 'loc-1' ? '1px solid #0284C7' : '1px solid #CBD5E1',
+                      background: selectedLocation === 'loc-1' ? '#E0F2FE' : '#FFFFFF',
+                      color: selectedLocation === 'loc-1' ? '#0284C7' : '#475569',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Maitri Station
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedRegion('Arctic'); setSelectedLocation('loc-3'); }}
+                    style={{
+                      fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '6px',
+                      border: selectedLocation === 'loc-3' ? '1px solid #0284C7' : '1px solid #CBD5E1',
+                      background: selectedLocation === 'loc-3' ? '#E0F2FE' : '#FFFFFF',
+                      color: selectedLocation === 'loc-3' ? '#0284C7' : '#475569',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Himadri Station
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Primary Filter row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', alignItems: 'start', paddingTop: '14px', borderTop: '1px solid rgba(148, 163, 184, 0.2)' }}>
 
             {/* Polar Region */}
             <div>
@@ -239,11 +600,12 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
                   const active = selectedRegion === r;
                   return (
                     <button key={r} type="button" onClick={() => setSelectedRegion(r)} style={{
-                      padding: '6px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                      flex: 1, padding: '6px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer',
                       fontSize: '12px', fontWeight: 700, transition: 'all 0.15s',
                       background: active ? '#0284C7' : 'transparent',
                       color: active ? '#FFFFFF' : '#64748B',
                       boxShadow: active ? '0 2px 6px rgba(2,132,199,0.3)' : 'none',
+                      whiteSpace: 'nowrap', textAlign: 'center'
                     }}>
                       {r}
                     </button>
@@ -260,14 +622,19 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
               </select>
             </div>
 
-            {/* Publication Year */}
+            {/* Publication Year (Includes all years from 2000 to present) */}
             <div>
               <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#64748B', marginBottom: '8px' }}>Publication Year</div>
-              <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={selectStyle}>
-                <option value="All">All Years</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                style={selectStyle}
+                aria-label="Filter by Publication Year"
+              >
+                <option value="All">All Years (2000–{CURRENT_YEAR})</option>
+                {PUBLICATION_YEARS.map(yr => (
+                  <option key={yr} value={yr}>{yr}</option>
+                ))}
               </select>
             </div>
 
@@ -282,20 +649,127 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
             </div>
           </div>
 
-          {/* Results count */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px' }}>
-            <div style={{ fontSize: '12px', color: '#64748B' }}>
-              Found:{' '}
-              <span style={{ color: '#0284C7', fontWeight: 700 }}>{papers.length} Published Papers</span>
+          {/* Active Filter Chips */}
+          {totalFiltersActiveCount > 0 && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed rgba(148, 163, 184, 0.25)' }}>
+              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Active Filters:</span>
+              {searchTerm.trim() && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Search: "{searchTerm}"
+                  <button type="button" onClick={() => setSearchTerm('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {selectedRegion !== 'All' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Region: {selectedRegion}
+                  <button type="button" onClick={() => setSelectedRegion('All')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {selectedArea !== 'All' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Area: {selectedArea}
+                  <button type="button" onClick={() => setSelectedArea('All')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {selectedYear !== 'All' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Year: {selectedYear}
+                  <button type="button" onClick={() => setSelectedYear('All')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {authorQuery.trim() && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Author: {authorQuery}
+                  <button type="button" onClick={() => setAuthorQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {selectedInstitution !== 'All' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Institution: {selectedInstitution.length > 25 ? selectedInstitution.slice(0, 25) + '...' : selectedInstitution}
+                  <button type="button" onClick={() => setSelectedInstitution('All')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {selectedLocation !== 'All' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Station: {POLAR_LOCATIONS.find(l => l.id === selectedLocation)?.name.split(' (')[0] || selectedLocation}
+                  <button type="button" onClick={() => setSelectedLocation('All')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {peerReviewedOnly && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Peer-Reviewed Only
+                  <button type="button" onClick={() => setPeerReviewedOnly(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
+              {openAccessOnly && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: '#E0F2FE', color: '#0369A1' }}>
+                  Open Access Only
+                  <button type="button" onClick={() => setOpenAccessOnly(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0369A1', display: 'flex' }}><X size={11} /></button>
+                </span>
+              )}
             </div>
-            {(searchTerm || selectedRegion !== 'All' || selectedArea !== 'All' || selectedYear !== 'All') && (
-              <button onClick={handleReset} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0369A1'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#0284C7'; }}>
-                <RefreshCw size={12} />
-                Clear Filters
-              </button>
-            )}
+          )}
+
+          {/* Results count & ALWAYS-VISIBLE Clear Filters */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px', paddingTop: '10px', borderTop: '1px solid rgba(148, 163, 184, 0.2)' }}>
+            <div style={{ fontSize: '13px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Found:</span>
+              <span style={{ color: '#0284C7', fontWeight: 700, fontSize: '14px' }}>
+                {papers.length} Published Paper{papers.length === 1 ? '' : 's'}
+              </span>
+              {totalFiltersActiveCount > 0 && (
+                <span style={{ fontSize: '11px', color: '#64748B', background: '#F1F5F9', border: '1px solid #E2E8F0', padding: '1px 8px', borderRadius: '999px' }}>
+                  ({totalFiltersActiveCount} filter{totalFiltersActiveCount > 1 ? 's' : ''} applied)
+                </span>
+              )}
+            </div>
+
+            {/* Clear Filters option: VISIBLE ALL THE TIME */}
+            <button
+              type="button"
+              id="btn-clear-filters"
+              onClick={handleReset}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '6px 14px',
+                borderRadius: '8px',
+                border: totalFiltersActiveCount > 0 ? '1px solid #0284C7' : '1px solid #CBD5E1',
+                background: totalFiltersActiveCount > 0 ? '#E0F2FE' : '#FFFFFF',
+                color: totalFiltersActiveCount > 0 ? '#0284C7' : '#64748B',
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
+                (e.currentTarget as HTMLElement).style.color = '#0284C7';
+                (e.currentTarget as HTMLElement).style.background = '#F0F9FF';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = totalFiltersActiveCount > 0 ? '#0284C7' : '#CBD5E1';
+                (e.currentTarget as HTMLElement).style.color = totalFiltersActiveCount > 0 ? '#0284C7' : '#64748B';
+                (e.currentTarget as HTMLElement).style.background = totalFiltersActiveCount > 0 ? '#E0F2FE' : '#FFFFFF';
+              }}
+              title="Reset all search queries and filters to defaults"
+            >
+              <RotateCcw size={13} style={{ transform: totalFiltersActiveCount > 0 ? 'rotate(-45deg)' : 'none', transition: 'transform 0.2s' }} />
+              <span>Clear Filters</span>
+              {totalFiltersActiveCount > 0 && (
+                <span style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  background: '#0284C7',
+                  color: '#FFFFFF',
+                  borderRadius: '999px',
+                  padding: '1px 6px',
+                }}>
+                  {totalFiltersActiveCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
