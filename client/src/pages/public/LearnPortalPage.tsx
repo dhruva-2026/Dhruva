@@ -124,12 +124,11 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
 
       {/* ═══ HERO ═══ */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        {/* Subtle dark polar gradient background overlay (as requested: change the bg) */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 229, 255, 0.08), transparent 70%), linear-gradient(180deg, rgba(3, 10, 30, 0.6) 0%, rgba(2, 6, 23, 0.85) 100%)',
+            background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(2, 132, 199, 0.05), transparent 70%), linear-gradient(180deg, rgba(240, 249, 255, 0.6) 0%, rgba(255, 255, 255, 0.9) 100%)',
             pointerEvents: 'none',
             zIndex: 1,
           }}
@@ -156,24 +155,9 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
             }}
           >
             {/* Eyebrow badge */}
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 16px',
-                borderRadius: '9999px',
-                border: '1px solid rgba(0, 229, 255, 0.35)',
-                background: 'rgba(0, 229, 255, 0.07)',
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                color: '#00E5FF',
-              }}
-            >
+            <div className="section-eyebrow">
               <GraduationCap size={14} />
-              {lang === 'en' ? 'Polar Science Education Hub' : 'ध्रुवीय विज्ञान शिक्षा केंद्र'}
+              <span>{lang === 'en' ? 'Polar Science Education Hub' : 'ध्रुवीय विज्ञान शिक्षा केंद्र'}</span>
             </div>
 
             {/* Right quote with accent bar */}
@@ -182,7 +166,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                 style={{
                   fontSize: '13px',
                   fontStyle: 'italic',
-                  color: 'rgba(226, 232, 240, 0.82)',
+                  color: '#64748B',
                   lineHeight: 1.6,
                   margin: 0,
                 }}
@@ -197,11 +181,10 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                 style={{
                   width: '36px',
                   height: '3px',
-                  background: '#00E5FF',
+                  background: '#0284C7',
                   marginTop: '8px',
                   marginLeft: 'auto',
                   borderRadius: '2px',
-                  boxShadow: '0 0 8px rgba(0, 229, 255, 0.6)',
                 }}
               />
             </div>
@@ -218,15 +201,8 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               marginBottom: '16px',
             }}
           >
-            <span style={{ color: '#FFFFFF' }}>Interactive </span>
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #00E5FF 0%, #38BDF8 60%, #60A5FA 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
+            <span style={{ color: '#0F172A' }}>Interactive </span>
+            <span className="heading-gradient">
               Polar Science Learning
             </span>
           </h1>
@@ -235,7 +211,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
           <p
             style={{
               fontSize: '0.95rem',
-              color: 'rgba(203, 213, 225, 0.85)',
+              color: '#475569',
               lineHeight: 1.7,
               maxWidth: '620px',
               marginBottom: '28px',
@@ -246,7 +222,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               : 'भारतीय अभियानों के संस्थागत अनुसंधान को संरचित शिक्षण मॉड्यूल, क्विज़ और फ्लैशकार्ड में बदलना।'}
           </p>
 
-          {/* 4 Feature Badges in circular blue pills */}
+          {/* 4 Feature Badges */}
           <div
             style={{
               display: 'flex',
@@ -270,7 +246,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                   gap: '10px',
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: 'rgba(226, 232, 240, 0.92)',
+                  color: '#334155',
                 }}
               >
                 <div
@@ -278,14 +254,13 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                     width: '36px',
                     height: '36px',
                     borderRadius: '50%',
-                    border: '1px solid rgba(0, 229, 255, 0.35)',
-                    background: 'rgba(0, 229, 255, 0.08)',
+                    border: '1px solid rgba(2, 132, 199, 0.25)',
+                    background: 'rgba(2, 132, 199, 0.08)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#00E5FF',
+                    color: '#0284C7',
                     flexShrink: 0,
-                    boxShadow: '0 0 12px rgba(0, 229, 255, 0.15)',
                   }}
                 >
                   <Icon size={16} />
@@ -298,8 +273,8 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
           {/* ═══ Sleek Search + Filter Bar Container ═══ */}
           <div
             style={{
-              background: 'rgba(3, 10, 28, 0.88)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              background: 'rgba(255, 255, 255, 0.94)',
+              border: '1px solid rgba(14, 116, 144, 0.18)',
               borderRadius: '9999px',
               padding: '6px 8px 6px 16px',
               backdropFilter: 'blur(20px)',
@@ -308,7 +283,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               alignItems: 'center',
               gap: '8px',
               flexWrap: 'wrap',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.35)',
+              boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
             }}
           >
             {/* Search Input */}
@@ -324,7 +299,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               <Search
                 size={16}
                 style={{
-                  color: '#00E5FF',
+                  color: '#0284C7',
                   marginRight: '10px',
                   flexShrink: 0,
                 }}
@@ -340,13 +315,13 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                   outline: 'none',
                   padding: '8px 0',
                   fontSize: '13px',
-                  color: '#FFFFFF',
+                  color: '#0F172A',
                   fontFamily: 'inherit',
                 }}
               />
             </div>
 
-            {/* Filter Pills with Icons */}
+            {/* Filter Pills */}
             <div
               style={{
                 display: 'flex',
@@ -368,27 +343,27 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                       gap: '6px',
                       padding: '7px 16px',
                       borderRadius: '9999px',
-                      border: active ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                      border: active ? 'none' : '1px solid #E2E8F0',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       transition: 'all 0.18s ease',
                       background: active
-                        ? 'linear-gradient(135deg, #00E5FF, #00BCD4)'
-                        : 'rgba(255, 255, 255, 0.05)',
-                      color: active ? '#020617' : '#94A3B8',
-                      boxShadow: active ? '0 2px 14px rgba(0, 229, 255, 0.4)' : 'none',
+                        ? 'linear-gradient(135deg, #0284C7, #0369A1)'
+                        : '#F1F5F9',
+                      color: active ? '#FFFFFF' : '#64748B',
+                      boxShadow: active ? '0 2px 10px rgba(2, 132, 199, 0.35)' : 'none',
                     }}
                     onMouseEnter={e => {
                       if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.1)';
-                        (e.currentTarget as HTMLElement).style.color = '#FFFFFF';
+                        (e.currentTarget as HTMLElement).style.background = '#E2E8F0';
+                        (e.currentTarget as HTMLElement).style.color = '#0F172A';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.05)';
-                        (e.currentTarget as HTMLElement).style.color = '#94A3B8';
+                        (e.currentTarget as HTMLElement).style.background = '#F1F5F9';
+                        (e.currentTarget as HTMLElement).style.color = '#64748B';
                       }
                     }}
                   >
@@ -427,7 +402,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                 fontFamily: 'var(--font-heading)',
                 fontSize: 'clamp(1.5rem, 3vw, 1.85rem)',
                 fontWeight: 800,
-                color: '#FFFFFF',
+                color: '#0F172A',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.2,
                 marginBottom: '4px',
@@ -435,7 +410,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
             >
               Featured Learning Modules
             </h2>
-            <p style={{ fontSize: '13px', color: 'rgba(148, 163, 184, 0.9)' }}>
+            <p style={{ fontSize: '13px', color: '#64748B' }}>
               Explore curated modules based on real research from Indian polar expeditions.
             </p>
           </div>
@@ -445,8 +420,8 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               alignItems: 'center',
               gap: '6px',
               fontSize: '13px',
-              fontWeight: 600,
-              color: '#00E5FF',
+              fontWeight: 700,
+              color: '#0284C7',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -454,11 +429,11 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               transition: 'all 0.15s ease',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.color = '#67E8F9';
+              (e.currentTarget as HTMLElement).style.color = '#0369A1';
               (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.color = '#00E5FF';
+              (e.currentTarget as HTMLElement).style.color = '#0284C7';
               (e.currentTarget as HTMLElement).style.transform = 'none';
             }}
           >
@@ -469,8 +444,8 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
         {/* 3-Column Card Grid */}
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-            <Search size={36} style={{ color: '#475569', margin: '0 auto 12px' }} />
-            <p style={{ color: '#94A3B8', fontSize: '15px' }}>
+            <Search size={36} style={{ color: '#94A3B8', margin: '0 auto 12px' }} />
+            <p style={{ color: '#64748B', fontSize: '15px' }}>
               No modules found matching your query. Try adjusting your search or filters.
             </p>
           </div>
@@ -491,25 +466,25 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                   style={{
                     borderRadius: '16px',
                     overflow: 'hidden',
-                    background: 'rgba(4, 12, 34, 0.92)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    border: '1px solid rgba(14, 116, 144, 0.16)',
                     display: 'flex',
                     flexDirection: 'column',
                     transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                    boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
                   }}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 229, 255, 0.45)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 229, 255, 0.15)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.45)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 40px rgba(15, 23, 42, 0.1)';
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.16)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(15, 23, 42, 0.06)';
                     (e.currentTarget as HTMLElement).style.transform = 'none';
                   }}
                 >
-                  {/* Card Image Area with overlay badges & bookmark */}
+                  {/* Card Image Area */}
                   <div
                     style={{
                       position: 'relative',
@@ -535,12 +510,11 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                       }}
                     />
 
-                    {/* Gradient Overlay for badges contrast */}
                     <div
                       style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'linear-gradient(to bottom, rgba(2, 6, 23, 0.1) 0%, rgba(2, 6, 23, 0.75) 100%)',
+                        background: 'linear-gradient(to bottom, transparent 30%, rgba(15, 23, 42, 0.45) 100%)',
                         pointerEvents: 'none',
                       }}
                     />
@@ -558,30 +532,30 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                         width: '32px',
                         height: '32px',
                         borderRadius: '8px',
-                        border: '1px solid rgba(255, 255, 255, 0.18)',
-                        background: 'rgba(2, 8, 24, 0.65)',
+                        border: '1px solid rgba(148, 163, 184, 0.4)',
+                        background: 'rgba(255, 255, 255, 0.9)',
                         backdropFilter: 'blur(8px)',
                         WebkitBackdropFilter: 'blur(8px)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        color: bookmarked.has(mod.id) ? '#00E5FF' : 'rgba(226, 232, 240, 0.85)',
+                        color: bookmarked.has(mod.id) ? '#0284C7' : '#64748B',
                         transition: 'all 0.15s ease',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'rgba(0, 229, 255, 0.2)';
-                        (e.currentTarget as HTMLElement).style.color = '#00E5FF';
+                        (e.currentTarget as HTMLElement).style.background = '#FFFFFF';
+                        (e.currentTarget as HTMLElement).style.color = '#0284C7';
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'rgba(2, 8, 24, 0.65)';
-                        (e.currentTarget as HTMLElement).style.color = bookmarked.has(mod.id) ? '#00E5FF' : 'rgba(226, 232, 240, 0.85)';
+                        (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.9)';
+                        (e.currentTarget as HTMLElement).style.color = bookmarked.has(mod.id) ? '#0284C7' : '#64748B';
                       }}
                     >
                       <Bookmark size={15} fill={bookmarked.has(mod.id) ? 'currentColor' : 'none'} />
                     </button>
 
-                    {/* Badges on Bottom-Left of the image (as shown in reference image) */}
+                    {/* Badges on Bottom-Left */}
                     <div
                       style={{
                         position: 'absolute',
@@ -602,9 +576,9 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                           textTransform: 'uppercase',
                           padding: '3px 9px',
                           borderRadius: '9999px',
-                          background: isAntarctic ? '#3B82F6' : '#00E5FF',
-                          color: isAntarctic ? '#FFFFFF' : '#020617',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                          background: isAntarctic ? '#4338CA' : '#0284C7',
+                          color: '#FFFFFF',
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
                         }}
                       >
                         {mod.region}
@@ -619,9 +593,9 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                           textTransform: 'uppercase',
                           padding: '3px 9px',
                           borderRadius: '9999px',
-                          background: 'rgba(4, 12, 32, 0.75)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          color: '#E2E8F0',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          border: '1px solid rgba(148, 163, 184, 0.3)',
+                          color: '#0F172A',
                           backdropFilter: 'blur(4px)',
                         }}
                       >
@@ -645,7 +619,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                       style={{
                         fontSize: '15px',
                         fontWeight: 700,
-                        color: '#FFFFFF',
+                        color: '#0F172A',
                         lineHeight: 1.35,
                         marginBottom: '8px',
                         fontFamily: 'var(--font-heading)',
@@ -654,10 +628,10 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                         transition: 'color 0.15s ease',
                       }}
                       onMouseEnter={e => {
-                        (e.target as HTMLElement).style.color = '#00E5FF';
+                        (e.target as HTMLElement).style.color = '#0284C7';
                       }}
                       onMouseLeave={e => {
-                        (e.target as HTMLElement).style.color = '#FFFFFF';
+                        (e.target as HTMLElement).style.color = '#0F172A';
                       }}
                     >
                       {mod.title}
@@ -667,7 +641,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                     <p
                       style={{
                         fontSize: '12.5px',
-                        color: 'rgba(148, 163, 184, 0.88)',
+                        color: '#475569',
                         lineHeight: 1.6,
                         flex: 1,
                         display: '-webkit-box',
@@ -688,7 +662,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                      borderTop: '1px solid rgba(148, 163, 184, 0.2)',
                     }}
                   >
                     {/* Left stats */}
@@ -706,10 +680,10 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                           alignItems: 'center',
                           gap: '4px',
                           fontSize: '11px',
-                          color: '#94A3B8',
+                          color: '#64748B',
                         }}
                       >
-                        <HelpCircle size={12} style={{ color: '#00E5FF' }} />
+                        <HelpCircle size={12} style={{ color: '#0284C7' }} />
                         {mod.mcqs} MCQs
                       </span>
                       <span
@@ -718,10 +692,10 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                           alignItems: 'center',
                           gap: '4px',
                           fontSize: '11px',
-                          color: '#94A3B8',
+                          color: '#64748B',
                         }}
                       >
-                        <Layers size={12} style={{ color: '#00E5FF' }} />
+                        <Layers size={12} style={{ color: '#0284C7' }} />
                         {mod.flashcards}
                       </span>
                       <span
@@ -730,38 +704,38 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                           alignItems: 'center',
                           gap: '4px',
                           fontSize: '11px',
-                          color: '#94A3B8',
+                          color: '#64748B',
                         }}
                       >
-                        <BarChart2 size={12} style={{ color: '#00E5FF' }} />
+                        <BarChart2 size={12} style={{ color: '#0284C7' }} />
                         {mod.tag}
                       </span>
                     </div>
 
-                    {/* Cyan Circular Arrow Button */}
+                    {/* Circular Arrow Button */}
                     <button
                       onClick={() => onOpenPaper(mod.paperId)}
                       style={{
                         width: '34px',
                         height: '34px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #00E5FF, #00BCD4)',
+                        background: 'linear-gradient(135deg, #0284C7, #0369A1)',
                         border: 'none',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 0 14px rgba(0, 229, 255, 0.45)',
+                        boxShadow: '0 2px 8px rgba(2, 132, 199, 0.35)',
                         transition: 'all 0.18s ease',
                         flexShrink: 0,
-                        color: '#020617',
+                        color: '#FFFFFF',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.boxShadow = '0 0 22px rgba(0, 229, 255, 0.7)';
+                        (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(2, 132, 199, 0.5)';
                         (e.currentTarget as HTMLElement).style.transform = 'scale(1.1)';
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.boxShadow = '0 0 14px rgba(0, 229, 255, 0.45)';
+                        (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(2, 132, 199, 0.35)';
                         (e.currentTarget as HTMLElement).style.transform = 'none';
                       }}
                     >
