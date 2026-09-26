@@ -273,7 +273,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
-                    onClick={() => onNavigate(currentUser.role === 'admin' ? 'admin-verification' : 'researcher-dashboard')}
+                    onClick={() => onNavigate(currentUser.role === 'admin' ? 'admin-dashboard' : 'researcher-dashboard')}
                     className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-700 text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
                   >
                     Dashboard

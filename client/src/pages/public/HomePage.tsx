@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   BookOpen, Sparkles, ArrowRight, Activity, Mountain, Globe,
   Waves, Wind, Snowflake, Leaf, Calendar, Eye, MapPin,
-  FileCheck2, GraduationCap, Users, UserCheck
+  FileCheck2, GraduationCap, Users, UserCheck, FileSearch, ShieldCheck
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -154,11 +154,185 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
               </div>
             </div>
             <div className="lg:col-span-5 xl:col-span-4 hidden lg:flex flex-col justify-center">
-              <div className="px-4 py-2 space-y-1">
-                <p className="text-2xl font-light tracking-normal leading-snug text-slate-400" style={{ fontFamily: 'var(--font-heading)' }}>Two poles.</p>
-                <p className="text-2xl font-bold tracking-normal leading-snug text-slate-800" style={{ fontFamily: 'var(--font-heading)' }}>One planet.</p>
-                <p className="text-2xl font-extrabold tracking-normal leading-snug text-cyan-700" style={{ fontFamily: 'var(--font-heading)' }}>A shared future.</p>
+              <div className="px-4 py-2 flex flex-col gap-0.5">
+                <div 
+                  style={{ 
+                    fontFamily: 'var(--font-heading)', 
+                    fontSize: 'clamp(1.9rem, 2.8vw, 2.6rem)', 
+                    fontWeight: 500, 
+                    color: '#0F172A', 
+                    lineHeight: 1.15, 
+                    letterSpacing: '-0.02em' 
+                  }}
+                >
+                  {lang === 'en' ? 'Two poles.' : 'दो ध्रुव।'}
+                </div>
+                <div 
+                  style={{ 
+                    fontFamily: 'var(--font-heading)', 
+                    fontSize: 'clamp(2.1rem, 3.2vw, 3rem)', 
+                    fontWeight: 800, 
+                    color: '#0062D2', 
+                    lineHeight: 1.15, 
+                    letterSpacing: '-0.025em' 
+                  }}
+                >
+                  {lang === 'en' ? 'One planet.' : 'एक पृथ्वी।'}
+                </div>
+                <div 
+                  style={{ 
+                    fontFamily: 'var(--font-heading)', 
+                    fontSize: 'clamp(2.1rem, 3.2vw, 3rem)', 
+                    fontWeight: 800, 
+                    background: 'linear-gradient(90deg, #0062D2 0%, #1D4ED8 38%, #4F46E5 72%, #6366F1 100%)', 
+                    WebkitBackgroundClip: 'text', 
+                    WebkitTextFillColor: 'transparent', 
+                    display: 'inline-block', 
+                    lineHeight: 1.15, 
+                    letterSpacing: '-0.025em' 
+                  }}
+                >
+                  {lang === 'en' ? 'A shared future.' : 'एक साझा भविष्य।'}
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* 4 PLATFORM OVERVIEW PILLARS (Unboxed, Close, One Line)         */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          <div className="mt-7 sm:mt-9 pt-5 sm:pt-6 border-t border-slate-200/60 overflow-x-auto no-scrollbar select-none">
+            <div className="inline-flex items-center gap-3.5 sm:gap-5 lg:gap-6 px-0.5 shrink-0">
+              
+              {/* 1. Peer-reviewed Research */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div 
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)',
+                    border: '1px solid rgba(2, 132, 199, 0.25)',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)'
+                  }}
+                >
+                  <FileSearch className="w-4 h-4 sm:w-5 sm:h-5 text-[#0284C7]" strokeWidth={2.3} />
+                </div>
+                <div 
+                  className="text-xs sm:text-[12.5px] font-bold text-slate-800 leading-tight whitespace-nowrap" 
+                  style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}
+                >
+                  {lang === 'en' ? (
+                    <>
+                      <div>Peer-reviewed</div>
+                      <div className="text-slate-600 font-medium">Research</div>
+                    </>
+                  ) : (
+                    <>
+                      <div>सहकर्मी-समीक्षित</div>
+                      <div className="text-slate-600 font-medium">अनुसंधान</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="w-[1px] h-7 bg-slate-200/90 shrink-0" />
+
+              {/* 2. Verified Information */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div 
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)',
+                    border: '1px solid rgba(2, 132, 199, 0.25)',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)'
+                  }}
+                >
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#0284C7]" strokeWidth={2.3} />
+                </div>
+                <div 
+                  className="text-xs sm:text-[12.5px] font-bold text-slate-800 leading-tight whitespace-nowrap" 
+                  style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}
+                >
+                  {lang === 'en' ? (
+                    <>
+                      <div>Verified</div>
+                      <div className="text-slate-600 font-medium">Information</div>
+                    </>
+                  ) : (
+                    <>
+                      <div>सत्यापित</div>
+                      <div className="text-slate-600 font-medium">जानकारी</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="w-[1px] h-7 bg-slate-200/90 shrink-0" />
+
+              {/* 3. Interactive Learning */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div 
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)',
+                    border: '1px solid rgba(2, 132, 199, 0.25)',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)'
+                  }}
+                >
+                  <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-[#0284C7]" strokeWidth={2.3} />
+                </div>
+                <div 
+                  className="text-xs sm:text-[12.5px] font-bold text-slate-800 leading-tight whitespace-nowrap" 
+                  style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}
+                >
+                  {lang === 'en' ? (
+                    <>
+                      <div>Interactive</div>
+                      <div className="text-slate-600 font-medium">Learning</div>
+                    </>
+                  ) : (
+                    <>
+                      <div>संवादात्मक</div>
+                      <div className="text-slate-600 font-medium">शिक्षण</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="w-[1px] h-7 bg-slate-200/90 shrink-0" />
+
+              {/* 4. For Students, Researchers & Citizens */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div 
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)',
+                    border: '1px solid rgba(2, 132, 199, 0.25)',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)'
+                  }}
+                >
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#0284C7]" strokeWidth={2.3} />
+                </div>
+                <div 
+                  className="text-xs sm:text-[12.5px] font-bold text-slate-800 leading-tight whitespace-nowrap" 
+                  style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}
+                >
+                  {lang === 'en' ? (
+                    <>
+                      <div>For Students,</div>
+                      <div className="text-slate-600 font-medium">Researchers & Citizens</div>
+                    </>
+                  ) : (
+                    <>
+                      <div>छात्रों, शोधकर्ताओं व</div>
+                      <div className="text-slate-600 font-medium">नागरिकों के लिए</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

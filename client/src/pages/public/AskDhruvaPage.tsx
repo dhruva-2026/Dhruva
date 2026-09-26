@@ -413,11 +413,43 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={(e) => handleDeleteHistoryItem(item.id, e)}
-                      style={{ background: 'none', border: 'none', color: '#CBD5E1', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
-                      title="Delete inquiry"
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: 'transparent',
+                        border: '1px solid transparent',
+                        color: '#94A3B8',
+                        cursor: 'pointer',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+                        flexShrink: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.background = '#FEE2E2';
+                        el.style.borderColor = '#FECACA';
+                        el.style.color = '#DC2626';
+                        el.style.transform = 'scale(1.15)';
+                        el.style.boxShadow = '0 2px 6px rgba(220, 38, 38, 0.22)';
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.background = 'transparent';
+                        el.style.borderColor = 'transparent';
+                        el.style.color = '#94A3B8';
+                        el.style.transform = 'scale(1)';
+                        el.style.boxShadow = 'none';
+                      }}
+                      title="Delete this search"
+                      aria-label="Delete this search"
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={13} strokeWidth={2.1} />
                     </button>
                   </div>
                 ))
@@ -428,10 +460,32 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
             {searchHistory.length > 0 && (
               <div style={{ paddingTop: '8px', borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
                 <button
+                  type="button"
                   onClick={handleClearAllHistory}
-                  style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '10.5px', cursor: 'pointer', textDecoration: 'underline' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#94A3B8',
+                    fontSize: '10.5px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.color = '#DC2626';
+                    el.style.background = '#FEE2E2';
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.color = '#94A3B8';
+                    el.style.background = 'transparent';
+                  }}
                 >
-                  Clear history
+                  Clear all history
                 </button>
               </div>
             )}

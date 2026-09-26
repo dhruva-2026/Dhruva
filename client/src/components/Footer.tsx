@@ -33,8 +33,8 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
 
           {/* Brand + Subtitle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '9999px', background: '#FFFFFF', padding: '2px', border: '1px solid rgba(2, 132, 199, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-              <img src="/images/dhruva-logo.png" alt="DHRUVA Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <div style={{ width: '30px', height: '30px', borderRadius: '9999px', background: '#FFFFFF', border: '1px solid rgba(2, 132, 199, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              <img src="/images/dhruva-logo.png" alt="DHRUVA Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span className="dhruva-brand-text" style={{ fontSize: '14px', fontWeight: 900, letterSpacing: '0.04em' }}>
