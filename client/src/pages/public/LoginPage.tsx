@@ -12,23 +12,33 @@ import {
   Building,
   AlertCircle,
   CheckCircle2,
-  Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  LogOut
 } from 'lucide-react';
-import { apiLogin, apiRegister, setAuthToken, setStoredUser } from '../../services/api';
+import { apiLogin, apiRegister, setAuthToken, clearAuthToken, setStoredUser } from '../../services/api';
 
 interface LoginPageProps {
   onNavigate: (tab: string) => void;
   currentUser: any;
   onLoginSuccess: (user: any) => void;
   initialRole?: 'public' | 'researcher' | 'admin';
+  onSignOut?: () => void;
+  canGoBack?: boolean;
+  canGoForward?: boolean;
+  onGoBack?: () => void;
+  onGoForward?: () => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onNavigate,
   currentUser,
   onLoginSuccess,
-  initialRole = 'public'
+  initialRole = 'public',
+  onSignOut,
+  canGoBack,
+  canGoForward,
+  onGoBack,
+  onGoForward
 }) => {
   const [selectedRole, setSelectedRole] = useState<'public' | 'researcher' | 'admin'>(initialRole);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -63,6 +73,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   useEffect(() => {
     setDemoCredentials(initialRole);
   }, [initialRole]);
+
+  const handleSignOut = () => {
+    clearAuthToken();
+    const pubUser = { role: 'public', name: 'Public Explorer' };
+    setStoredUser(pubUser);
+    onLoginSuccess(pubUser);
+    if (onSignOut) {
+      onSignOut();
+    }
+    setSuccessMessage('Successfully signed out of session.');
+    setSelectedRole('public');
+    setEmail('student@dhruva.edu');
+    setPassword('student123');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,247 +132,374 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: 'rgba(4,10,24,0.88)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '10px',
-    paddingTop: '13px',
-    paddingBottom: '13px',
-    paddingRight: '16px',
-    fontSize: '13px',
-    color: '#FFFFFF',
-    outline: 'none',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.18s',
-  };
-
   const portals: Array<{ role: 'public' | 'researcher' | 'admin'; icon: React.ReactNode; label: string; sub: string }> = [
-    { role: 'public',     icon: <Globe size={22} />,       label: 'PUBLIC',     sub: 'Explore & Learn'  },
-    { role: 'researcher', icon: <FlaskConical size={22} />, label: 'RESEARCHER', sub: 'Upload & Manage'  },
-    { role: 'admin',      icon: <ShieldCheck size={22} />,  label: 'ADMIN',      sub: 'Verify & Govern'  },
+    { role: 'public', icon: <Globe size={20} />, label: 'Public User', sub: 'Explore & Read' },
+    { role: 'researcher', icon: <FlaskConical size={20} />, label: 'Researcher', sub: 'Upload & Review' },
+    { role: 'admin', icon: <ShieldCheck size={20} />, label: 'Admin', sub: 'Govern & Publish' },
   ];
 
+  const isAuthenticated = currentUser && currentUser.role !== 'public';
+
   return (
-    <div
-      style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1rem', position: 'relative' }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-b from-[#060c18]/60 via-[#071426]/80 to-[#040812]/90 pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center py-10 px-4 relative">
+      {/* Soft aurora highlight background gradient - transparent to let polar compass watermark show through */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 70% 45% at 50% 12%, rgba(2, 132, 199, 0.09) 0%, rgba(56, 189, 248, 0.03) 50%, transparent 80%)'
+        }}
+      />
 
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '460px' }}>
-
-        {/* Top bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <button
-            onClick={() => onNavigate('home')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#CBD5E1', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#00F0FF'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#CBD5E1'; }}
+      <div className="relative z-10 w-full max-w-[480px]">
+        {/* Navigation & Status Header: Only the Arrow as requested */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div 
+            className="flex items-center gap-1 p-1 rounded-full transition-all select-none"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 249, 255, 0.92))',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(14, 116, 144, 0.22)',
+              boxShadow: '0 2px 10px -2px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset'
+            }}
           >
-            <ArrowLeft size={15} />
-            Back to DHRUVA Portal
-          </button>
-          {currentUser && (
-            <span style={{ fontSize: '11px', fontWeight: 500, padding: '4px 12px', borderRadius: '9999px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: '#34D399' }}>
-              Logged in as {currentUser.name} ({currentUser.role})
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (onGoBack && canGoBack) {
+                  onGoBack();
+                } else {
+                  onNavigate('home');
+                }
+              }}
+              title="Previous page"
+              aria-label="Previous page"
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 group text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer"
+            >
+              <ArrowLeft size={16} strokeWidth={2.4} className="transition-transform group-hover:-translate-x-0.5" />
+            </button>
+            {canGoForward && onGoForward && (
+              <>
+                <div className="w-[1px] h-3.5 bg-gradient-to-b from-transparent via-slate-300 to-transparent mx-0.5" />
+                <button
+                  type="button"
+                  onClick={onGoForward}
+                  title="Next page"
+                  aria-label="Next page"
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 group text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer"
+                >
+                  <ArrowRight size={16} strokeWidth={2.4} className="transition-transform group-hover:translate-x-0.5" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {isAuthenticated && (
+            <button
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer shadow-2xs"
+            >
+              <LogOut size={12} />
+              <span>Sign Out</span>
+            </button>
           )}
         </div>
 
-        {/* Main card */}
-        <div style={{
-          background: 'rgba(6,18,42,0.93)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '20px',
-          padding: '2rem 2rem 1.75rem',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,240,255,0.04)',
-        }}>
-
-          {/* Brand */}
-          <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-              <div style={{
-                width: '72px', height: '72px', borderRadius: '50%', background: '#FFFFFF',
-                overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 0 3px rgba(56,189,248,0.3), 0 8px 24px rgba(0,0,0,0.45)',
-                flexShrink: 0,
-              }}>
-                <img src="/images/dhruva-logo.png" alt="DHRUVA" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
-                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+        {/* Main Card */}
+        <div
+          className="rounded-3xl p-6 sm:p-8 transition-all"
+          style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(14, 116, 144, 0.18)',
+            boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(14, 116, 144, 0.06)'
+          }}
+        >
+          {/* Brand Header */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center mb-3">
+              <div
+                className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-md"
+                style={{
+                  border: '2px solid rgba(14, 116, 144, 0.2)',
+                  boxShadow: '0 6px 20px rgba(2, 132, 199, 0.15)'
+                }}
+              >
+                <img
+                  src="/images/dhruva-logo.png"
+                  alt="DHRUVA"
+                  className="w-full h-full object-cover rounded-full"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
               </div>
             </div>
-            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.65rem,4vw,2.1rem)', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.12, letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>
-              Welcome to{' '}
-              <span style={{ background: 'linear-gradient(135deg,#00F0FF 0%,#38BDF8 55%,#818CF8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                DHRUVA
-              </span>
+
+            <h1 className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1">
+              Welcome to <span className="dhruva-brand-text">DHRUVA</span>
             </h1>
-            <p style={{ fontSize: '0.8rem', color: 'rgba(203,213,225,0.82)', lineHeight: 1.65, maxWidth: '340px', margin: '0 auto' }}>
-              Access India's Integrated Polar Science Outreach, Knowledge Repository and Media Dissemination Platform
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              India's Polar Science Outreach, Knowledge Repository and Media Dissemination Platform
             </p>
           </div>
 
-          {/* Portal selector */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#64748B', marginBottom: '10px' }}>
-              Select Your Portal
+          {/* Active Session Card (when logged in) */}
+          {isAuthenticated && (
+            <div className="mb-5 p-3.5 rounded-2xl bg-sky-50/90 border border-sky-200/90 shadow-xs">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-white border border-sky-200 flex items-center justify-center text-sky-600 shrink-0 shadow-2xs">
+                    {currentUser.role === 'admin' ? (
+                      <ShieldCheck size={18} className="text-rose-600" />
+                    ) : (
+                      <FlaskConical size={18} className="text-sky-600" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 whitespace-nowrap">
+                        {currentUser.role}
+                      </span>
+                      <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 whitespace-nowrap">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active Session
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-900 mt-1 truncate">
+                      {currentUser.name || currentUser.email}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(currentUser.role === 'admin' ? 'admin-verification' : 'researcher-dashboard')}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-700 text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                  >
+                    <LogOut size={12} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+          )}
+
+          {/* Portal Selector */}
+          <div className="mb-4">
+            <div className="text-[10px] font-bold tracking-wider text-slate-500 uppercase mb-2 flex items-center justify-between">
+              <span>Select Sign In Portal</span>
+              <span className="text-[10px] text-sky-600 font-medium">Specific role access</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
               {portals.map(({ role, icon, label, sub }) => {
                 const active = selectedRole === role;
                 return (
-                  <button key={role} type="button" onClick={() => setDemoCredentials(role)}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                      padding: '14px 6px 12px', borderRadius: '12px', cursor: 'pointer', gap: '5px',
-                      border: active ? '1.5px solid rgba(0,240,255,0.7)' : '1px solid rgba(255,255,255,0.07)',
-                      background: active ? 'rgba(0,240,255,0.08)' : 'rgba(255,255,255,0.03)',
-                      boxShadow: active ? '0 0 20px rgba(0,240,255,0.14), inset 0 1px 0 rgba(0,240,255,0.1)' : 'none',
-                      transition: 'all 0.18s ease',
-                    }}
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setDemoCredentials(role)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                      active
+                        ? 'bg-sky-50/90 border-sky-500 text-sky-700 shadow-sm shadow-sky-500/10'
+                        : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-slate-100/70 text-slate-600'
+                    }`}
                   >
-                    <span style={{ color: active ? '#00F0FF' : '#64748B', transition: 'color 0.18s', marginBottom: '2px' }}>{icon}</span>
-                    <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.07em', color: active ? '#FFFFFF' : '#94A3B8', fontFamily: 'var(--font-heading)' }}>{label}</span>
-                    <span style={{ fontSize: '10px', color: active ? 'rgba(0,240,255,0.7)' : '#475569', lineHeight: 1.25 }}>{sub}</span>
+                    <span className={`mb-1.5 ${active ? 'text-sky-600' : 'text-slate-400'}`}>
+                      {icon}
+                    </span>
+                    <span className={`text-xs font-bold font-heading ${active ? 'text-slate-900' : 'text-slate-700'}`}>
+                      {label}
+                    </span>
+                    <span className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                      {sub}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Demo banner */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '10px', background: 'rgba(0,240,255,0.06)', border: '1px solid rgba(0,240,255,0.22)', marginBottom: '18px' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12px', fontWeight: 600, color: '#67E8F9' }}>
-              <Sparkles size={13} style={{ color: '#00F0FF' }} />
-              Demo Credentials Loaded for {selectedRole.toUpperCase()}
-            </span>
-            <span style={{ fontSize: '10px', color: '#64748B', fontFamily: 'var(--font-mono)' }}>Ready to Sign In</span>
-          </div>
-
           {/* Errors / Success */}
           {errorMessage && (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '11px 13px', borderRadius: '10px', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', marginBottom: '14px' }}>
-              <AlertCircle size={15} style={{ color: '#FB7185', flexShrink: 0, marginTop: '1px' }} />
-              <span style={{ fontSize: '12px', color: '#FCA5A5' }}>{errorMessage}</span>
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs mb-4">
+              <AlertCircle size={15} className="text-rose-500 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
             </div>
           )}
+
           {successMessage && (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '11px 13px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', marginBottom: '14px' }}>
-              <CheckCircle2 size={15} style={{ color: '#34D399', flexShrink: 0, marginTop: '1px' }} />
-              <span style={{ fontSize: '12px', color: '#6EE7B7' }}>{successMessage}</span>
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-4">
+              <CheckCircle2 size={15} className="text-emerald-600 shrink-0 mt-0.5" />
+              <span>{successMessage}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit}>
-
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             {isRegistering && (
-              <div style={{ marginBottom: '13px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#CBD5E1', marginBottom: '6px' }}>Full Name</label>
-                <div style={{ position: 'relative' }}>
-                  <User size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
-                  <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Dr. Rajesh Sharma"
-                    style={{ ...inputStyle, paddingLeft: '42px' }}
-                    onFocus={(e) => { e.target.style.borderColor = 'rgba(0,240,255,0.5)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} />
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'center' }}>
+                    <User size={16} className="text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Dr. Rajesh Sharma"
+                    style={{ paddingLeft: '44px', paddingRight: '16px', fontSize: '13.5px' }}
+                    className="w-full py-2.5 rounded-xl border border-slate-300 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-3 focus:ring-sky-500/15 focus:bg-white transition-all"
+                  />
                 </div>
               </div>
             )}
 
             {isRegistering && selectedRole === 'researcher' && (
-              <div style={{ marginBottom: '13px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#CBD5E1', marginBottom: '6px' }}>Institution / Organization</label>
-                <div style={{ position: 'relative' }}>
-                  <Building size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
-                  <input type="text" value={institution} onChange={(e) => setInstitution(e.target.value)} placeholder="e.g. NCAOR / IIT Bombay / IISC"
-                    style={{ ...inputStyle, paddingLeft: '42px' }}
-                    onFocus={(e) => { e.target.style.borderColor = 'rgba(0,240,255,0.5)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} />
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Institution / Organization
+                </label>
+                <div className="relative">
+                  <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'center' }}>
+                    <Building size={16} className="text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    placeholder="e.g. NCPOR / IIT Bombay / IISC"
+                    style={{ paddingLeft: '44px', paddingRight: '16px', fontSize: '13.5px' }}
+                    className="w-full py-2.5 rounded-xl border border-slate-300 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-3 focus:ring-sky-500/15 focus:bg-white transition-all"
+                  />
                 </div>
               </div>
             )}
 
             {/* Email */}
-            <div style={{ marginBottom: '13px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#CBD5E1', marginBottom: '6px' }}>Email Address or Username</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
-                <input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@organization.gov.in"
-                  style={{ ...inputStyle, paddingLeft: '42px' }}
-                  onFocus={(e) => { e.target.style.borderColor = 'rgba(0,240,255,0.5)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} />
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Email Address or Username
+              </label>
+              <div className="relative">
+                <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'center' }}>
+                  <Mail size={16} className="text-slate-400" />
+                </div>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@organization.gov.in"
+                  style={{ paddingLeft: '44px', paddingRight: '16px', fontSize: '13.5px' }}
+                  className="w-full py-2.5 rounded-xl border border-slate-300 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-3 focus:ring-sky-500/15 focus:bg-white transition-all"
+                />
               </div>
             </div>
 
             {/* Password */}
-            <div style={{ marginBottom: '18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: '#CBD5E1' }}>Password</label>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">Password</label>
                 {!isRegistering && (
-                  <button type="button"
+                  <button
+                    type="button"
                     onClick={() => alert('Password reset is managed through your institution single sign-on or system administrator.')}
-                    style={{ fontSize: '12px', color: '#00F0FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    className="text-xs text-sky-600 hover:text-sky-700 transition-colors font-medium cursor-pointer"
+                  >
                     Forgot Password?
                   </button>
                 )}
               </div>
-              <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
-                <input type={showPassword ? 'text' : 'password'} autoComplete={isRegistering ? 'new-password' : 'current-password'}
-                  required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••"
-                  style={{ ...inputStyle, paddingLeft: '42px', paddingRight: '46px' }}
-                  onFocus={(e) => { e.target.style.borderColor = 'rgba(0,240,255,0.5)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
+              <div className="relative">
+                <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'center' }}>
+                  <Lock size={16} className="text-slate-400" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••"
+                  style={{ paddingLeft: '44px', paddingRight: '44px', fontSize: '13.5px' }}
+                  className="w-full py-2.5 rounded-xl border border-slate-300 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-3 focus:ring-sky-500/15 focus:bg-white transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: 0, display: 'flex', alignItems: 'center' }}>
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)' }}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5 flex items-center justify-center"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Sign In button */}
-            <button type="submit" disabled={isLoading}
-              style={{
-                width: '100%', height: '52px', borderRadius: '12px', border: 'none',
-                background: isLoading ? 'rgba(0,240,255,0.35)' : 'linear-gradient(135deg, #00E5FF 0%, #0BC5EB 55%, #0284C7 100%)',
-                color: '#020617', fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                boxShadow: isLoading ? 'none' : '0 0 30px rgba(0,229,255,0.38), 0 4px 16px rgba(0,0,0,0.3)',
-                transition: 'all 0.2s ease', fontFamily: 'var(--font-heading)',
-              }}>
+            {/* Submit button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full h-11 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${
+                isLoading
+                  ? 'bg-sky-400 cursor-not-allowed opacity-80'
+                  : 'bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 shadow-sky-600/20 active:scale-[0.99]'
+              }`}
+            >
               {isLoading ? (
                 <>
-                  <span style={{ width: '18px', height: '18px', border: '2px solid #020617', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'lp-spin 0.7s linear infinite' }} />
-                  Authenticating...
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Authenticating...</span>
                 </>
               ) : (
                 <>
-                  <span>{isRegistering ? `Register as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}` : `Sign In to ${selectedRole.toUpperCase()} Portal`}</span>
-                  <ArrowRight size={17} />
+                  <span>
+                    {isRegistering
+                      ? `Register as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}`
+                      : `Sign In to ${selectedRole.toUpperCase()} Portal`}
+                  </span>
+                  <ArrowRight size={15} />
                 </>
               )}
             </button>
           </form>
 
-          {/* Register toggle */}
+          {/* Register / Sign In toggle */}
           {selectedRole !== 'admin' && (
-            <div style={{ marginTop: '15px', textAlign: 'center' }}>
-              <p style={{ fontSize: '12px', color: '#94A3B8' }}>
+            <div className="mt-4 text-center">
+              <p className="text-xs text-slate-500">
                 {isRegistering ? (
-                  <>Already have an account?{' '}
-                    <button type="button" onClick={() => setIsRegistering(false)}
-                      style={{ color: '#00F0FF', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px' }}>
+                  <>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setIsRegistering(false)}
+                      className="text-sky-600 hover:text-sky-700 font-semibold cursor-pointer"
+                    >
                       Sign In
                     </button>
                   </>
                 ) : (
-                  <>Don't have an account?{' '}
-                    <button type="button" onClick={() => setIsRegistering(true)}
-                      style={{ color: '#00F0FF', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px' }}>
+                  <>
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setIsRegistering(true)}
+                      className="text-sky-600 hover:text-sky-700 font-semibold cursor-pointer"
+                    >
                       Create {selectedRole === 'researcher' ? 'Researcher' : 'Public Explorer'} Account
                     </button>
                   </>
@@ -357,16 +508,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           )}
 
-          {/* NCPOR footer */}
-          <div style={{ marginTop: '18px', textAlign: 'center' }}>
-            <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>
+          {/* Quick Sign Out Action if logged in */}
+          {isAuthenticated && (
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-2">
+              <span className="text-xs text-slate-500">Signed in as {currentUser.name}?</span>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <LogOut size={12} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
+
+          {/* NCPOR Footer */}
+          <div className="mt-5 text-center">
+            <p className="text-[11px] text-slate-400 leading-relaxed">
               National Centre for Polar and Ocean Research (NCPOR) &middot; Ministry of Earth Sciences
             </p>
           </div>
         </div>
       </div>
-
-      <style>{`@keyframes lp-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

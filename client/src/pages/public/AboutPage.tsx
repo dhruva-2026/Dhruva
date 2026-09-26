@@ -239,7 +239,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ setCurrentTab, lang }) => 
             lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: '18px',
           }}>
             <span style={{ color: '#0F172A' }}>Know About </span>
-            <span className="heading-gradient">DHRUVA</span>
+            <span className="dhruva-brand-text">DHRUVA</span>
           </h1>
 
           {/* Subheading */}
@@ -308,7 +308,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ setCurrentTab, lang }) => 
               }}
             >
               <Sparkles size={17} style={{ color: '#0284C7' }} />
-              <span>{lang === 'en' ? 'Ask DHRUVA' : 'ध्रुव से पूछें'}</span>
+              <span>{lang === 'en' ? <>Ask <span className="dhruva-brand-text">DHRUVA</span></> : 'ध्रुव से पूछें'}</span>
             </button>
           </div>
         </div>
@@ -324,7 +324,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ setCurrentTab, lang }) => 
             <span>Our Mission</span>
           </div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.8rem,3.5vw,2.6rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: '10px' }}>
-            Three Pillars of <span className="heading-gradient">DHRUVA</span>
+            Three Pillars of <span className="dhruva-brand-text">DHRUVA</span>
           </h2>
           <p style={{ fontSize: '0.95rem', color: '#64748B', lineHeight: 1.6 }}>
             Click on any card to open the live station telemetry, verifiable AI metrics, and national outreach showcase below.

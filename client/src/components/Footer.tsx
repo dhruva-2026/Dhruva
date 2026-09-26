@@ -37,7 +37,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
               <img src="/images/dhruva-logo.png" alt="DHRUVA Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.04em', color: '#0F172A', fontFamily: 'var(--font-heading)' }}>
+              <span className="dhruva-brand-text" style={{ fontSize: '14px', fontWeight: 900, letterSpacing: '0.04em' }}>
                 DHRUVA
               </span>
               <span style={{ fontSize: '9.5px', color: '#0369A1', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', background: '#F0F9FF', border: '1px solid #BAE6FD' }}>
@@ -53,7 +53,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
 
           {/* Copyright + PACER */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px', color: '#64748B' }}>
-            <span>© 2026 DHRUVA | MoES, Govt. of India</span>
+            <span>© 2026 <span className="dhruva-brand-text font-bold">DHRUVA</span> | MoES, Govt. of India</span>
             <span style={{ color: '#CBD5E1' }}>•</span>
             <span style={{ color: '#0284C7', fontWeight: 600 }}>PACER</span>
           </div>

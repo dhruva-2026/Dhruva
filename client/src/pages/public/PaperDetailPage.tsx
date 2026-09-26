@@ -467,7 +467,7 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
               }}
             >
               <MessageSquare size={13} style={{ color: '#4338CA' }} />
-              <span>Ask DHRUVA (AI RAG)</span>
+              <span>Ask <span className="dhruva-brand-text">DHRUVA</span> (AI RAG)</span>
             </button>
 
             <button
@@ -692,7 +692,7 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
           {activeTab === 'ask' && (
             <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '540px' }}>
               <div style={{ padding: '14px 18px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Ask DHRUVA Research Assistant</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Ask <span className="dhruva-brand-text">DHRUVA</span> Research Assistant</span>
                 <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#16A34A', background: '#F0FDF4', padding: '3px 8px', borderRadius: '9999px', border: '1px solid #BBF7D0' }}>100% Grounded</span>
               </div>
               <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -791,7 +791,7 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
               </h3>
             </div>
             <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.55, margin: 0 }}>
-              This summary has been cross-referenced sentence-by-sentence with the original full-text manuscript by DHRUVA's scientific verification engine.
+              This summary has been cross-referenced sentence-by-sentence with the original full-text manuscript by <span className="dhruva-brand-text font-bold">DHRUVA</span>'s scientific verification engine.
             </p>
           </div>
 

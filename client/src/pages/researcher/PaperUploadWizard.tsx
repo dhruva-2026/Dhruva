@@ -102,7 +102,7 @@ export const PaperUploadWizard: React.FC<PaperUploadWizardProps> = ({ onComplete
           <span>Manuscript Ingestion Workflow</span>
         </div>
         <h1 className="text-3xl font-extrabold text-white">
-          Upload Research Paper to DHRUVA
+          Upload Research Paper to <span className="dhruva-brand-text">DHRUVA</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-300">
           Step-by-step scientific ingestion wizard with automated section extraction, vector chunking, and AI grounding.

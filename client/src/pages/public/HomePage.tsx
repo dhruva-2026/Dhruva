@@ -149,7 +149,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                   }}
                 >
                   <Sparkles style={{ width: '15px', height: '15px', flexShrink: 0, color: '#0284C7' }} />
-                  <span>{lang === 'en' ? 'Ask DHRUVA' : 'ध्रुव से पूछें'}</span>
+                  <span>{lang === 'en' ? <>Ask <span className="dhruva-brand-text">DHRUVA</span></> : 'ध्रुव से पूछें'}</span>
                 </button>
               </div>
             </div>
@@ -491,7 +491,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
             <div>
               <div className="section-eyebrow" style={{ marginBottom: '6px' }}>
                 <span className="eyebrow-dot" />
-                <span>{lang === 'en' ? 'LEARN WITH DHRUVA' : 'ध्रुव के साथ सीखें'}</span>
+                <span>{lang === 'en' ? <>LEARN WITH <span className="dhruva-brand-text">DHRUVA</span></> : 'ध्रुव के साथ सीखें'}</span>
               </div>
               <h2 
                 style={{ 
@@ -665,7 +665,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
                   fontFamily: 'var(--font-heading)' 
                 }}
               >
-                {lang === 'en' ? 'Why DHRUVA Matters for India' : 'भारत के लिए ध्रुव क्यों महत्वपूर्ण है'}
+                {lang === 'en' ? <>Why <span className="dhruva-brand-text">DHRUVA</span> Matters for India</> : 'भारत के लिए ध्रुव क्यों महत्वपूर्ण है'}
               </h2>
               <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, maxWidth: '640px', margin: 0 }}>
                 {lang === 'en' ? 'Transforming complex polar science data into open, accessible and grounded knowledge for every citizen and researcher.' : 'जटिल ध्रुवीय विज्ञान डेटा को प्रत्येक नागरिक और शोधकर्ता के लिए खुले, सुलभ और प्रामाणिक ज्ञान में बदलना।'}

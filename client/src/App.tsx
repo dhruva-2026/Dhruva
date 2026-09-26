@@ -36,7 +36,40 @@ import {
 } from './services/api';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<string>('home');
+  const [currentTab, setCurrentTabState] = useState<string>('home');
+  const [history, setHistory] = useState<string[]>(['home']);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+
+  const setCurrentTab = (tab: string) => {
+    if (tab === currentTab) return;
+    setHistory((prev) => {
+      const updated = prev.slice(0, historyIndex + 1);
+      updated.push(tab);
+      setHistoryIndex(updated.length - 1);
+      return updated;
+    });
+    setCurrentTabState(tab);
+  };
+
+  const canGoBack = historyIndex > 0;
+  const canGoForward = historyIndex < history.length - 1;
+
+  const handleGoBack = () => {
+    if (historyIndex > 0) {
+      const newIdx = historyIndex - 1;
+      setHistoryIndex(newIdx);
+      setCurrentTabState(history[newIdx]);
+    }
+  };
+
+  const handleGoForward = () => {
+    if (historyIndex < history.length - 1) {
+      const newIdx = historyIndex + 1;
+      setHistoryIndex(newIdx);
+      setCurrentTabState(history[newIdx]);
+    }
+  };
+
   const [selectedPaperId, setSelectedPaperId] = useState<string>('paper-001');
   const [selectedTheme, setSelectedTheme] = useState<string>('All');
   const [lang, setLang] = useState<'en' | 'hi'>('en');
@@ -53,9 +86,9 @@ export function App() {
     }
   }, []);
 
-  // Scroll to top whenever tab changes (ensures Ask DHRUVA and other pages start at top without scroll)
+  // Scroll to top smoothly whenever tab changes (ensures seamless page transition)
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentTab]);
 
   // Instant Portal & Role Switcher Helper
@@ -95,6 +128,17 @@ export function App() {
   return (
     <div className="min-h-screen flex flex-col text-slate-900 selection:bg-cyan-100 selection:text-cyan-950 relative">
 
+      {/* Subtle Top Navigation Progress Accent for smooth transition feedback */}
+      <div 
+        key={`nav-progress-${currentTab}`}
+        className="fixed top-0 left-0 right-0 h-[2.5px] z-[60] pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, #0284C7 0%, #38BDF8 50%, #818CF8 100%)',
+          animation: 'navBarSweep 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          boxShadow: '0 0 10px rgba(2, 132, 199, 0.5)'
+        }}
+      />
+
       {/* Global Iceberg Parallax & Atmospheric Background */}
       <ParallaxBackground />
 
@@ -106,6 +150,10 @@ export function App() {
         setLang={setLang}
         currentUser={currentUser}
         onRoleSwitch={handleRoleSwitch}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onGoBack={handleGoBack}
+        onGoForward={handleGoForward}
       />
 
       {/* Main Content Area — keyed by tab so each tab gets entry animation */}
@@ -159,6 +207,10 @@ export function App() {
                 setCurrentUser(u);
               }}
               initialRole="public"
+              canGoBack={canGoBack}
+              canGoForward={canGoForward}
+              onGoBack={handleGoBack}
+              onGoForward={handleGoForward}
             />
           </div>
         )}

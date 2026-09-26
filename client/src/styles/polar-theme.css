@@ -33,6 +33,25 @@
   --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --dhruva-gradient: linear-gradient(90deg, #0284C7 0%, #0369A1 22%, #2563EB 55%, #4F46E5 80%, #6366F1 100%);
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   DHRUVA SIGNATURE BRAND TYPOGRAPHY GRADIENT
+   Vibrant Ocean Cyan -> Deep Sky Blue -> Royal Blue -> Indigo Violet
+   ═════════════════════════════════════════════════════════════════════ */
+.dhruva-brand-text,
+.brand-dhruva,
+.heading-gradient {
+  font-family: var(--font-heading), 'Outfit', sans-serif;
+  font-weight: 800;
+  background: linear-gradient(90deg, #0284C7 0%, #0369A1 22%, #2563EB 55%, #4F46E5 80%, #6366F1 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  display: inline-block;
+  letter-spacing: -0.01em;
 }
 
 *, ::before, ::after {
@@ -804,9 +823,38 @@ textarea:focus {
   }
 }
 
+@keyframes pageTransition {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.998);
+    filter: blur(1.5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes navBarSweep {
+  0% {
+    width: 0%;
+    opacity: 1;
+  }
+  75% {
+    width: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 0;
+  }
+}
+
 /* Animation utility classes */
 .animate-fadeIn {
-  animation: fadeIn var(--transition-slow) ease both;
+  animation: pageTransition 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform, filter;
 }
 
 .animate-fadeInUp {

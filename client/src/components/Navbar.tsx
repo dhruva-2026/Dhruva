@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Compass, BookOpen, Sparkles, Image, Shield, UploadCloud, UserCheck, Globe, Menu, X, ChevronDown, Check, ArrowRight } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Compass, BookOpen, Sparkles, Image, Shield, UploadCloud, UserCheck, Globe, Menu, X, ChevronDown, Check, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: string;
@@ -8,6 +8,10 @@ interface NavbarProps {
   setLang: (l: 'en' | 'hi') => void;
   currentUser: any;
   onRoleSwitch: (role: 'public' | 'researcher' | 'admin', email?: string) => void;
+  canGoBack?: boolean;
+  canGoForward?: boolean;
+  onGoBack?: () => void;
+  onGoForward?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,10 +20,31 @@ export const Navbar: React.FC<NavbarProps> = ({
   lang,
   setLang,
   currentUser,
-  onRoleSwitch
+  onRoleSwitch,
+  canGoBack,
+  canGoForward,
+  onGoBack,
+  onGoForward
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setRoleDropdownOpen(false);
+      }
+    };
+
+    if (roleDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [roleDropdownOpen]);
 
   const t = {
     home: lang === 'en' ? 'Home' : 'मुख्य पृष्ठ',
@@ -54,25 +79,71 @@ export const Navbar: React.FC<NavbarProps> = ({
     >
       <div className="site-container-wide h-20 flex items-center justify-between gap-3 lg:gap-6 relative">
         
-        {/* Brand Logo with Uploaded Logo Image */}
-        <div 
-          className="flex items-center gap-3 cursor-pointer select-none shrink-0"
-          onClick={() => setCurrentTab('home')}
-        >
-          <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-white p-1 shadow-xs border border-cyan-500/30 flex items-center justify-center relative overflow-hidden group shrink-0">
-            <img 
-              src="/images/dhruva-logo.png" 
-              alt="DHRUVA Logo" 
-              className="h-full w-full object-contain group-hover:scale-105 transition-transform"
-            />
+        {/* Brand Logo & Global Previous / Next Page Navigation */}
+        <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
+          {/* Global Platform Navigation Pill (Previous / Next Page) */}
+          <div 
+            className="flex items-center gap-1 p-1 rounded-full transition-all select-none shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 249, 255, 0.92))',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(14, 116, 144, 0.22)',
+              boxShadow: '0 2px 10px -2px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset'
+            }}
+          >
+            <button
+              type="button"
+              onClick={onGoBack}
+              disabled={!canGoBack}
+              title={canGoBack ? "Go to previous page" : "No previous page in history"}
+              aria-label="Previous page"
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 group ${
+                canGoBack
+                  ? 'text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer'
+                  : 'text-slate-300 bg-transparent border-transparent cursor-not-allowed opacity-45'
+              }`}
+            >
+              <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${canGoBack ? 'transition-transform group-hover:-translate-x-0.5' : ''}`} strokeWidth={2.4} />
+            </button>
+
+            <div className="w-[1px] h-3.5 bg-gradient-to-b from-transparent via-slate-300 to-transparent mx-0.5" />
+
+            <button
+              type="button"
+              onClick={onGoForward}
+              disabled={!canGoForward}
+              title={canGoForward ? "Go to next page" : "No next page in history"}
+              aria-label="Next page"
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 group ${
+                canGoForward
+                  ? 'text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer'
+                  : 'text-slate-300 bg-transparent border-transparent cursor-not-allowed opacity-45'
+              }`}
+            >
+              <ArrowRight className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${canGoForward ? 'transition-transform group-hover:translate-x-0.5' : ''}`} strokeWidth={2.4} />
+            </button>
           </div>
-          <div className="flex flex-col">
-            <span className="text-lg sm:text-xl font-black tracking-wider text-slate-900 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-              DHRUVA
-            </span>
-            <p className="text-[10px] xl:text-[11px] text-slate-500 font-medium tracking-wide leading-none mt-0.5 hidden sm:block whitespace-nowrap">
-              {lang === 'en' ? 'Polar Science Outreach & Knowledge Portal' : 'ध्रुवीय विज्ञान प्रसार एवं ज्ञान पोर्टल'}
-            </p>
+
+          <div 
+            className="flex items-center gap-3 cursor-pointer select-none shrink-0"
+            onClick={() => setCurrentTab('home')}
+          >
+            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-white p-1 shadow-xs border border-cyan-500/30 flex items-center justify-center relative overflow-hidden group shrink-0">
+              <img 
+                src="/images/dhruva-logo.png" 
+                alt="DHRUVA Logo" 
+                className="h-full w-full object-contain group-hover:scale-105 transition-transform"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg sm:text-xl font-black tracking-wider leading-tight dhruva-brand-text">
+                DHRUVA
+              </span>
+              <p className="text-[10px] xl:text-[11px] text-slate-500 font-medium tracking-wide leading-none mt-0.5 hidden sm:block whitespace-nowrap">
+                {lang === 'en' ? 'Polar Science Outreach & Knowledge Portal' : 'ध्रुवीय विज्ञान प्रसार एवं ज्ञान पोर्टल'}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -118,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
-            <span>Ask DHRUVA</span>
+            <span>Ask <span className="dhruva-brand-text">DHRUVA</span></span>
           </button>
 
           {/* Quick Search Button */}
@@ -151,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Role Switcher Dropdown */}
-          <div className="relative shrink-0">
+          <div className="relative shrink-0" ref={roleDropdownRef}>
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all shadow-xs cursor-pointer whitespace-nowrap"
@@ -185,16 +256,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'Researcher' 
                   : 'Public Portal'}
               </span>
-              {currentUser?.role === 'public' || !currentUser ? (
-                <ArrowRight className="w-3 h-3 opacity-70 shrink-0 ml-0.5" />
-              ) : (
-                <ChevronDown className="w-3 h-3 opacity-70 shrink-0 ml-0.5" />
-              )}
+              <ChevronDown className={`w-3 h-3 opacity-70 shrink-0 ml-0.5 transition-transform ${roleDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {roleDropdownOpen && (
               <div
-                className="absolute right-0 mt-2 w-64 rounded-xl border p-2 shadow-xl z-50"
+                className="absolute right-0 mt-2 w-64 rounded-xl border p-2 shadow-xl z-50 animate-fadeIn"
                 style={{ background: '#FFFFFF', borderColor: 'rgba(14, 116, 144, 0.2)' }}
               >
                 <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-700 px-3 py-1.5 border-b border-slate-100">
@@ -207,13 +274,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setRoleDropdownOpen(false);
                     setCurrentTab('home');
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 mt-1 cursor-pointer"
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 mt-1 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4 text-cyan-600" />
                     <div>
                       <div className="font-semibold text-slate-900">Public User</div>
-                      <div className="text-[10px] text-slate-500">Search, Read & Ask DHRUVA</div>
+                      <div className="text-[10px] text-slate-500">Search, Read & Ask <span className="dhruva-brand-text">DHRUVA</span></div>
                     </div>
                   </div>
                   {(!currentUser || currentUser?.role === 'public') && <Check className="w-4 h-4 text-cyan-600" />}
@@ -225,12 +292,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setRoleDropdownOpen(false);
                     setCurrentTab('researcher-dashboard');
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 cursor-pointer"
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <UploadCloud className="w-4 h-4 text-sky-600" />
                     <div>
-                      <div className="font-semibold text-slate-900">Dr. Ananya (Researcher)</div>
+                      <div className="font-semibold text-slate-900">Researcher</div>
                       <div className="text-[10px] text-slate-500">Upload paper & Track review</div>
                     </div>
                   </div>
@@ -243,43 +310,84 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setRoleDropdownOpen(false);
                     setCurrentTab('admin-verification');
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 cursor-pointer"
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-50 flex items-center justify-between text-slate-800 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-rose-600" />
                     <div>
-                      <div className="font-semibold text-slate-900">Dr. Swaminathan (Admin)</div>
+                      <div className="font-semibold text-slate-900">Admin</div>
                       <div className="text-[10px] text-slate-500">Verify AI claims & Publish</div>
                     </div>
                   </div>
                   {currentUser?.role === 'admin' && <Check className="w-4 h-4 text-rose-600" />}
                 </button>
 
-                <div className="border-t border-slate-100 mt-1 pt-1">
+                <div className="border-t border-slate-100 mt-1 pt-1 space-y-0.5">
                   <button
                     onClick={() => {
                       setRoleDropdownOpen(false);
                       setCurrentTab('login');
                     }}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-700 hover:bg-cyan-50 flex items-center gap-2 cursor-pointer"
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-700 hover:bg-cyan-50 flex items-center gap-2 cursor-pointer transition-colors"
                   >
-                    <span>Full Authentication / Sign In →</span>
+                    <span>Sign In →</span>
                   </button>
+
+                  {currentUser && currentUser?.role !== 'public' && (
+                    <button
+                      onClick={() => {
+                        onRoleSwitch('public');
+                        setRoleDropdownOpen(false);
+                        setCurrentTab('home');
+                      }}
+                      className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Sign Out</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Dedicated Sign In / Portal button */}
-          <button
-            onClick={() => setCurrentTab('login')}
-            className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap ${currentTab === 'login'
-                ? 'bg-cyan-600 text-white shadow-xs'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+          {/* Dedicated Sign In / Portal / Sign Out button */}
+          {currentUser && currentUser?.role !== 'public' ? (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => setCurrentTab('login')}
+                className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  currentTab === 'login'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                }`}
+              >
+                Portal
+              </button>
+              <button
+                onClick={() => {
+                  onRoleSwitch('public');
+                  setCurrentTab('home');
+                }}
+                title="Sign Out"
+                className="text-xs px-2.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer whitespace-nowrap bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 flex items-center gap-1"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setCurrentTab('login')}
+              className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                currentTab === 'login'
+                  ? 'bg-cyan-600 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
               }`}
-          >
-            {currentUser && currentUser.role !== 'public' ? 'Portal' : 'Sign In'}
-          </button>
+            >
+              Sign In
+            </button>
+          )}
         </div>
 
         {/* Mobile menu trigger */}
@@ -353,7 +461,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-100">
+          <div className="pt-2 border-t border-slate-100 space-y-2">
             <button
               onClick={() => {
                 setCurrentTab('login');
@@ -361,8 +469,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full btn-primary h-[40px] text-xs font-semibold flex items-center justify-center gap-2 rounded-xl"
             >
-              <span>{currentUser && currentUser.role !== 'public' ? 'Manage Account / Portal' : 'Sign In to DHRUVA Portal'}</span>
+              <span>{currentUser && currentUser.role !== 'public' ? 'Manage Account / Portal' : <>Sign In to <span className="dhruva-brand-text">DHRUVA</span> Portal</>}</span>
             </button>
+
+            {currentUser && currentUser.role !== 'public' && (
+              <button
+                onClick={() => {
+                  onRoleSwitch('public');
+                  setMobileMenuOpen(false);
+                  setCurrentTab('home');
+                }}
+                className="w-full h-[38px] text-xs font-semibold flex items-center justify-center gap-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            )}
           </div>
         </div>
       )}

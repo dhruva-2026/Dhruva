@@ -528,7 +528,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                   fontFamily: 'var(--font-heading)' 
                 }}
               >
-                Ask DHRUVA
+                Ask <span className="dhruva-brand-text">DHRUVA</span>
               </h1>
 
               <p 
@@ -718,10 +718,10 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748B', marginBottom: '2px' }}>
-                  DHRUVA ASSISTANT
+                  <span className="dhruva-brand-text font-bold">DHRUVA</span> ASSISTANT
                 </div>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, marginBottom: '2px' }}>
-                  Namaste! I am DHRUVA (ध्रुव), the AI Research Assistant for India's Polar Science expeditions.
+                  Namaste! I am <span className="dhruva-brand-text font-bold">DHRUVA</span> (ध्रुव), the AI Research Assistant for India's Polar Science expeditions.
                 </div>
                 <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.45, margin: 0 }}>
                   I answer questions strictly grounded in our peer-reviewed polar science knowledge repository, providing verified section and page citations. Try selecting one of the suggested scientific queries below or ask your own question!
@@ -767,7 +767,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                     {msg.role === 'assistant' && (
                       <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Sparkles size={10} />
-                        <span>DHRUVA AI · GROUNDED SYNTHESIS</span>
+                        <span><span className="dhruva-brand-text font-bold">DHRUVA</span> AI · GROUNDED SYNTHESIS</span>
                       </div>
                     )}
 
