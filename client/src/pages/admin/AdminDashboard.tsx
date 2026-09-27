@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, CheckCircle2, Clock, XCircle, ShieldAlert, BookOpen, Activity, ArrowRight, BarChart3, ListFilter } from 'lucide-react';
+import { 
+  Shield, CheckCircle2, Clock, XCircle, ShieldAlert, BookOpen, Activity, 
+  ArrowRight, BarChart3, ListFilter, Sparkles, Layers, FileCheck
+} from 'lucide-react';
 import { apiFetchAdminDashboard } from '../../services/api';
 
 interface AdminDashboardProps {
@@ -43,28 +46,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, []);
 
   return (
-    <div className="page-wrapper">
-      <div className="page-wrapper-inner space-y-10">
+    <div className="site-container py-10 space-y-10 animate-fadeIn">
       
       {/* Header */}
-      <div className="section-header-block mb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="section-eyebrow" style={{ borderColor: 'rgba(244, 63, 94, 0.35)', background: 'rgba(244, 63, 94, 0.1)', color: '#FDA4AF' }}>
-            <span className="eyebrow-dot" style={{ background: '#F43F5E', boxShadow: '0 0 8px #F43F5E' }} />
-            <Shield className="w-3.5 h-3.5" />
-            <span>NCPOR Scientific Review Board</span>
+      <div className="bg-gradient-to-r from-rose-50 via-white to-sky-50 border border-rose-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100/80 border border-rose-200 text-rose-800 text-xs font-bold uppercase tracking-wider shadow-2xs">
+            <Shield className="w-3.5 h-3.5 text-rose-600" />
+            <span>NCPOR Scientific Review Board & Governance</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Admin Verification & <span className="heading-gradient">Dissemination Console</span>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight font-heading">
+            Admin Verification & <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent">Dissemination Console</span>
           </h1>
-          <p className="section-subtitle">
-            Welcome, Dr. K. Swaminathan. Audit AI-generated claims, verify source evidence, manage embargoes, and approve manuscripts for public release.
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Welcome, Dr. K. Swaminathan. Audit AI-generated claims, verify source evidence, manage publication embargoes, and approve scientific manuscripts for public release.
           </p>
         </div>
 
         <button
           onClick={onNavigateQueue}
-          className="btn-danger text-xs sm:text-sm py-2.5 px-5 flex items-center gap-2 shrink-0"
+          className="px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-rose-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
         >
           <Clock className="w-4 h-4" />
           <span>Open Verification Queue ({metrics.pendingVerification})</span>
@@ -75,153 +76,178 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div 
           onClick={onNavigateQueue}
-          className="glass-panel p-5 cursor-pointer hover:border-amber-400/60 transition-all text-center group"
+          className="bg-white border border-slate-200 hover:border-amber-400 p-5 rounded-2xl cursor-pointer hover:shadow-md transition-all text-center group"
         >
-          <div className="text-slate-400 text-[11px] font-bold uppercase tracking-[0.14em] mb-2 flex items-center justify-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-amber-500" />
             <span>Pending Review</span>
           </div>
-          <div className="text-3xl font-black text-amber-400 font-mono tabular-nums group-hover:scale-105 transition-transform">
+          <div className="text-3xl font-black text-amber-600 font-mono tabular-nums group-hover:scale-105 transition-transform">
             {metrics.pendingVerification}
           </div>
-          <div className="text-[10px] text-amber-300/90 font-medium mt-1.5">Awaiting Decision</div>
+          <div className="inline-flex items-center gap-1 text-[11px] text-amber-700 font-medium mt-1.5 bg-amber-50 px-2 py-0.5 rounded-full">
+            <span>Awaiting Decision</span>
+            <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
         </div>
 
-        <div className="glass-panel p-5 text-center">
-          <div className="text-slate-400 text-[11px] font-bold uppercase tracking-[0.14em] mb-2 flex items-center justify-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl text-center shadow-2xs">
+          <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
             <span>Published</span>
           </div>
-          <div className="text-3xl font-black text-emerald-400 font-mono tabular-nums">
+          <div className="text-3xl font-black text-emerald-600 font-mono tabular-nums">
             {metrics.published}
           </div>
-          <div className="text-[10px] text-emerald-300/90 font-medium mt-1.5">Publicly Available</div>
-        </div>
-
-        <div className="glass-panel p-5 text-center">
-          <div className="text-slate-400 text-[11px] font-bold uppercase tracking-[0.14em] mb-2 flex items-center justify-center gap-1.5">
-            <ShieldAlert className="w-3.5 h-3.5 text-purple-400" />
-            <span>Embargoed</span>
-          </div>
-          <div className="text-3xl font-black text-purple-400 font-mono tabular-nums">
-            {metrics.embargoed}
-          </div>
-          <div className="text-[10px] text-purple-300/90 font-medium mt-1.5">Waiting for clearance</div>
-        </div>
-
-        <div className="glass-panel p-5 text-center">
-          <div className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5">
-            <XCircle className="w-3.5 h-3.5 text-rose-400" />
-            <span>Rejected</span>
-          </div>
-          <div className="text-3xl font-black text-rose-400">
-            {metrics.rejected}
-          </div>
-          <div className="text-[10px] text-rose-300/80 mt-1.5">Needs correction</div>
-        </div>
-
-        <div className="glass-panel p-5 text-center">
-          <div className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Claims Verified</span>
-          </div>
-          <div className="text-3xl font-black text-cyan-400">
-            {((metrics.verifiedClaims / (metrics.totalClaims || 1)) * 100).toFixed(0)}%
-          </div>
-          <div className="text-[10px] text-cyan-300/80 mt-1.5">Of {metrics.totalClaims} total claims</div>
-        </div>
-      </div>
-
-      {/* QUICK ACTIONS & MODULES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-        
-        <div 
-          onClick={onNavigateQueue}
-          className="glass-panel p-6 sm:p-8 flex flex-col justify-between hover:border-rose-400/50 cursor-pointer transition-all group"
-        >
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-400 mb-4">
-              <ShieldAlert className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold text-white group-hover:text-rose-400 transition-colors mb-2">
-              Verification & Audit Queue
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed font-normal">
-              Review newly uploaded manuscripts, verify AI-extracted claims against original source text, and approve interactive learning modules for public dissemination.
-            </p>
-          </div>
-          <div className="mt-6 flex items-center gap-2 text-xs font-bold text-rose-400 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-            <span>Open Queue</span>
-            <ArrowRight className="w-4 h-4" />
+          <div className="text-[10px] text-emerald-700 font-medium mt-1.5 bg-emerald-50 px-2 py-0.5 rounded-full inline-block">
+            Publicly Discoverable
           </div>
         </div>
 
         <div 
           onClick={onNavigateEmbargo}
-          className="glass-panel p-6 sm:p-8 flex flex-col justify-between hover:border-purple-400/50 cursor-pointer transition-all group"
+          className="bg-white border border-slate-200 hover:border-purple-400 p-5 rounded-2xl cursor-pointer hover:shadow-md transition-all text-center group"
         >
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center text-purple-400 mb-4">
-              <Clock className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors mb-2">
-              Embargo Management
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed font-normal">
-              Manage publication embargo periods for sensitive polar data, strategic findings, and international collaboration mandates before public release.
-            </p>
+          <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5">
+            <ShieldAlert className="w-3.5 h-3.5 text-purple-500" />
+            <span>Embargoed</span>
           </div>
-          <div className="mt-6 flex items-center gap-2 text-xs font-bold text-purple-400 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-            <span>Manage Embargoes</span>
-            <ArrowRight className="w-4 h-4" />
+          <div className="text-3xl font-black text-purple-600 font-mono tabular-nums group-hover:scale-105 transition-transform">
+            {metrics.embargoed}
+          </div>
+          <div className="inline-flex items-center gap-1 text-[11px] text-purple-700 font-medium mt-1.5 bg-purple-50 px-2 py-0.5 rounded-full">
+            <span>Protected Access</span>
+            <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
 
-        <div 
-          onClick={onNavigateAnalytics}
-          className="glass-panel p-6 sm:p-8 flex flex-col justify-between hover:border-cyan-400/50 cursor-pointer transition-all group"
-        >
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-400 mb-4">
-              <BarChart3 className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors mb-2">
-              Dissemination Analytics
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed font-normal">
-              Track portal engagement, popular research topics, student quiz performance metrics, and global viewership of Indian polar research.
-            </p>
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl text-center shadow-2xs">
+          <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5">
+            <XCircle className="w-3.5 h-3.5 text-rose-500" />
+            <span>Revisions Needed</span>
           </div>
-          <div className="mt-6 flex items-center gap-2 text-xs font-bold text-cyan-400 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-            <span>View Analytics</span>
-            <ArrowRight className="w-4 h-4" />
+          <div className="text-3xl font-black text-rose-600 font-mono tabular-nums">
+            {metrics.rejected}
+          </div>
+          <div className="text-[10px] text-rose-700 font-medium mt-1.5 bg-rose-50 px-2 py-0.5 rounded-full inline-block">
+            Returned to Author
           </div>
         </div>
 
-        <div 
-          onClick={onNavigateAudit}
-          className="glass-panel p-6 sm:p-8 flex flex-col justify-between hover:border-emerald-400/50 cursor-pointer transition-all group"
-        >
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400 mb-4">
-              <ListFilter className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold text-white group-hover:text-emerald-400 transition-colors mb-2">
-              System Audit Logs
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed font-normal">
-              Review comprehensive, immutable logs of all researcher uploads, admin verification decisions, AI pipeline executions, and status changes.
-            </p>
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl text-center shadow-2xs">
+          <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-sky-500" />
+            <span>Claims Verified</span>
           </div>
-          <div className="mt-6 flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-            <span>Review Logs</span>
-            <ArrowRight className="w-4 h-4" />
+          <div className="text-3xl font-black text-sky-600 font-mono tabular-nums">
+            {((metrics.verifiedClaims / (metrics.totalClaims || 1)) * 100).toFixed(0)}%
+          </div>
+          <div className="text-[10px] text-sky-700 font-medium mt-1.5 bg-sky-50 px-2 py-0.5 rounded-full inline-block">
+            {metrics.verifiedClaims} of {metrics.totalClaims} Grounded
           </div>
         </div>
+      </div>
 
+      {/* QUICK ACTIONS & MODULES */}
+      <div className="space-y-4">
+        <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+          <Layers className="w-4 h-4 text-rose-600" />
+          <span>Governance & Review Modules</span>
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          {/* Module 1: Verification Queue */}
+          <div 
+            onClick={onNavigateQueue}
+            className="bg-white border border-slate-200 hover:border-rose-400 p-6 sm:p-7 rounded-3xl flex flex-col justify-between hover:shadow-md cursor-pointer transition-all group"
+          >
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shadow-2xs group-hover:scale-105 transition-transform">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
+                Verification & Audit Queue
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Review newly submitted manuscripts, audit AI-extracted claims against original source text, and verify interactive learning modules for public dissemination.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-2 text-xs font-bold text-rose-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+              <span>Open Queue ({metrics.pendingVerification} Pending)</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Module 2: Embargo Management */}
+          <div 
+            onClick={onNavigateEmbargo}
+            className="bg-white border border-slate-200 hover:border-purple-400 p-6 sm:p-7 rounded-3xl flex flex-col justify-between hover:shadow-md cursor-pointer transition-all group"
+          >
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shadow-2xs group-hover:scale-105 transition-transform">
+                <Clock className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-purple-600 transition-colors">
+                Embargo Management
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Manage publication embargo periods for sensitive polar data, strategic findings, and international collaboration mandates before public release.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-2 text-xs font-bold text-purple-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+              <span>Manage Embargoes ({metrics.embargoed} Active)</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Module 3: Dissemination Analytics */}
+          <div 
+            onClick={onNavigateAnalytics}
+            className="bg-white border border-slate-200 hover:border-sky-400 p-6 sm:p-7 rounded-3xl flex flex-col justify-between hover:shadow-md cursor-pointer transition-all group"
+          >
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 shadow-2xs group-hover:scale-105 transition-transform">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition-colors">
+                Dissemination Analytics
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Track portal engagement, popular research topics, student quiz performance metrics, and global readership of Indian polar research.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-2 text-xs font-bold text-sky-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+              <span>View Analytics</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Module 4: System Audit Logs */}
+          <div 
+            onClick={onNavigateAudit}
+            className="bg-white border border-slate-200 hover:border-emerald-400 p-6 sm:p-7 rounded-3xl flex flex-col justify-between hover:shadow-md cursor-pointer transition-all group"
+          >
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-2xs group-hover:scale-105 transition-transform">
+                <ListFilter className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
+                System Audit Logs
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Review comprehensive, immutable logs of all researcher uploads, admin verification decisions, AI pipeline executions, and status changes.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-2 text-xs font-bold text-emerald-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+              <span>Review Audit Trail</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+
+        </div>
       </div>
       
-      </div>
     </div>
   );
 };
