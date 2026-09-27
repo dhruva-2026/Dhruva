@@ -5,15 +5,21 @@ const { answerQuery, answerQueryAsync, searchChunks } = require('../services/rag
 
 // POST /api/rag/ask - Query the DHRUVA Grounded RAG Pipeline
 router.post('/ask', async (req, res) => {
-  const { query, paperId, region, area } = req.body;
+  const { query, paperId, region, area, history = [], mode } = req.body;
 
   if (!query || !query.trim()) {
     return res.status(400).json({ error: 'A query string is required.' });
   }
 
   try {
-    const result = await answerQueryAsync(db, query.trim(), { paperId, region, area, topK: 4 });
-
+    const result = await answerQueryAsync(db, query.trim(), { 
+      paperId, 
+      region, 
+      area, 
+      topK: 5,
+      history,
+      mode 
+    });
 
     // Log query in audit logs for analytics
     db.execute(
@@ -27,7 +33,7 @@ router.post('/ask', async (req, res) => {
         paperId || null,
         null,
         query.slice(0, 80),
-        `Retrieved ${result.sources.length} grounded source citations with top confidence ${result.sources[0]?.confidenceScore || 0}%`
+        `Retrieved ${result.sources.length} grounded source citations with mode ${result.mode || 'standard'}`
       ]
     );
 
@@ -40,7 +46,7 @@ router.post('/ask', async (req, res) => {
 
 // GET /api/rag/stream - Server-Sent Events (SSE) Streaming RAG Answer
 router.get('/stream', async (req, res) => {
-  const { query, paperId, region, area } = req.query;
+  const { query, paperId, region, area, mode } = req.query;
 
   if (!query || !query.trim()) {
     return res.status(400).json({ error: 'A query string is required.' });
@@ -53,7 +59,14 @@ router.get('/stream', async (req, res) => {
   res.flushHeaders?.();
 
   try {
-    const result = await answerQueryAsync(db, query.trim(), { paperId, region, area, topK: 4 });
+    const result = await answerQueryAsync(db, query.trim(), { 
+      paperId, 
+      region, 
+      area, 
+      topK: 5,
+      mode 
+    });
+
 
     // 1. Send sources metadata event first
     res.write(`event: sources\ndata: ${JSON.stringify(result.sources)}\n\n`);
@@ -80,7 +93,7 @@ router.get('/stream', async (req, res) => {
 
 
 // POST /api/rag/semantic-search - Return top chunks directly
-router.post('/semantic-search', (req, res) => {
+router.post('/semantic-search', async (req, res) => {
   const { query, paperId, region, area, topK = 6 } = req.body;
 
   if (!query || !query.trim()) {
@@ -88,11 +101,58 @@ router.post('/semantic-search', (req, res) => {
   }
 
   try {
-    const chunks = searchChunks(db, query.trim(), { paperId, region, area, topK });
+    const chunks = await searchChunks(db, query.trim(), { paperId, region, area, topK });
     res.json({ count: chunks.length, chunks });
   } catch (err) {
     console.error('Semantic Search Error:', err);
     res.status(500).json({ error: 'Error performing semantic retrieval' });
+  }
+});
+
+// GET /api/rag/status - Check configured LLM providers (Groq / Gemini / Grounded Engine)
+const { getLLMProviderStatus, generateChatCompletion } = require('../services/llmService.js');
+
+router.get('/status', (req, res) => {
+  const status = getLLMProviderStatus();
+  res.json({
+    status: 'ok',
+    llmProviders: status,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// POST /api/rag/test-llm - Test live connection with Groq or Gemini
+router.post('/test-llm', async (req, res) => {
+  const { prompt = 'Explain polar albedo feedback in two sentences.' } = req.body;
+  try {
+    const startTime = Date.now();
+    const result = await generateChatCompletion(
+      'You are DHRUVA Polar Science AI assistant.',
+      prompt,
+      { max_tokens: 150 }
+    );
+    const latencyMs = Date.now() - startTime;
+
+    if (!result) {
+      return res.json({
+        success: false,
+        message: 'No external LLM API key configured (GROQ_API_KEY or GEMINI_API_KEY). DHRUVA will use the built-in deterministic grounded engine.',
+        status: getLLMProviderStatus()
+      });
+    }
+
+    res.json({
+      success: true,
+      provider: result.provider,
+      model: result.model,
+      response: result.content,
+      latencyMs
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 });
 

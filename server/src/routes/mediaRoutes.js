@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../db/db.js');
 
 // GET /api/media - Dissemination media (Stories, Infographics, Images, News)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { type, region } = req.query;
 
   let sql = `
@@ -38,7 +38,7 @@ router.get('/', (req, res) => {
 
   sql += ` ORDER BY m.publication_date DESC`;
 
-  const items = db.queryAll(sql, params);
+  const items = await db.queryAll(sql, params);
   res.json({ media: items });
 });
 

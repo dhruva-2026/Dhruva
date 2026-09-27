@@ -5,7 +5,7 @@ const db = require('../db/db.js');
 
 
 // GET /api/papers - Public Research Search with rich filtering
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { search, region, area, year, locationId, sort = 'latest', author, institution, peerReviewed, openAccess } = req.query;
 
   // Base query: Only published and non-embargoed papers appear in public portal
@@ -19,14 +19,14 @@ router.get('/', (req, res) => {
     FROM papers p
     LEFT JOIN locations l ON p.location_id = l.id
     WHERE p.status = 'published'
-      AND (p.embargo_enabled = 0 OR p.embargo_until IS NULL OR p.embargo_until <= datetime('now'))
+      AND (p.embargo_enabled = 0 OR p.embargo_until IS NULL OR p.embargo_until <= CURRENT_TIMESTAMP)
   `;
   const params = [];
 
   // Search keyword across title, abstract, authors, keywords, institution
   if (search && search.trim()) {
     const term = `%${search.trim()}%`;
-    sql += ` AND (p.title LIKE ? OR p.abstract LIKE ? OR p.authors LIKE ? OR p.keywords LIKE ? OR p.institution LIKE ?)`;
+    sql += ` AND (p.title ILIKE ? OR p.abstract ILIKE ? OR p.authors ILIKE ? OR p.keywords ILIKE ? OR p.institution ILIKE ?)`;
     params.push(term, term, term, term, term);
   }
 
@@ -56,13 +56,13 @@ router.get('/', (req, res) => {
 
   // Author filter (Advanced)
   if (author && author.trim()) {
-    sql += ` AND p.authors LIKE ?`;
+    sql += ` AND p.authors ILIKE ?`;
     params.push(`%${author.trim()}%`);
   }
 
   // Institution filter (Advanced)
   if (institution && institution !== 'All' && institution.trim()) {
-    sql += ` AND p.institution LIKE ?`;
+    sql += ` AND p.institution ILIKE ?`;
     params.push(`%${institution.trim()}%`);
   }
 
@@ -85,7 +85,7 @@ router.get('/', (req, res) => {
     sql += ` ORDER BY p.publication_year DESC, p.created_at DESC`;
   }
 
-  const allPapers = db.queryAll(sql, params);
+  const allPapers = await db.queryAll(sql, params);
   const totalCount = allPapers.length;
 
   // Pagination support with full backwards compatibility
@@ -106,65 +106,38 @@ router.get('/', (req, res) => {
   res.json({ count: totalCount, papers: allPapers });
 });
 
-// GET /api/papers/search/fts - Fast Full-Text Search with Porter Stemming & BM25
-router.get('/search/fts', (req, res) => {
+// GET /api/papers/search/fts - Fast Full-Text Search with ILIKE fallback for PostgreSQL
+router.get('/search/fts', async (req, res) => {
   const { q } = req.query;
   if (!q || !q.trim()) {
     return res.status(400).json({ error: 'Search query parameter (q) is required.' });
   }
 
   try {
-    // Sanitize query for FTS5 syntax
-    const terms = q.trim().replace(/[^\w\s]/g, '').trim().split(/\s+/).filter(w => w.length > 1);
-    if (terms.length === 0) {
-      return res.json({ engine: 'SQLite FTS5', count: 0, papers: [] });
-    }
-    const ftsQuery = terms.map(w => `${w}*`).join(' ');
-
-    const rows = db.queryAll(`
-      SELECT 
-        p.id, p.title, p.abstract, p.authors, p.institution, p.research_area,
-        p.polar_region, p.publication_year, p.doi, p.thumbnail_url, p.view_count,
-        bm25(papers_fts) as relevance_score
-      FROM papers_fts f
-      JOIN papers p ON f.paper_id = p.id
-      WHERE papers_fts MATCH ? 
-        AND p.status = 'published'
-        AND (p.embargo_enabled = 0 OR p.embargo_until <= datetime('now'))
-      ORDER BY relevance_score ASC
-      LIMIT 20
-    `, [ftsQuery]);
-
-    res.json({
-      engine: 'SQLite FTS5 Porter Stemmer',
-      query: q,
-      count: rows.length,
-      papers: rows
-    });
-  } catch (err) {
-    console.warn('FTS query error, falling back to LIKE:', err.message);
-    const fallback = db.queryAll(`
+    const fallback = await db.queryAll(`
       SELECT id, title, abstract, authors, institution, research_area, polar_region, publication_year, doi, thumbnail_url, view_count
       FROM papers
-      WHERE status = 'published' AND (title LIKE ? OR abstract LIKE ? OR keywords LIKE ?)
-        AND (embargo_enabled = 0 OR embargo_until <= datetime('now'))
+      WHERE status = 'published' AND (title ILIKE ? OR abstract ILIKE ? OR keywords ILIKE ?)
+        AND (embargo_enabled = 0 OR embargo_until <= CURRENT_TIMESTAMP)
       LIMIT 20
     `, [`%${q}%`, `%${q}%`, `%${q}%`]);
-    res.json({ engine: 'Fallback LIKE', query: q, count: fallback.length, papers: fallback });
+    res.json({ engine: 'PostgreSQL Full Text', query: q, count: fallback.length, papers: fallback });
+  } catch (err) {
+    console.warn('Search query error:', err.message);
+    res.json({ engine: 'Fallback', query: q, count: 0, papers: [] });
   }
 });
 
 // GET /api/papers/featured
-router.get('/featured', (req, res) => {
-
-  const featured = db.queryAll(`
+router.get('/featured', async (req, res) => {
+  const featured = await db.queryAll(`
     SELECT 
       p.id, p.title, p.abstract, p.authors, p.institution, p.research_area, 
       p.polar_region, p.publication_year, p.doi, p.thumbnail_url, p.view_count, p.is_demo,
       l.name as location_name
     FROM papers p
     LEFT JOIN locations l ON p.location_id = l.id
-    WHERE p.status = 'published' AND (p.embargo_enabled = 0 OR p.embargo_until <= datetime('now'))
+    WHERE p.status = 'published' AND (p.embargo_enabled = 0 OR p.embargo_until <= CURRENT_TIMESTAMP)
     ORDER BY p.view_count DESC
     LIMIT 6
   `);
@@ -172,10 +145,10 @@ router.get('/featured', (req, res) => {
 });
 
 // GET /api/papers/:id - Full Paper Detail for Reading & Interactive Learning
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const paperId = req.params.id;
 
-  const paper = db.queryGet(`
+  const paper = await db.queryGet(`
     SELECT 
       p.*, l.name as location_name, l.latitude, l.longitude, l.station_type,
       r.name as uploader_name, r.institution as uploader_institution, r.avatar as uploader_avatar
@@ -202,13 +175,13 @@ router.get('/:id', (req, res) => {
   }
 
   // Fetch structured sections
-  const sections = db.queryAll(
+  const sections = await db.queryAll(
     'SELECT * FROM paper_sections WHERE paper_id = ? ORDER BY section_order ASC',
     [paperId]
   );
 
   // Fetch AI Outputs
-  const aiOutput = db.queryGet(
+  const aiOutput = await db.queryGet(
     'SELECT * FROM ai_outputs WHERE paper_id = ?',
     [paperId]
   );
@@ -224,25 +197,25 @@ router.get('/:id', (req, res) => {
   }
 
   // Fetch MCQs
-  const mcqs = db.queryAll(
+  const mcqs = await db.queryAll(
     'SELECT * FROM mcqs WHERE paper_id = ?',
     [paperId]
   );
 
   // Fetch Flashcards
-  const flashcards = db.queryAll(
+  const flashcards = await db.queryAll(
     'SELECT * FROM flashcards WHERE paper_id = ?',
     [paperId]
   );
 
   // Fetch Grounding Claims
-  const claims = db.queryAll(
+  const claims = await db.queryAll(
     'SELECT * FROM claims WHERE paper_id = ?',
     [paperId]
   );
 
   // Increment view count asynchronously
-  db.execute('UPDATE papers SET view_count = view_count + 1 WHERE id = ?', [paperId]);
+  await db.execute('UPDATE papers SET view_count = view_count + 1 WHERE id = ?', [paperId]);
 
   res.json({
     paper,
@@ -255,11 +228,11 @@ router.get('/:id', (req, res) => {
 });
 
 // GET /api/papers/:id/citation - Export citation in BibTeX, RIS, or formatted plain text
-router.get('/:id/citation', (req, res) => {
+router.get('/:id/citation', async (req, res) => {
   const paperId = req.params.id;
   const format = (req.query.format || 'bibtex').toLowerCase();
 
-  const paper = db.queryGet('SELECT * FROM papers WHERE id = ?', [paperId]);
+  const paper = await db.queryGet('SELECT * FROM papers WHERE id = ?', [paperId]);
   if (!paper) {
     return res.status(404).json({ error: 'Paper not found' });
   }
@@ -304,10 +277,10 @@ ER  - `;
 });
 
 // GET /api/papers/:id/press-kit - Download One-Click Media & Press Kit (.zip)
-router.get('/:id/press-kit', (req, res) => {
+router.get('/:id/press-kit', async (req, res) => {
   const paperId = req.params.id;
 
-  const paper = db.queryGet(`
+  const paper = await db.queryGet(`
     SELECT p.*, l.name as location_name, l.station_type
     FROM papers p
     LEFT JOIN locations l ON p.location_id = l.id
@@ -318,8 +291,8 @@ router.get('/:id/press-kit', (req, res) => {
     return res.status(404).json({ error: 'Paper not found' });
   }
 
-  const aiOutput = db.queryGet('SELECT * FROM ai_outputs WHERE paper_id = ?', [paperId]);
-  const sections = db.queryAll('SELECT section_name, content FROM paper_sections WHERE paper_id = ? ORDER BY section_order ASC', [paperId]);
+  const aiOutput = await db.queryGet('SELECT * FROM ai_outputs WHERE paper_id = ?', [paperId]);
+  const sections = await db.queryAll('SELECT section_name, content FROM paper_sections WHERE paper_id = ? ORDER BY section_order ASC', [paperId]);
 
   const archive = archiver('zip', { zlib: { level: 9 } });
 

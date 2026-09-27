@@ -13,36 +13,36 @@ function initCronJobs() {
   console.log('⏰ DHRUVA Scheduled Jobs Initialized (Hourly Embargo Auto-Release)');
 }
 
-function checkExpiredEmbargoes() {
+async function checkExpiredEmbargoes() {
   try {
-    const expired = db.queryAll(`
+    const expired = await db.queryAll(`
       SELECT id, title, embargo_until 
       FROM papers 
       WHERE status = 'embargoed' 
         AND embargo_until IS NOT NULL 
-        AND embargo_until <= datetime('now')
+        AND embargo_until <= CURRENT_TIMESTAMP
     `);
 
     if (expired.length > 0) {
       console.log(`🔍 Found ${expired.length} expired embargo paper(s) to auto-release.`);
       for (const paper of expired) {
-        db.execute(`
+        await db.execute(`
           UPDATE papers 
           SET status = 'published', 
               visibility = 'public', 
               embargo_enabled = 0,
-              updated_at = datetime('now')
+              updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
         `, [paper.id]);
 
-        db.execute(`
+        await db.execute(`
           UPDATE embargoes 
           SET status = 'Released', 
-              updated_at = datetime('now') 
+              updated_at = CURRENT_TIMESTAMP 
           WHERE paper_id = ?
         `, [paper.id]);
 
-        db.execute(`
+        await db.execute(`
           INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
           VALUES (?, 'DHRUVA System Scheduler', 'system', 'EMBARGO_AUTO_RELEASED', ?, 'embargoed', 'published', ?)
         `, [

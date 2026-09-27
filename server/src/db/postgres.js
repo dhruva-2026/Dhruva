@@ -6,6 +6,7 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 let pool = null;
 let isConnected = false;
@@ -49,11 +50,15 @@ function initPool() {
 }
 
 /**
- * Converts SQLite-style `?` parameter placeholders to PostgreSQL `$1, $2, ...`
+ * Converts SQLite-style `?` parameter placeholders and date functions to PostgreSQL syntax
  */
-function convertPlaceholders(sql) {
+function normalizeSqlForPostgres(sql) {
   let paramIdx = 1;
-  return sql.replace(/\?/g, () => `$${paramIdx++}`);
+  let normalized = sql.replace(/\?/g, () => `$${paramIdx++}`);
+  normalized = normalized.replace(/datetime\('now'\)/gi, 'CURRENT_TIMESTAMP');
+  normalized = normalized.replace(/datetime\('now',\s*'-?(\d+)\s+hours?'\)/gi, "NOW() - INTERVAL '$1 hours'");
+  normalized = normalized.replace(/datetime\('now',\s*'-?(\d+)\s+days?'\)/gi, "NOW() - INTERVAL '$1 days'");
+  return normalized;
 }
 
 /**
@@ -61,7 +66,7 @@ function convertPlaceholders(sql) {
  */
 async function query(text, params = []) {
   const p = initPool();
-  const pgSql = convertPlaceholders(text);
+  const pgSql = normalizeSqlForPostgres(text);
   const start = Date.now();
   try {
     const res = await p.query(pgSql, params);
@@ -108,13 +113,13 @@ async function withTransaction(callback) {
   try {
     await client.query('BEGIN');
     const transactionDb = {
-      query: (text, params = []) => client.query(convertPlaceholders(text), params),
-      queryAll: async (text, params = []) => (await client.query(convertPlaceholders(text), params)).rows,
+      query: (text, params = []) => client.query(normalizeSqlForPostgres(text), params),
+      queryAll: async (text, params = []) => (await client.query(normalizeSqlForPostgres(text), params)).rows,
       queryGet: async (text, params = []) => {
-        const r = await client.query(convertPlaceholders(text), params);
+        const r = await client.query(normalizeSqlForPostgres(text), params);
         return r.rows.length > 0 ? r.rows[0] : null;
       },
-      execute: (text, params = []) => client.query(convertPlaceholders(text), params)
+      execute: (text, params = []) => client.query(normalizeSqlForPostgres(text), params)
     };
 
     const result = await callback(transactionDb);

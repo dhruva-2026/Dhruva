@@ -1,140 +1,62 @@
 /**
  * DHRUVA Database Gateway
- * Production Target: PostgreSQL + pgvector
- * Development/Testing Fallback: Node.js SQLite with FTS5
+ * Engine: 100% PostgreSQL with pg Connection Pool
+ * Target Database: dhruva_db
  */
 
-const { DatabaseSync } = require('node:sqlite');
-const path = require('path');
-const fs = require('fs');
 const pg = require('./postgres.js');
 
-let activeEngine = 'SQLite';
-let sqliteDb = null;
+// Initialize PostgreSQL pool
+pg.initPool();
 
-// Initialize SQLite fallback instance for local standalone development
-const dbPath = path.join(__dirname, '..', '..', 'dhruva.sqlite');
-try {
-  sqliteDb = new DatabaseSync(dbPath);
-  sqliteDb.exec('PRAGMA foreign_keys = ON;');
-  
-  const schemaPath = path.join(__dirname, 'schema.sql');
-  if (fs.existsSync(schemaPath)) {
-    const schema = fs.readFileSync(schemaPath, 'utf8');
-    sqliteDb.exec(schema);
-  }
-
-  // FTS5 Virtual table
-  sqliteDb.exec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS papers_fts USING fts5(
-      paper_id UNINDEXED,
-      title,
-      abstract,
-      keywords,
-      tokenize = 'porter unicode61'
-    );
-  `);
-} catch (err) {
-  console.warn('SQLite init warning:', err.message);
-}
-
-function syncPapersFts() {
-  if (!sqliteDb) return;
-  try {
-    const existing = queryGet('SELECT COUNT(*) as count FROM papers_fts');
-    const papers = queryAll('SELECT id, title, abstract, keywords FROM papers');
-    if (existing && existing.count === 0 && papers.length > 0) {
-      sqliteDb.exec('BEGIN TRANSACTION;');
-      const stmt = sqliteDb.prepare('INSERT INTO papers_fts (paper_id, title, abstract, keywords) VALUES (?, ?, ?, ?)');
-      for (const p of papers) {
-        stmt.run(p.id, p.title, p.abstract, p.keywords || '');
-      }
-      sqliteDb.exec('COMMIT;');
-    }
-  } catch (err) {
-    // Non-fatal
-  }
-}
-
-// Check initial FTS sync
-syncPapersFts();
-
-// Helper wrapper functions
-function queryAll(sql, params = []) {
-  if (sqliteDb) {
-    const stmt = sqliteDb.prepare(sql);
-    return stmt.all(...params);
-  }
-  return [];
-}
-
-function queryGet(sql, params = []) {
-  if (sqliteDb) {
-    const stmt = sqliteDb.prepare(sql);
-    return stmt.get(...params);
-  }
-  return null;
-}
-
-function execute(sql, params = []) {
-  if (sqliteDb) {
-    const stmt = sqliteDb.prepare(sql);
-    return stmt.run(...params);
-  }
-  return { changes: 0 };
-}
-
-function exec(sql) {
-  if (sqliteDb) {
-    return sqliteDb.exec(sql);
-  }
-}
-
-function execRaw(sql) {
-  if (sqliteDb) {
-    return sqliteDb.exec(sql);
-  }
+/**
+ * Execute a query returning all matching rows
+ */
+async function queryAll(sql, params = []) {
+  return pg.queryAll(sql, params);
 }
 
 /**
- * Health check performing real DB query
+ * Execute a query returning the first matching row or null
+ */
+async function queryGet(sql, params = []) {
+  return pg.queryGet(sql, params);
+}
+
+/**
+ * Execute INSERT/UPDATE/DELETE query
+ */
+async function execute(sql, params = []) {
+  return pg.execute(sql, params);
+}
+
+/**
+ * Execute raw multi-statement SQL
+ */
+async function exec(sql) {
+  return pg.execRaw(sql);
+}
+
+async function execRaw(sql) {
+  return pg.execRaw(sql);
+}
+
+/**
+ * Health check performing real PostgreSQL query: SELECT 1;
  */
 async function checkHealth() {
-  // If PostgreSQL is configured, verify real query
-  if (process.env.DATABASE_URL || process.env.PGHOST) {
-    const pgHealth = await pg.checkHealth();
-    if (pgHealth.connected) {
-      return pgHealth;
-    }
-  }
-
-  // Fallback check on SQLite
-  try {
-    const res = queryGet('SELECT 1 as live');
-    return {
-      status: 'ok',
-      database: 'SQLite (Development)',
-      connected: res && (res.live === 1 || res['1'] === 1),
-      note: 'Production target is PostgreSQL with pgvector'
-    };
-  } catch (err) {
-    return {
-      status: 'error',
-      database: 'SQLite',
-      connected: false,
-      error: err.message
-    };
-  }
+  return pg.checkHealth();
 }
 
 module.exports = {
-  db: sqliteDb,
+  activeEngine: 'PostgreSQL',
+  query: pg.query,
   queryAll,
   queryGet,
   execute,
   exec,
   execRaw,
+  withTransaction: pg.withTransaction,
   checkHealth,
-  syncPapersFts,
   postgres: pg
 };

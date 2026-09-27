@@ -7,8 +7,8 @@ const { requireRole } = require('../middleware/auth.js');
 router.use(requireRole(['admin']));
 
 // GET /api/admin/dashboard - High-level metrics
-router.get('/dashboard', (req, res) => {
-  const counts = db.queryAll(`
+router.get('/dashboard', async (req, res) => {
+  const counts = await db.queryAll(`
     SELECT status, COUNT(*) as count 
     FROM papers 
     GROUP BY status
@@ -26,29 +26,29 @@ router.get('/dashboard', (req, res) => {
   };
 
   counts.forEach(c => {
-    if (c.status === 'under_review' || c.status === 'submitted') metrics.pendingVerification += c.count;
-    if (c.status === 'approved') metrics.approved += c.count;
-    if (c.status === 'rejected') metrics.rejected += c.count;
-    if (c.status === 'embargoed') metrics.embargoed += c.count;
-    if (c.status === 'published') metrics.published += c.count;
+    if (c.status === 'under_review' || c.status === 'submitted') metrics.pendingVerification += parseInt(c.count, 10);
+    if (c.status === 'approved') metrics.approved += parseInt(c.count, 10);
+    if (c.status === 'rejected') metrics.rejected += parseInt(c.count, 10);
+    if (c.status === 'embargoed') metrics.embargoed += parseInt(c.count, 10);
+    if (c.status === 'published') metrics.published += parseInt(c.count, 10);
   });
 
-  const claimStats = db.queryGet(`
+  const claimStats = await db.queryGet(`
     SELECT 
       COUNT(*) as total,
       SUM(CASE WHEN decision = 'Approved' THEN 1 ELSE 0 END) as approved_claims
     FROM claims
   `);
 
-  metrics.totalClaims = claimStats?.total || 0;
-  metrics.verifiedClaims = claimStats?.approved_claims || 0;
+  metrics.totalClaims = parseInt(claimStats?.total, 10) || 0;
+  metrics.verifiedClaims = parseInt(claimStats?.approved_claims, 10) || 0;
 
   res.json({ metrics });
 });
 
 // GET /api/admin/queue - Papers waiting for admin review
-router.get('/queue', (req, res) => {
-  const queue = db.queryAll(`
+router.get('/queue', async (req, res) => {
+  const queue = await db.queryAll(`
     SELECT 
       p.id, p.title, p.authors, p.institution, p.research_area, p.polar_region,
       p.status, p.created_at, p.embargo_enabled, p.embargo_until,
@@ -63,10 +63,10 @@ router.get('/queue', (req, res) => {
 });
 
 // GET /api/admin/verification/:paperId - Split-Screen Review Payload
-router.get('/verification/:paperId', (req, res) => {
+router.get('/verification/:paperId', async (req, res) => {
   const paperId = req.params.paperId;
 
-  const paper = db.queryGet(`
+  const paper = await db.queryGet(`
     SELECT 
       p.*, l.name as location_name, l.station_type,
       r.name as researcher_name, r.email as researcher_email
@@ -81,13 +81,13 @@ router.get('/verification/:paperId', (req, res) => {
   }
 
   // Left Pane: Structured Sections
-  const sections = db.queryAll(
+  const sections = await db.queryAll(
     'SELECT * FROM paper_sections WHERE paper_id = ? ORDER BY section_order ASC',
     [paperId]
   );
 
   // Right Pane: AI Generated Content
-  const aiOutput = db.queryGet(
+  const aiOutput = await db.queryGet(
     'SELECT * FROM ai_outputs WHERE paper_id = ?',
     [paperId]
   );
@@ -101,11 +101,11 @@ router.get('/verification/:paperId', (req, res) => {
     };
   }
 
-  const mcqs = db.queryAll('SELECT * FROM mcqs WHERE paper_id = ?', [paperId]);
-  const flashcards = db.queryAll('SELECT * FROM flashcards WHERE paper_id = ?', [paperId]);
+  const mcqs = await db.queryAll('SELECT * FROM mcqs WHERE paper_id = ?', [paperId]);
+  const flashcards = await db.queryAll('SELECT * FROM flashcards WHERE paper_id = ?', [paperId]);
 
   // Bottom Pane: Grounding Claims
-  const claims = db.queryAll(`
+  const claims = await db.queryAll(`
     SELECT 
       c.*,
       v.reviewer_comment, v.verified_at, u.name as reviewer_name
@@ -126,7 +126,7 @@ router.get('/verification/:paperId', (req, res) => {
 });
 
 // POST /api/admin/claims/verify - Verify / Approve / Edit / Reject specific AI Claim
-router.post('/claims/verify', (req, res) => {
+router.post('/claims/verify', async (req, res) => {
   const { claimId, paperId, decision, reviewerComment, editedText } = req.body;
 
   if (!claimId || !decision) {
@@ -136,7 +136,7 @@ router.post('/claims/verify', (req, res) => {
   // Update claim status
   const groundingStatus = decision === 'Approved' ? 'Verified' : (decision === 'Rejected' ? 'Unsupported' : 'Partially Verified');
 
-  db.execute(`
+  await db.execute(`
     UPDATE claims 
     SET decision = ?,
         grounding_status = ?,
@@ -146,13 +146,13 @@ router.post('/claims/verify', (req, res) => {
 
   // Record verification entry
   const verId = `ver-${claimId}-${Date.now().toString(36)}`;
-  db.execute(`
+  await db.execute(`
     INSERT INTO verifications (id, claim_id, paper_id, reviewer_id, reviewer_comment, decision)
     VALUES (?, ?, ?, ?, ?, ?)
   `, [verId, claimId, paperId, req.user.userId, reviewerComment || 'Verified against original source section.', decision]);
 
   // Log in audit logs
-  db.execute(`
+  await db.execute(`
     INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
     VALUES (?, ?, 'admin', 'CLAIM_VERIFIED', ?, 'Needs Review', ?, ?)
   `, [`audit-${Date.now()}`, req.user.name, paperId, decision, `Claim: ${claimId} marked ${decision}. Comment: ${reviewerComment || 'None'}`]);
@@ -161,14 +161,14 @@ router.post('/claims/verify', (req, res) => {
 });
 
 // POST /api/admin/papers/decision - Major Approval / Rejection & Publication Flow
-router.post('/papers/decision', (req, res) => {
+router.post('/papers/decision', async (req, res) => {
   const { paperId, decision, comment, reason, overrideEmbargo = false } = req.body;
 
   if (!paperId || !['approve', 'reject'].includes(decision)) {
     return res.status(400).json({ error: 'Valid paperId and decision (approve/reject) are required.' });
   }
 
-  const paper = db.queryGet('SELECT * FROM papers WHERE id = ?', [paperId]);
+  const paper = await db.queryGet('SELECT * FROM papers WHERE id = ?', [paperId]);
   if (!paper) {
     return res.status(404).json({ error: 'Paper not found' });
   }
@@ -176,16 +176,16 @@ router.post('/papers/decision', (req, res) => {
   const prevStatus = paper.status;
 
   if (decision === 'reject') {
-    db.execute(`
+    await db.execute(`
       UPDATE papers 
       SET status = 'rejected',
           rejection_reason = ?,
           admin_comment = ?,
-          updated_at = datetime('now')
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [reason || 'Scientific criteria not satisfied', comment || 'Please address reviewer notes and resubmit.', paperId]);
 
-    db.execute(`
+    await db.execute(`
       INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
       VALUES (?, ?, 'admin', 'PAPER_REJECTED', ?, ?, 'rejected', ?)
     `, [`audit-${Date.now()}`, req.user.name, paperId, prevStatus, `Reason: ${reason}. Notes: ${comment}`]);
@@ -205,28 +205,28 @@ router.post('/papers/decision', (req, res) => {
     newVisibility = 'embargoed';
   }
 
-  db.execute(`
+  await db.execute(`
     UPDATE papers 
     SET status = ?,
         visibility = ?,
         admin_comment = ?,
-        updated_at = datetime('now')
-    WHERE id = ?
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
   `, [newStatus, newVisibility, comment || 'Approved by NCPOR Editorial Board.', paperId]);
 
   // Log audit actions
-  db.execute(`
+  await db.execute(`
     INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
     VALUES (?, ?, 'admin', 'PAPER_APPROVED', ?, ?, 'approved', ?)
   `, [`audit-${Date.now()}-1`, req.user.name, paperId, prevStatus, comment || 'All claims verified and grounded.']);
 
   if (newStatus === 'published') {
-    db.execute(`
+    await db.execute(`
       INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
       VALUES (?, ?, 'admin', 'PAPER_PUBLISHED', ?, 'approved', 'published', 'Released live to DHRUVA Public Knowledge Portal.')
     `, [`audit-${Date.now()}-2`, req.user.name, paperId]);
   } else {
-    db.execute(`
+    await db.execute(`
       INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
       VALUES (?, ?, 'admin', 'EMBARGO_SCHEDULED', ?, 'approved', 'embargoed', 'Scheduled release on ' || ?)
     `, [`audit-${Date.now()}-2`, req.user.name, paperId, paper.embargo_until]);
@@ -242,27 +242,27 @@ router.post('/papers/decision', (req, res) => {
 });
 
 // POST /api/admin/embargo/override - Modify or release embargo
-router.post('/embargo/override', (req, res) => {
+router.post('/embargo/override', async (req, res) => {
   const { paperId, action } = req.body; // action: 'release' | 'extend'
 
-  const paper = db.queryGet('SELECT * FROM papers WHERE id = ?', [paperId]);
+  const paper = await db.queryGet('SELECT * FROM papers WHERE id = ?', [paperId]);
   if (!paper) {
     return res.status(404).json({ error: 'Paper not found' });
   }
 
   if (action === 'release') {
-    db.execute(`
+    await db.execute(`
       UPDATE papers 
       SET status = 'published',
           visibility = 'public',
           embargo_enabled = 0,
-          updated_at = datetime('now')
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [paperId]);
 
-    db.execute(`UPDATE embargoes SET status = 'Overridden' WHERE paper_id = ?`, [paperId]);
+    await db.execute(`UPDATE embargoes SET status = 'Overridden' WHERE paper_id = ?`, [paperId]);
 
-    db.execute(`
+    await db.execute(`
       INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
       VALUES (?, ?, 'admin', 'EMBARGO_OVERRIDDEN', ?, 'embargoed', 'published', 'Admin manually released embargo to public portal.')
     `, [`audit-${Date.now()}`, req.user.name, paperId]);
@@ -274,8 +274,8 @@ router.post('/embargo/override', (req, res) => {
 });
 
 // GET /api/admin/audit-logs - Tamper-evident activity logs
-router.get('/audit-logs', (req, res) => {
-  const logs = db.queryAll(`
+router.get('/audit-logs', async (req, res) => {
+  const logs = await db.queryAll(`
     SELECT * FROM audit_logs 
     ORDER BY timestamp DESC 
     LIMIT 100
@@ -284,34 +284,34 @@ router.get('/audit-logs', (req, res) => {
 });
 
 // GET /api/admin/analytics - Platform analytics
-router.get('/analytics', (req, res) => {
-  const regionBreakdown = db.queryAll(`
+router.get('/analytics', async (req, res) => {
+  const regionBreakdown = await db.queryAll(`
     SELECT polar_region, COUNT(*) as count 
     FROM papers 
     GROUP BY polar_region
   `);
 
-  const areaBreakdown = db.queryAll(`
+  const areaBreakdown = await db.queryAll(`
     SELECT research_area, COUNT(*) as count 
     FROM papers 
     GROUP BY research_area 
     ORDER BY count DESC
   `);
 
-  const statusBreakdown = db.queryAll(`
+  const statusBreakdown = await db.queryAll(`
     SELECT status, COUNT(*) as count 
     FROM papers 
     GROUP BY status
   `);
 
-  const topViewed = db.queryAll(`
+  const topViewed = await db.queryAll(`
     SELECT title, view_count, polar_region 
     FROM papers 
     ORDER BY view_count DESC 
     LIMIT 5
   `);
 
-  const totalQuestions = db.queryGet(`
+  const totalQuestions = await db.queryGet(`
     SELECT COUNT(*) as count 
     FROM audit_logs 
     WHERE action = 'RAG_QUERY_ANSWERED'
@@ -322,7 +322,7 @@ router.get('/analytics', (req, res) => {
     areaBreakdown,
     statusBreakdown,
     topViewed,
-    questionsAnswered: totalQuestions?.count || 42
+    questionsAnswered: parseInt(totalQuestions?.count, 10) || 42
   });
 });
 

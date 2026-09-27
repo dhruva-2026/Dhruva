@@ -123,20 +123,10 @@ async function migrateSqliteToPostgres() {
     // 8. Migrate Paper Chunks & Convert Embeddings to pgvector
     const chunks = sqlite.prepare('SELECT * FROM paper_chunks').all();
     for (const c of chunks) {
-      let vectorStr = null;
-      if (c.embedding_json) {
-        try {
-          const parsed = JSON.parse(c.embedding_json);
-          if (Array.isArray(parsed) && parsed.length === 58) {
-            vectorStr = `[${parsed.join(',')}]`;
-          }
-        } catch (e) {}
-      }
-
       await pg.execute(
-        `INSERT INTO paper_chunks (id, paper_id, section_id, section_name, chunk_index, text, page_number, embedding, embedding_json)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::vector, $9)`,
-        [c.id, c.paper_id, c.section_id, c.section_name, c.chunk_index, c.text, c.page_number, vectorStr, c.embedding_json]
+        `INSERT INTO paper_chunks (id, paper_id, section_id, section_name, chunk_index, text, page_number, embedding_json)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [c.id, c.paper_id, c.section_id, c.section_name, c.chunk_index, c.text, c.page_number, c.embedding_json]
       );
     }
     migrationStats.paper_chunks = { sqlite: chunks.length, postgres: (await pg.queryAll('SELECT * FROM paper_chunks')).length };
@@ -260,3 +250,7 @@ async function migrateSqliteToPostgres() {
 }
 
 module.exports = { migrateSqliteToPostgres };
+
+if (require.main === module) {
+  migrateSqliteToPostgres().then(res => process.exit(res.success ? 0 : 1));
+}

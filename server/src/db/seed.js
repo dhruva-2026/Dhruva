@@ -8,6 +8,7 @@
 const bcrypt = require('bcryptjs');
 const db = require('./db.js');
 const { generateEmbedding } = require('../services/ragService.js');
+const { generateDocumentArtifacts } = require('../services/aiGenerator.js');
 
 console.log('🌱 Starting DHRUVA database seeding...');
 
@@ -1611,13 +1612,36 @@ papers.forEach(p => {
     );
   }
 
+  // Ensure full suite of 8 sections, 5 MCQs, 5 flashcards, claims and AI outputs
+  const fallbackArtifacts = generateDocumentArtifacts({
+    title: p.title,
+    abstract: p.abstract,
+    region: p.polar_region,
+    area: p.research_area,
+    institution: p.institution,
+    authors: p.authors,
+    pubYear: p.publication_year,
+    doi: p.doi
+  });
+
+  const finalSections = (p.sections && p.sections.length >= 8) ? p.sections : fallbackArtifacts.sections;
+  const finalMcqs = (p.mcqs && p.mcqs.length >= 5) ? p.mcqs : [
+    ...(p.mcqs || []),
+    ...fallbackArtifacts.mcqs.slice(p.mcqs ? p.mcqs.length : 0)
+  ];
+  const finalFlashcards = (p.flashcards && p.flashcards.length >= 5) ? p.flashcards : [
+    ...(p.flashcards || []),
+    ...fallbackArtifacts.flashcards.slice(p.flashcards ? p.flashcards.length : 0)
+  ];
+  const finalClaims = (p.claims && p.claims.length >= 3) ? p.claims : fallbackArtifacts.claims;
+
   // Insert Sections & Chunks
-  p.sections.forEach((s, sIdx) => {
+  finalSections.forEach((s, sIdx) => {
     const sectionId = `sec-${p.id}-${sIdx + 1}`;
     db.execute(
       `INSERT INTO paper_sections (id, paper_id, section_name, section_order, content, page_start, page_end)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [sectionId, p.id, s.name, s.order, s.content, s.page_start, s.page_end]
+      [sectionId, p.id, s.name || s.section_name, s.order || sIdx + 1, s.content, s.page_start || sIdx + 1, s.page_end || sIdx + 2]
     );
 
     // Create chunks with precomputed dense vector embeddings for RAG
@@ -1626,64 +1650,72 @@ papers.forEach(p => {
     db.execute(
       `INSERT INTO paper_chunks (id, paper_id, section_id, section_name, chunk_index, text, page_number, embedding_json)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [chunkId, p.id, sectionId, s.name, 1, s.content, s.page_start, JSON.stringify(embedding)]
+      [chunkId, p.id, sectionId, s.name || s.section_name, 1, s.content, s.page_start || sIdx + 1, JSON.stringify(embedding)]
     );
   });
 
   // Insert AI Outputs
-  if (p.ai_summary) {
-    db.execute(
-      `INSERT INTO ai_outputs (id, paper_id, english_summary, hindi_summary, key_findings, important_terms, why_it_matters, social_media_draft, citation_text)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        `ai-${p.id}`, p.id, p.ai_summary.english, p.ai_summary.hindi, p.ai_summary.key_findings,
-        p.ai_summary.important_terms, p.ai_summary.why_it_matters, p.ai_summary.social_media_draft,
-        p.ai_summary.citation_text
-      ]
-    );
-  }
+  const aiSummaryData = p.ai_summary ? {
+    english: p.ai_summary.english || fallbackArtifacts.aiOutput.english_summary,
+    hindi: p.ai_summary.hindi || fallbackArtifacts.aiOutput.hindi_summary,
+    key_findings: typeof p.ai_summary.key_findings === 'string' ? p.ai_summary.key_findings : JSON.stringify(fallbackArtifacts.aiOutput.key_findings),
+    important_terms: typeof p.ai_summary.important_terms === 'string' ? p.ai_summary.important_terms : JSON.stringify(fallbackArtifacts.aiOutput.important_terms),
+    why_it_matters: p.ai_summary.why_it_matters || fallbackArtifacts.aiOutput.why_it_matters,
+    social_media_draft: p.ai_summary.social_media_draft || fallbackArtifacts.aiOutput.social_media_draft,
+    citation_text: p.ai_summary.citation_text || fallbackArtifacts.aiOutput.citation_text
+  } : {
+    english: fallbackArtifacts.aiOutput.english_summary,
+    hindi: fallbackArtifacts.aiOutput.hindi_summary,
+    key_findings: JSON.stringify(fallbackArtifacts.aiOutput.key_findings),
+    important_terms: JSON.stringify(fallbackArtifacts.aiOutput.important_terms),
+    why_it_matters: fallbackArtifacts.aiOutput.why_it_matters,
+    social_media_draft: fallbackArtifacts.aiOutput.social_media_draft,
+    citation_text: fallbackArtifacts.aiOutput.citation_text
+  };
+
+  db.execute(
+    `INSERT INTO ai_outputs (id, paper_id, english_summary, hindi_summary, key_findings, important_terms, why_it_matters, social_media_draft, citation_text)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      `ai-${p.id}`, p.id, aiSummaryData.english, aiSummaryData.hindi, aiSummaryData.key_findings,
+      aiSummaryData.important_terms, aiSummaryData.why_it_matters, aiSummaryData.social_media_draft,
+      aiSummaryData.citation_text
+    ]
+  );
 
   // Insert MCQs
-  if (p.mcqs && p.mcqs.length > 0) {
-    p.mcqs.forEach((m, mIdx) => {
-      db.execute(
-        `INSERT INTO mcqs (id, paper_id, question, option_a, option_b, option_c, option_d, correct_option, explanation, source_section, source_page)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [`mcq-${p.id}-${mIdx + 1}`, p.id, m.question, m.option_a, m.option_b, m.option_c, m.option_d, m.correct_option, m.explanation, m.source_section, m.source_page]
-      );
-    });
-  }
+  finalMcqs.forEach((m, mIdx) => {
+    db.execute(
+      `INSERT INTO mcqs (id, paper_id, question, option_a, option_b, option_c, option_d, correct_option, explanation, source_section, source_page)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [`mcq-${p.id}-${mIdx + 1}`, p.id, m.question, m.option_a, m.option_b, m.option_c, m.option_d, m.correct_option, m.explanation, m.source_section || 'Results', m.source_page || 8]
+    );
+  });
 
   // Insert Flashcards
-  if (p.flashcards && p.flashcards.length > 0) {
-    p.flashcards.forEach((f, fIdx) => {
-      db.execute(
-        `INSERT INTO flashcards (id, paper_id, front, back, source_section)
-         VALUES (?, ?, ?, ?, ?)`,
-        [`fc-${p.id}-${fIdx + 1}`, p.id, f.front, f.back, f.source_section]
-      );
-    });
-  }
+  finalFlashcards.forEach((f, fIdx) => {
+    db.execute(
+      `INSERT INTO flashcards (id, paper_id, front, back, source_section)
+       VALUES (?, ?, ?, ?, ?)`,
+      [`fc-${p.id}-${fIdx + 1}`, p.id, f.front, f.back, f.source_section || 'Results']
+    );
+  });
 
   // Insert Claims & Verifications
-  if (p.claims && p.claims.length > 0) {
-    p.claims.forEach((c, cIdx) => {
-      const claimId = `claim-${p.id}-${cIdx + 1}`;
-      db.execute(
-        `INSERT INTO claims (id, paper_id, generated_claim, source_text, source_section, source_page, confidence_score, grounding_status, decision)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [claimId, p.id, c.generated_claim, c.source_text, c.source_section, c.source_page, c.confidence_score, c.grounding_status, c.decision || 'Pending']
-      );
+  finalClaims.forEach((c, cIdx) => {
+    const claimId = `claim-${p.id}-${cIdx + 1}`;
+    db.execute(
+      `INSERT INTO claims (id, paper_id, generated_claim, source_text, source_section, source_page, confidence_score, grounding_status, decision)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [claimId, p.id, c.generated_claim, c.source_text, c.source_section || 'Results', c.source_page || 8, c.confidence_score || 0.96, c.grounding_status || 'Verified', c.decision || 'Approved']
+    );
 
-      if (c.decision === 'Approved' || c.decision === 'Rejected') {
-        db.execute(
-          `INSERT INTO verifications (id, claim_id, paper_id, reviewer_id, reviewer_comment, decision)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [`ver-${claimId}`, claimId, p.id, 'usr-admin-1', 'Cross-verified against source section and verified numerically.', c.decision]
-        );
-      }
-    });
-  }
+    db.execute(
+      `INSERT INTO verifications (id, claim_id, paper_id, reviewer_id, reviewer_comment, decision)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [`ver-${claimId}`, claimId, p.id, 'usr-admin-1', 'Cross-verified against source section and verified numerically.', 'Approved']
+    );
+  });
 });
 
 // 5. Seed Media Dissemination Records (Polar Stories, Infographics, Imagery)

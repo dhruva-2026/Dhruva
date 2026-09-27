@@ -5,12 +5,14 @@ import {
   Globe, Mountain, Sliders, Activity
 } from 'lucide-react';
 
+import { apiFetchPapers } from '../../services/api';
+
 interface LearnPortalPageProps {
   onOpenPaper: (id: string) => void;
   lang: 'en' | 'hi';
 }
 
-const MODULES = [
+const INITIAL_MODULES = [
   {
     id: 'mod-1',
     paperId: 'paper-001',
@@ -18,7 +20,7 @@ const MODULES = [
     level: 'INTERMEDIATE',
     title: 'Antarctic Sea Ice & Ocean Dynamics',
     desc: 'Learn about freeze-up delays, the Southern Annular Mode, and Circumpolar Deep Water upwelling in the Weddell Sea.',
-    mcqs: 4,
+    mcqs: 5,
     flashcards: '3D Flashcards',
     tag: 'Research Based',
     img: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=700&q=80',
@@ -30,7 +32,7 @@ const MODULES = [
     level: 'ADVANCED',
     title: 'Arctic Permafrost Thaw & Methane Emissions',
     desc: 'Explore how deepening active-layer soil horizons in Svalbard awaken methanogenic archaea, creating potent climate feedbacks.',
-    mcqs: 3,
+    mcqs: 5,
     flashcards: '3D Flashcards',
     tag: 'Research Based',
     img: 'https://images.unsplash.com/photo-1517760444937-f6397edcbbcd?w=700&q=80',
@@ -42,8 +44,8 @@ const MODULES = [
     level: 'BEGINNER',
     title: 'Prydz Bay Phytoplankton & Marine Carbon Pump',
     desc: 'Understand how glacial meltwater delivers iron to fuel massive diatom blooms that sustain Antarctic krill and penguins.',
-    mcqs: 4,
-    flashcards: 'Flashcards',
+    mcqs: 5,
+    flashcards: '3D Flashcards',
     tag: 'Research Based',
     img: 'https://images.unsplash.com/photo-1559827291-72ee739d0d9a?w=700&q=80',
   },
@@ -54,8 +56,8 @@ const MODULES = [
     level: 'INTERMEDIATE',
     title: 'Atmospheric Black Carbon & Arctic Haze',
     desc: 'Track long-range transboundary transport of soot from industrial corridors to Ny-Ålesund and its impact on snow albedo.',
-    mcqs: 3,
-    flashcards: 'Flashcards',
+    mcqs: 5,
+    flashcards: '3D Flashcards',
     tag: 'Research Based',
     img: 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=700&q=80',
   },
@@ -67,7 +69,7 @@ const MODULES = [
     title: 'Glaciology: Ice Sheets, Flow & Change',
     desc: 'Learn the fundamentals of ice sheet dynamics, mass balance, and their role in global sea level rise.',
     mcqs: 5,
-    flashcards: 'Flashcards',
+    flashcards: '3D Flashcards',
     tag: 'Research Based',
     img: 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=700&q=80',
   },
@@ -78,8 +80,8 @@ const MODULES = [
     level: 'INTERMEDIATE',
     title: 'Polar Regions, People & Policy',
     desc: 'Explore how science, communities, and international collaborations shape a sustainable polar future.',
-    mcqs: 4,
-    flashcards: 'Case Studies',
+    mcqs: 5,
+    flashcards: '3D Flashcards',
     tag: 'Research Based',
     img: 'https://images.unsplash.com/photo-1548263594-a71ea65a8598?w=700&q=80',
   },
@@ -98,6 +100,38 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Modules');
   const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
+  const [allModules, setAllModules] = useState(INITIAL_MODULES);
+
+  React.useEffect(() => {
+    async function loadDynamicModules() {
+      try {
+        const res = await apiFetchPapers({ sort: 'views' });
+        if (res && res.papers && res.papers.length > 0) {
+          const knownIds = new Set(INITIAL_MODULES.map(m => m.paperId));
+          const extraModules = res.papers
+            .filter((p: any) => !knownIds.has(p.id))
+            .slice(0, 6)
+            .map((p: any, idx: number) => ({
+              id: `dyn-mod-${idx + 1}`,
+              paperId: p.id,
+              region: (p.polar_region || 'Antarctic').toUpperCase(),
+              level: idx % 2 === 0 ? 'INTERMEDIATE' : 'ADVANCED',
+              title: p.title,
+              desc: p.abstract || 'Learn through interactive MCQs and 3D flashcards generated from this polar research paper.',
+              mcqs: 5,
+              flashcards: '3D Flashcards',
+              tag: 'Research Based',
+              img: p.thumbnail_url || 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=700&q=80'
+            }));
+
+          setAllModules([...INITIAL_MODULES, ...extraModules]);
+        }
+      } catch (e) {
+        // Fallback to initial modules
+      }
+    }
+    loadDynamicModules();
+  }, []);
 
   const toggleBookmark = (id: string) => {
     setBookmarked(prev => {
@@ -107,7 +141,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
     });
   };
 
-  const filtered = MODULES.filter(m => {
+  const filtered = allModules.filter(m => {
     const matchSearch =
       search === '' ||
       m.title.toLowerCase().includes(search.toLowerCase()) ||

@@ -3,8 +3,8 @@ const router = express.Router();
 const db = require('../db/db.js');
 
 // GET /api/locations - All polar stations & research locations
-router.get('/', (req, res) => {
-  const locations = db.queryAll(`
+router.get('/', async (req, res) => {
+  const locations = await db.queryAll(`
     SELECT 
       l.*,
       (SELECT COUNT(*) FROM papers WHERE location_id = l.id AND status = 'published') as paper_count
@@ -81,8 +81,8 @@ function getStationTelemetry(loc) {
 }
 
 // GET /api/locations/telemetry - Live polar environmental telemetry across all stations
-router.get('/telemetry', (req, res) => {
-  const locations = db.queryAll('SELECT * FROM locations ORDER BY region ASC, name ASC');
+router.get('/telemetry', async (req, res) => {
+  const locations = await db.queryAll('SELECT * FROM locations ORDER BY region ASC, name ASC');
   const telemetry = locations.map(loc => getStationTelemetry(loc));
   res.json({
     portal: 'DHRUVA Integrated Polar Observation Telemetry Hub',
@@ -93,8 +93,8 @@ router.get('/telemetry', (req, res) => {
 });
 
 // GET /api/locations/:id/weather - 7-day environmental telemetry history and forecast
-router.get('/:id/weather', (req, res) => {
-  const loc = db.queryGet('SELECT * FROM locations WHERE id = ?', [req.params.id]);
+router.get('/:id/weather', async (req, res) => {
+  const loc = await db.queryGet('SELECT * FROM locations WHERE id = ?', [req.params.id]);
   if (!loc) {
     return res.status(404).json({ error: 'Station not found' });
   }
@@ -119,13 +119,13 @@ router.get('/:id/weather', (req, res) => {
 });
 
 // GET /api/locations/:id - Location detail with published papers
-router.get('/:id', (req, res) => {
-  const loc = db.queryGet('SELECT * FROM locations WHERE id = ?', [req.params.id]);
+router.get('/:id', async (req, res) => {
+  const loc = await db.queryGet('SELECT * FROM locations WHERE id = ?', [req.params.id]);
   if (!loc) {
     return res.status(404).json({ error: 'Location not found' });
   }
 
-  const papers = db.queryAll(`
+  const papers = await db.queryAll(`
     SELECT id, title, authors, research_area, publication_year, doi, view_count, is_demo
     FROM papers
     WHERE location_id = ? AND status = 'published'

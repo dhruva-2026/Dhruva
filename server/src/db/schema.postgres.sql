@@ -1,8 +1,13 @@
 -- DHRUVA PostgreSQL Production Database Schema
 -- SIH26063 - Integrated Polar Science Outreach, Knowledge Repository and Media Dissemination Portal
 
--- 0. Enable pgvector extension for high-performance semantic vector similarity search
-CREATE EXTENSION IF NOT EXISTS vector;
+-- 0. Optional: Enable pgvector extension if installed
+DO $$ 
+BEGIN 
+  CREATE EXTENSION IF NOT EXISTS vector;
+EXCEPTION WHEN OTHERS THEN 
+  RAISE NOTICE 'pgvector extension not installed on host, using native PostgreSQL JSON vector storage.';
+END $$;
 
 -- 1. Users table (Role-Based Access Control)
 CREATE TABLE IF NOT EXISTS users (
@@ -87,7 +92,7 @@ CREATE TABLE IF NOT EXISTS paper_sections (
     page_end INTEGER NOT NULL
 );
 
--- 6. Paper Chunks for Semantic Vector RAG with pgvector
+-- 6. Paper Chunks for Semantic Vector RAG
 CREATE TABLE IF NOT EXISTS paper_chunks (
     id VARCHAR(64) PRIMARY KEY,
     paper_id VARCHAR(64) NOT NULL REFERENCES papers(id) ON DELETE CASCADE,
@@ -96,7 +101,6 @@ CREATE TABLE IF NOT EXISTS paper_chunks (
     chunk_index INTEGER NOT NULL,
     text TEXT NOT NULL,
     page_number INTEGER NOT NULL,
-    embedding vector(58),
     embedding_json TEXT
 );
 

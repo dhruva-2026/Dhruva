@@ -4,8 +4,6 @@ import {
   Send, 
   ShieldCheck, 
   User, 
-  ChevronRight, 
-  Compass, 
   Waves, 
   Thermometer, 
   Ship, 
@@ -17,13 +15,13 @@ import {
   FileText, 
   Lock, 
   ArrowRight,
-  RotateCcw,
   Clock,
   Trash2,
   X,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus
+  Plus,
+  BookOpen
 } from 'lucide-react';
 import { apiAskRAG } from '../../services/api';
 
@@ -98,6 +96,206 @@ const RESEARCH_INQUIRIES = [
   }
 ];
 
+/**
+ * Rich Formatted Markdown Renderer for DHRUVA AI Responses
+ * Parses headers (###), blockquotes (>), bold (**), italics (*), bullet lists (• / -), numbered lists
+ */
+const FormattedMessageContent: React.FC<{ content: string; role: 'user' | 'assistant' }> = ({ content, role }) => {
+  if (role === 'user') {
+    return <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '13px', lineHeight: 1.55 }}>{content}</div>;
+  }
+
+  const lines = content.split('\n');
+  const renderedElements: React.ReactNode[] = [];
+  let inBlockquote = false;
+  let blockquoteBuffer: string[] = [];
+  let inList = false;
+  let listBuffer: string[] = [];
+
+  const renderInlineMarkdown = (text: string) => {
+    const parts: React.ReactNode[] = [];
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    let lastIdx = 0;
+    let match;
+
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(renderItalics(text.substring(lastIdx, match.index), `txt-${match.index}`));
+      }
+      parts.push(
+        <strong key={`b-${match.index}`} style={{ fontWeight: 700, color: '#0F172A' }}>
+          {match[1]}
+        </strong>
+      );
+      lastIdx = match.index + match[0].length;
+    }
+
+    if (lastIdx < text.length) {
+      parts.push(renderItalics(text.substring(lastIdx), `txt-end`));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
+  const renderItalics = (text: string, keyPrefix: string) => {
+    const parts: React.ReactNode[] = [];
+    const italicRegex = /\*(.*?)\*/g;
+    let lastIdx = 0;
+    let match;
+
+    while ((match = italicRegex.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(text.substring(lastIdx, match.index));
+      }
+      parts.push(
+        <em key={`${keyPrefix}-i-${match.index}`} style={{ fontStyle: 'italic', color: '#334155' }}>
+          {match[1]}
+        </em>
+      );
+      lastIdx = match.index + match[0].length;
+    }
+
+    if (lastIdx < text.length) {
+      parts.push(text.substring(lastIdx));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
+  const flushBlockquote = (key: string) => {
+    if (blockquoteBuffer.length > 0) {
+      renderedElements.push(
+        <div
+          key={key}
+          style={{
+            borderLeft: '3px solid #0284C7',
+            background: 'rgba(240, 249, 255, 0.8)',
+            borderRadius: '0 8px 8px 0',
+            padding: '8px 12px',
+            margin: '6px 0 10px 0',
+            fontSize: '12.5px',
+            color: '#0F172A',
+            fontStyle: 'italic',
+            lineHeight: 1.55
+          }}
+        >
+          {blockquoteBuffer.map((bLine, bIdx) => (
+            <div key={bIdx}>{renderInlineMarkdown(bLine)}</div>
+          ))}
+        </div>
+      );
+      blockquoteBuffer = [];
+      inBlockquote = false;
+    }
+  };
+
+  const flushList = (key: string) => {
+    if (listBuffer.length > 0) {
+      renderedElements.push(
+        <ul 
+          key={key} 
+          style={{ 
+            margin: '6px 0 10px 0', 
+            paddingLeft: '18px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '5px' 
+          }}
+        >
+          {listBuffer.map((item, idx) => (
+            <li key={idx} style={{ fontSize: '12.5px', color: '#1E293B', lineHeight: 1.55 }}>
+              {renderInlineMarkdown(item)}
+            </li>
+          ))}
+        </ul>
+      );
+      listBuffer = [];
+      inList = false;
+    }
+  };
+
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+
+    // Check for blockquote
+    if (trimmed.startsWith('>')) {
+      if (inList) flushList(`list-before-quote-${i}`);
+      inBlockquote = true;
+      blockquoteBuffer.push(trimmed.replace(/^>\s*/, ''));
+      return;
+    } else if (inBlockquote) {
+      flushBlockquote(`quote-${i}`);
+    }
+
+    // Check for bullet list
+    if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('* ')) {
+      inList = true;
+      listBuffer.push(trimmed.replace(/^[•\-*]\s*/, ''));
+      return;
+    } else if (inList) {
+      flushList(`list-${i}`);
+    }
+
+    if (!trimmed) {
+      return;
+    }
+
+    // Check for Headings
+    if (trimmed.startsWith('### ')) {
+      renderedElements.push(
+        <h4
+          key={`h3-${i}`}
+          style={{
+            fontSize: '13.5px',
+            fontWeight: 800,
+            color: '#0284C7',
+            margin: '10px 0 4px 0',
+            letterSpacing: '-0.01em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          {renderInlineMarkdown(trimmed.replace(/^###\s*/, ''))}
+        </h4>
+      );
+    } else if (trimmed.startsWith('#### ')) {
+      renderedElements.push(
+        <h5
+          key={`h4-${i}`}
+          style={{
+            fontSize: '12.5px',
+            fontWeight: 700,
+            color: '#0F172A',
+            margin: '8px 0 4px 0'
+          }}
+        >
+          {renderInlineMarkdown(trimmed.replace(/^####\s*/, ''))}
+        </h5>
+      );
+    } else {
+      renderedElements.push(
+        <p
+          key={`p-${i}`}
+          style={{
+            margin: '4px 0',
+            fontSize: '12.5px',
+            lineHeight: 1.6,
+            color: '#1E293B'
+          }}
+        >
+          {renderInlineMarkdown(trimmed)}
+        </p>
+      );
+    }
+  });
+
+  if (inBlockquote) flushBlockquote('quote-final');
+  if (inList) flushList('list-final');
+
+  return <div style={{ display: 'flex', flexDirection: 'column' }}>{renderedElements}</div>;
+};
+
 export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({ 
   onReadPaper, 
   lang, 
@@ -123,7 +321,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  // Load search history from localStorage on initial mount
+  // Load search history from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem('dhruva_search_history');
@@ -135,15 +333,14 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
     }
   }, []);
 
+  // Auto-scroll on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Save history to localStorage
   const saveHistory = (items: SearchHistoryItem[]) => {
     setSearchHistory(items);
     try {
-      // Save items without huge raw data URLs if needed to prevent quota exhaustion
       const safeItems = items.map(item => ({
         ...item,
         attachment: item.attachment ? {
@@ -166,9 +363,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
     }
   };
 
-  // Handle file attachment via file/image pickers and save in localStorage
   const processSelectedFile = (file: File) => {
-    // 5MB safety limit
     if (file.size > 5 * 1024 * 1024) {
       alert('File size exceeds the 5MB limit.');
       return;
@@ -184,7 +379,6 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
       };
       setCurrentAttachment(attachment);
 
-      // Cache metadata in localStorage
       try {
         localStorage.setItem('dhruva_latest_attachment', JSON.stringify({
           name: attachment.name,
@@ -295,11 +489,11 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
     <div 
       style={{ 
         width: '100%', 
-        height: 'calc(100vh - 80px)', 
-        maxHeight: 'calc(100vh - 80px)',
+        height: 'calc(100vh - 76px)', 
         display: 'flex', 
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        background: '#F8FAFC'
       }}
     >
       {/* Hidden file inputs for attachment handling */}
@@ -319,7 +513,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
       />
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* LEFT SIDEBAR: Search History (backed by localStorage)         */}
+      {/* LEFT SIDEBAR: Search History                                  */}
       {/* ───────────────────────────────────────────────────────────── */}
       <aside 
         style={{
@@ -435,29 +629,22 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'all 0.18s',
                         flexShrink: 0
                       }}
                       onMouseEnter={(e) => {
                         const el = e.currentTarget as HTMLElement;
                         el.style.background = '#FEE2E2';
-                        el.style.borderColor = '#FECACA';
                         el.style.color = '#DC2626';
-                        el.style.transform = 'scale(1.15)';
-                        el.style.boxShadow = '0 2px 6px rgba(220, 38, 38, 0.22)';
                       }}
                       onMouseLeave={(e) => {
                         const el = e.currentTarget as HTMLElement;
                         el.style.background = 'transparent';
-                        el.style.borderColor = 'transparent';
                         el.style.color = '#94A3B8';
-                        el.style.transform = 'scale(1)';
-                        el.style.boxShadow = 'none';
                       }}
                       title="Delete this search"
-                      aria-label="Delete this search"
                     >
-                      <Trash2 size={13} strokeWidth={2.1} />
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 ))
@@ -479,18 +666,15 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                     cursor: 'pointer',
                     textDecoration: 'underline',
                     padding: '3px 8px',
-                    borderRadius: '4px',
-                    transition: 'all 0.15s ease'
+                    borderRadius: '4px'
                   }}
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLElement;
                     el.style.color = '#DC2626';
-                    el.style.background = '#FEE2E2';
                   }}
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLElement;
                     el.style.color = '#94A3B8';
-                    el.style.background = 'transparent';
                   }}
                 >
                   Clear all history
@@ -502,7 +686,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
       </aside>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* MAIN VIEWPORT: Compact, Centered, Fits Screen Without Scroll  */}
+      {/* MAIN VIEWPORT: Spacious, Non-Congested Layout                 */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div 
         style={{ 
@@ -510,14 +694,11 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
           height: '100%', 
           display: 'flex', 
           flexDirection: 'column', 
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          overflowY: 'auto',
-          padding: '10px 20px',
-          position: 'relative'
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
-        {/* Toggle Button to reopen sidebar when closed */}
+        {/* Toggle Button to reopen sidebar when collapsed */}
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
@@ -528,16 +709,16 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
               background: '#FFFFFF',
               border: '1px solid #CBD5E1',
               borderRadius: '8px',
-              padding: '5px 9px',
+              padding: '5px 10px',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '11px',
+              fontSize: '11.5px',
               fontWeight: 600,
               color: '#475569',
               cursor: 'pointer',
               boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-              zIndex: 10
+              zIndex: 15
             }}
             title="Open history sidebar"
           >
@@ -546,329 +727,492 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
           </button>
         )}
 
-
-        {/* ── TOP SECTION (HERO + BANNER + INQUIRIES + GREETING) ── */}
-        <div 
-          style={{ 
-            width: '100%', 
-            maxWidth: '1020px', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          {/* 1. HERO HEADER (Horizontal alignment matching reference image) */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '2px' }}>
-            <div 
-              style={{ 
-                width: '46px', 
-                height: '46px', 
-                borderRadius: '14px', 
-                background: 'rgba(224, 242, 254, 0.85)', 
-                border: '1.5px solid #BAE6FD', 
-                color: '#0284C7', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.1)',
-                flexShrink: 0
-              }}
-            >
-              <Sparkles size={24} />
-            </div>
-
-            <div style={{ textAlign: 'left' }}>
-              <h1 
-                style={{ 
-                  fontSize: 'clamp(28px, 3.4vw, 38px)', 
-                  fontWeight: 800, 
-                  color: '#0F172A', 
-                  letterSpacing: '-0.03em', 
-                  lineHeight: 1.1, 
-                  margin: 0, 
-                  fontFamily: 'var(--font-heading)' 
-                }}
-              >
-                Ask <span className="dhruva-brand-text">DHRUVA</span>
-              </h1>
-
-              <p 
-                style={{ 
-                  fontSize: '10px', 
-                  fontWeight: 700, 
-                  letterSpacing: '0.22em', 
-                  textTransform: 'uppercase', 
-                  color: '#64748B', 
-                  marginTop: '3px', 
-                  marginBottom: 0 
-                }}
-              >
-                AI POLAR RESEARCH ASSISTANT
-              </p>
-            </div>
-          </div>
-
-          {/* 2. HERO BANNER CARD */}
-          <div 
-            style={{ 
-              width: '100%', 
-              maxWidth: '820px', 
-              background: '#FFFFFF', 
-              border: '1px solid rgba(2, 132, 199, 0.18)', 
-              borderRadius: '16px', 
-              padding: '11px 24px', 
-              textAlign: 'center', 
-              boxShadow: '0 2px 14px rgba(2, 132, 199, 0.04)' 
+        {/* ── TOP COMPACT TOOLBAR (Only shown during active conversation) ── */}
+        {messages.length > 0 && (
+          <header 
+            style={{
+              width: '100%',
+              padding: '10px 24px',
+              background: '#FFFFFF',
+              borderBottom: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              zIndex: 10,
+              flexShrink: 0
             }}
           >
-            <h2 
-              style={{ 
-                fontSize: 'clamp(18px, 2vw, 23px)', 
-                fontWeight: 800, 
-                color: '#0F172A', 
-                margin: 0, 
-                lineHeight: 1.25, 
-                fontFamily: 'var(--font-heading)' 
-              }}
-            >
-              Ask any <span style={{ color: '#0284C7' }}>polar</span> <span style={{ color: '#2563EB' }}>science</span> question
-            </h2>
-            <p 
-              style={{ 
-                fontSize: '11.5px', 
-                color: '#64748B', 
-                marginTop: '4px', 
-                marginBottom: 0, 
-                lineHeight: 1.4 
-              }}
-            >
-              Strictly grounded in peer-reviewed NCPOR research — Arctic &amp; Antarctic expeditions — with section &amp; page citations.
-            </p>
-          </div>
-
-          {/* 3. SUGGESTED RESEARCH INQUIRIES (Initial State) */}
-          {messages.length === 0 && (
-            <div style={{ width: '100%' }}>
-              <div 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between', 
-                  marginBottom: '6px' 
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div 
-                    style={{ 
-                      width: '17px', 
-                      height: '17px', 
-                      borderRadius: '9999px', 
-                      background: '#E0F2FE', 
-                      color: '#0284C7', 
-                      fontSize: '10.5px', 
-                      fontWeight: 700, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center' 
-                    }}
-                  >
-                    ?
-                  </div>
-                  <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                    Suggested Research Inquiries
-                  </h3>
-                </div>
-
-                <button 
-                  onClick={() => handleSubmit(undefined, RESEARCH_INQUIRIES[0].text)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                  <span>View All Suggestions</span>
-                  <ArrowRight size={11} />
-                </button>
-              </div>
-
-              {/* 3 Columns × 2 Rows Compact Grid */}
-              <div 
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
-                style={{ width: '100%' }}
-              >
-                {RESEARCH_INQUIRIES.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleSubmit(undefined, item.text)}
-                    style={{
-                      background: '#FFFFFF',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: '12px',
-                      padding: '8px 12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
-                      (e.currentTarget as HTMLElement).style.boxShadow = '0 3px 10px rgba(2, 132, 199, 0.08)';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0';
-                      (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
-                    }}
-                  >
-                    <div 
-                      style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '8px',
-                        background: '#F0F9FF',
-                        border: '1px solid #E0F2FE',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}
-                    >
-                      {item.icon}
-                    </div>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#1E293B', lineHeight: 1.35, flex: 1 }}>
-                      {item.text}
-                    </span>
-                    <ArrowRight size={13} style={{ color: '#0284C7', flexShrink: 0 }} />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 4. DHRUVA ASSISTANT WELCOME CARD */}
-          {messages.length === 0 && (
-            <div 
-              style={{ 
-                width: '100%', 
-                background: '#FFFFFF', 
-                border: '1px solid #E2E8F0', 
-                borderRadius: '14px', 
-                padding: '10px 18px', 
-                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.02)', 
-                display: 'flex', 
-                alignItems: 'flex-start', 
-                gap: '12px' 
-              }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: !sidebarOpen ? '80px' : '0px' }}>
               <div 
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '9999px',
-                  background: '#EEF2FF',
-                  border: '1px solid #C7D2FE',
-                  color: '#6366F1',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '8px',
+                  background: '#E0F2FE',
+                  border: '1px solid #BAE6FD',
+                  color: '#0284C7',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  marginTop: '2px'
+                  justifyContent: 'center'
                 }}
               >
                 <Sparkles size={16} />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748B', marginBottom: '2px' }}>
-                  <span className="dhruva-brand-text font-bold">DHRUVA</span> ASSISTANT
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>Ask <span className="dhruva-brand-text">DHRUVA</span></span>
+                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '1px 6px', borderRadius: '9999px' }}>
+                    Active Intelligence
+                  </span>
                 </div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, marginBottom: '2px' }}>
-                  Namaste! I am <span className="dhruva-brand-text font-bold">DHRUVA</span> (ध्रुव), the AI Research Assistant for India's Polar Science expeditions.
+                <div style={{ fontSize: '10.5px', color: '#64748B' }}>
+                  Grounded in peer-reviewed NCPOR research archives
                 </div>
-                <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.45, margin: 0 }}>
-                  I answer questions strictly grounded in our peer-reviewed polar science knowledge repository, providing verified section and page citations. Try selecting one of the suggested scientific queries below or ask your own question!
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={handleResetChat}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  color: '#0284C7',
+                  background: '#F0F9FF',
+                  border: '1px solid #BAE6FD',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+              >
+                <Plus size={13} />
+                <span>New Inquiry</span>
+              </button>
+            </div>
+          </header>
+        )}
+
+        {/* ── CENTER SCROLL AREA: Hero + Suggestions (if empty) OR Clean Message Stream (if active) ── */}
+        <div 
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: messages.length === 0 ? '20px 24px' : '16px 24px 24px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          {/* INITIAL STATE: HERO + SUGGESTIONS + WELCOME CARD */}
+          {messages.length === 0 && (
+            <div 
+              style={{ 
+                width: '100%', 
+                maxWidth: '860px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                gap: '14px',
+                margin: 'auto 0'
+              }}
+            >
+              {/* 1. HERO HEADER */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+                <div 
+                  style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    borderRadius: '14px', 
+                    background: 'rgba(224, 242, 254, 0.9)', 
+                    border: '1.5px solid #BAE6FD', 
+                    color: '#0284C7', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.12)',
+                    flexShrink: 0
+                  }}
+                >
+                  <Sparkles size={26} />
+                </div>
+
+                <div style={{ textAlign: 'left' }}>
+                  <h1 
+                    style={{ 
+                      fontSize: 'clamp(26px, 3.2vw, 36px)', 
+                      fontWeight: 800, 
+                      color: '#0F172A', 
+                      letterSpacing: '-0.03em', 
+                      lineHeight: 1.1, 
+                      margin: 0, 
+                      fontFamily: 'var(--font-heading)' 
+                    }}
+                  >
+                    Ask <span className="dhruva-brand-text">DHRUVA</span>
+                  </h1>
+
+                  <p 
+                    style={{ 
+                      fontSize: '10.5px', 
+                      fontWeight: 700, 
+                      letterSpacing: '0.2em', 
+                      textTransform: 'uppercase', 
+                      color: '#64748B', 
+                      marginTop: '3px', 
+                      marginBottom: 0 
+                    }}
+                  >
+                    AI POLAR RESEARCH INTELLIGENCE
+                  </p>
+                </div>
+              </div>
+
+              {/* 2. HERO BANNER CARD */}
+              <div 
+                style={{ 
+                  width: '100%', 
+                  background: '#FFFFFF', 
+                  border: '1px solid rgba(2, 132, 199, 0.2)', 
+                  borderRadius: '16px', 
+                  padding: '12px 24px', 
+                  textAlign: 'center', 
+                  boxShadow: '0 4px 20px rgba(2, 132, 199, 0.04)' 
+                }}
+              >
+                <h2 
+                  style={{ 
+                    fontSize: 'clamp(18px, 2.2vw, 22px)', 
+                    fontWeight: 800, 
+                    color: '#0F172A', 
+                    margin: 0, 
+                    lineHeight: 1.3, 
+                    fontFamily: 'var(--font-heading)' 
+                  }}
+                >
+                  Ask any <span style={{ color: '#0284C7' }}>polar</span> <span style={{ color: '#2563EB' }}>science</span> question
+                </h2>
+                <p 
+                  style={{ 
+                    fontSize: '12px', 
+                    color: '#64748B', 
+                    marginTop: '4px', 
+                    marginBottom: 0, 
+                    lineHeight: 1.45 
+                  }}
+                >
+                  Strictly grounded in peer-reviewed NCPOR research — Arctic, Antarctic &amp; Himalayas — with page citations.
                 </p>
+              </div>
+
+              {/* 3. SUGGESTED RESEARCH INQUIRIES */}
+              <div style={{ width: '100%' }}>
+                <div 
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    marginBottom: '8px' 
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div 
+                      style={{ 
+                        width: '18px', 
+                        height: '18px', 
+                        borderRadius: '9999px', 
+                        background: '#E0F2FE', 
+                        color: '#0284C7', 
+                        fontSize: '11px', 
+                        fontWeight: 700, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center' 
+                      }}
+                    >
+                      ?
+                    </div>
+                    <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                      Suggested Research Inquiries
+                    </h3>
+                  </div>
+
+                  <span style={{ fontSize: '11px', color: '#64748B' }}>
+                    Click any prompt to ask
+                  </span>
+                </div>
+
+                <div 
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"
+                  style={{ width: '100%' }}
+                >
+                  {RESEARCH_INQUIRIES.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSubmit(undefined, item.text)}
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
+                        (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(2, 132, 199, 0.08)';
+                        (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0';
+                        (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+                        (e.currentTarget as HTMLElement).style.transform = 'none';
+                      }}
+                    >
+                      <div 
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '8px',
+                          background: '#F0F9FF',
+                          border: '1px solid #E0F2FE',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        {item.icon}
+                      </div>
+                      <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#1E293B', lineHeight: 1.4, flex: 1 }}>
+                        {item.text}
+                      </span>
+                      <ArrowRight size={13} style={{ color: '#0284C7', flexShrink: 0 }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. DHRUVA ASSISTANT WELCOME CARD */}
+              <div 
+                style={{ 
+                  width: '100%', 
+                  background: '#FFFFFF', 
+                  border: '1px solid #E2E8F0', 
+                  borderRadius: '14px', 
+                  padding: '12px 18px', 
+                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.02)', 
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  gap: '12px' 
+                }}
+              >
+                <div 
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '9999px',
+                    background: '#EEF2FF',
+                    border: '1px solid #C7D2FE',
+                    color: '#6366F1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: '2px'
+                  }}
+                >
+                  <Sparkles size={18} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748B', marginBottom: '2px' }}>
+                    <span className="dhruva-brand-text font-bold">DHRUVA</span> ASSISTANT
+                  </div>
+                  <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, marginBottom: '3px' }}>
+                    Namaste! I am <span className="dhruva-brand-text font-bold">DHRUVA</span> (ध्रुव), the AI Research Assistant for India's Polar Science expeditions.
+                  </div>
+                  <p style={{ fontSize: '11.5px', color: '#475569', lineHeight: 1.5, margin: 0 }}>
+                    I answer queries about polar geography, expeditions, research stations (<em>Himadri, Maitri, Bharati</em>), and peer-reviewed NCPOR publications. Ask anything from simple foundational questions to in-depth scientific queries!
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* 5. ACTIVE CHAT THREAD (When conversation has started) */}
+          {/* ACTIVE STATE: CLEAN EXPANDED CONVERSATION STREAM */}
           {messages.length > 0 && (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: 'calc(100vh - 270px)', overflowY: 'auto', paddingRight: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={handleResetChat}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#64748B', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
-                >
-                  <RotateCcw size={11} />
-                  <span>New Inquiry</span>
-                </button>
-              </div>
-
+            <div 
+              style={{ 
+                width: '100%', 
+                maxWidth: '880px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '16px'
+              }}
+            >
               {messages.map((msg, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '10px', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div 
+                  key={idx} 
+                  style={{ 
+                    display: 'flex', 
+                    gap: '12px', 
+                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    width: '100%'
+                  }}
+                >
+                  {/* Assistant Avatar */}
                   {msg.role === 'assistant' && (
-                    <div style={{ width: '28px', height: '28px', borderRadius: '9999px', background: '#EEF2FF', border: '1px solid #C7D2FE', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                      <Sparkles size={14} />
+                    <div 
+                      style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '10px', 
+                        background: '#EEF2FF', 
+                        border: '1px solid #C7D2FE', 
+                        color: '#6366F1', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        flexShrink: 0, 
+                        marginTop: '2px',
+                        boxShadow: '0 2px 6px rgba(99, 102, 241, 0.12)'
+                      }}
+                    >
+                      <Sparkles size={16} />
                     </div>
                   )}
 
+                  {/* Message Bubble */}
                   <div 
                     style={{
-                      maxWidth: '82%',
-                      borderRadius: '14px',
-                      padding: '10px 14px',
-                      fontSize: '12.5px',
-                      lineHeight: 1.55,
-                      background: msg.role === 'user' ? '#0284C7' : '#FFFFFF',
+                      maxWidth: '85%',
+                      borderRadius: '16px',
+                      padding: '14px 18px',
+                      background: msg.role === 'user' ? 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)' : '#FFFFFF',
                       color: msg.role === 'user' ? '#FFFFFF' : '#1E293B',
                       border: msg.role === 'user' ? 'none' : '1px solid #E2E8F0',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                      boxShadow: msg.role === 'user' ? '0 3px 12px rgba(2, 132, 199, 0.22)' : '0 2px 10px rgba(15, 23, 42, 0.04)'
                     }}
                   >
                     {msg.role === 'assistant' && (
-                      <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Sparkles size={10} />
-                        <span><span className="dhruva-brand-text font-bold">DHRUVA</span> AI · GROUNDED SYNTHESIS</span>
+                      <div 
+                        style={{ 
+                          fontSize: '10px', 
+                          fontWeight: 700, 
+                          color: '#6366F1', 
+                          textTransform: 'uppercase', 
+                          letterSpacing: '0.08em', 
+                          marginBottom: '8px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between',
+                          borderBottom: '1px solid #F1F5F9',
+                          paddingBottom: '6px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <Sparkles size={11} />
+                          <span><span className="dhruva-brand-text font-bold">DHRUVA</span> AI · Grounded Synthesis</span>
+                        </div>
+                        <span style={{ fontSize: '9px', color: '#94A3B8', fontWeight: 600 }}>
+                          MoES / NCPOR India
+                        </span>
                       </div>
                     )}
 
                     {/* Attachment preview inside message */}
                     {msg.attachment && (
-                      <div style={{ marginBottom: '6px', padding: '6px 10px', borderRadius: '8px', background: msg.role === 'user' ? 'rgba(255,255,255,0.18)' : '#F1F5F9', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', border: '1px solid rgba(255,255,255,0.3)' }}>
-                        <Paperclip size={12} />
+                      <div 
+                        style={{ 
+                          marginBottom: '8px', 
+                          padding: '6px 12px', 
+                          borderRadius: '8px', 
+                          background: msg.role === 'user' ? 'rgba(255,255,255,0.18)' : '#F1F5F9', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '6px', 
+                          fontSize: '11.5px', 
+                          border: '1px solid rgba(255,255,255,0.3)' 
+                        }}
+                      >
+                        <Paperclip size={13} />
                         <span style={{ fontWeight: 600 }}>{msg.attachment.name}</span>
-                        <span style={{ opacity: 0.8 }}>({(msg.attachment.size / 1024).toFixed(0)} KB)</span>
+                        <span style={{ opacity: 0.85 }}>({(msg.attachment.size / 1024).toFixed(0)} KB)</span>
                       </div>
                     )}
 
-                    <div style={{ whiteSpace: 'pre-line' }}>{msg.content}</div>
+                    {/* Parsed & Formatted Content */}
+                    <FormattedMessageContent content={msg.content} role={msg.role} />
 
-                    {/* Verified Sources Citations */}
+                    {/* Verified Sources & Provenance Cards */}
                     {msg.sources && msg.sources.length > 0 && (
-                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #F1F5F9' }}>
-                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <ShieldCheck size={12} />
-                          <span>Verified Citations ({msg.sources.length})</span>
+                      <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #F1F5F9' }}>
+                        <div 
+                          style={{ 
+                            fontSize: '10.5px', 
+                            fontWeight: 700, 
+                            color: '#059669', 
+                            textTransform: 'uppercase', 
+                            letterSpacing: '0.05em', 
+                            marginBottom: '8px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '5px' 
+                          }}
+                        >
+                          <ShieldCheck size={14} />
+                          <span>Verified Scientific Citations ({msg.sources.length})</span>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {msg.sources.map((src, sIdx) => (
                             <div 
                               key={sIdx}
                               onClick={() => onReadPaper(src.paperId)}
-                              style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', cursor: 'pointer' }}
+                              style={{ 
+                                background: '#F8FAFC', 
+                                border: '1px solid #E2E8F0', 
+                                borderRadius: '10px', 
+                                padding: '8px 12px', 
+                                fontSize: '11.5px', 
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLElement).style.background = '#F0F9FF';
+                                (e.currentTarget as HTMLElement).style.borderColor = '#BAE6FD';
+                              }}
+                              onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLElement).style.background = '#F8FAFC';
+                                (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0';
+                              }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <span style={{ fontWeight: 700, color: '#0284C7' }}>📄 {src.paperTitle}</span>
-                                <span style={{ fontSize: '9px', fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '1px 5px', borderRadius: '4px' }}>
-                                  {(src.confidenceScore * 100).toFixed(0)}% Conf
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                <span style={{ fontWeight: 700, color: '#0284C7', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  <BookOpen size={12} />
+                                  <span>{src.paperTitle}</span>
+                                </span>
+                                <span style={{ fontSize: '9.5px', fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>
+                                  {src.confidenceScore}% Verified
                                 </span>
                               </div>
-                              <div style={{ fontSize: '9.5px', color: '#64748B', fontFamily: 'var(--font-mono)' }}>
-                                § {src.sectionName} · Page {src.pageNumber}
+                              <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>§ {src.sectionName}</span>
+                                <span>•</span>
+                                <span>Page {src.pageNumber}</span>
                               </div>
-                              <div style={{ fontStyle: 'italic', color: '#475569', borderLeft: '2px solid #0284C7', paddingLeft: '6px', marginTop: '2px' }}>
-                                "{src.snippet}"
+                              <div style={{ fontStyle: 'italic', color: '#475569', borderLeft: '2px solid #0284C7', paddingLeft: '8px', marginTop: '4px', fontSize: '11px', lineHeight: 1.45 }}>
+                                "{src.snippet.length > 240 ? src.snippet.slice(0, 240) + '...' : src.snippet}"
                               </div>
                             </div>
                           ))}
@@ -877,26 +1221,68 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                     )}
                   </div>
 
+                  {/* User Avatar */}
                   {msg.role === 'user' && (
-                    <div style={{ width: '28px', height: '28px', borderRadius: '9999px', background: '#E0F2FE', border: '1px solid #BAE6FD', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                      <User size={14} />
+                    <div 
+                      style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '10px', 
+                        background: '#E0F2FE', 
+                        border: '1px solid #BAE6FD', 
+                        color: '#0284C7', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        flexShrink: 0, 
+                        marginTop: '2px',
+                        boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)'
+                      }}
+                    >
+                      <User size={16} />
                     </div>
                   )}
                 </div>
               ))}
 
+              {/* Loading Indicator */}
               {loading && (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '9999px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Sparkles size={14} className="animate-spin text-indigo-600" />
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', alignSelf: 'flex-start' }}>
+                  <div 
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '10px', 
+                      background: '#EEF2FF', 
+                      border: '1px solid #C7D2FE',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }}
+                  >
+                    <Sparkles size={16} className="animate-spin text-indigo-600" />
                   </div>
-                  <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 14px', fontSize: '11.5px', color: '#64748B' }}>
-                    Searching polar scientific knowledge repository &amp; validating page citations...
+                  <div 
+                    style={{ 
+                      background: '#FFFFFF', 
+                      border: '1px solid #E2E8F0', 
+                      borderRadius: '12px', 
+                      padding: '10px 16px', 
+                      fontSize: '12px', 
+                      color: '#475569',
+                      boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span className="inline-block w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
+                    <span>Synthesizing answer from polar scientific repository &amp; verifying citations...</span>
                   </div>
                 </div>
               )}
               
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} style={{ height: '8px' }} />
             </div>
           )}
         </div>
@@ -905,195 +1291,190 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
         <div 
           style={{ 
             width: '100%', 
-            maxWidth: '1020px', 
+            padding: '10px 24px 14px 24px',
+            background: 'linear-gradient(to top, #FFFFFF 85%, rgba(255,255,255,0.7) 100%)',
+            borderTop: '1px solid #E2E8F0',
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center',
-            paddingTop: '4px'
+            flexShrink: 0,
+            zIndex: 10
           }}
         >
-          {/* Active Attachment Pill Preview (if selected via paperclip/image) */}
-          {currentAttachment && (
+          <div style={{ width: '100%', maxWidth: '880px' }}>
+            {/* Active Attachment Pill Preview */}
+            {currentAttachment && (
+              <div 
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '6px 14px',
+                  borderRadius: '10px',
+                  background: '#F0F9FF',
+                  border: '1px solid #BAE6FD',
+                  marginBottom: '8px',
+                  fontSize: '12px',
+                  color: '#0284C7'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {currentAttachment.type.startsWith('image/') ? <ImageIcon size={14} /> : <Paperclip size={14} />}
+                  <span style={{ fontWeight: 600 }}>Attached: {currentAttachment.name}</span>
+                  <span style={{ color: '#64748B', fontSize: '10.5px' }}>({(currentAttachment.size / 1024).toFixed(0)} KB)</span>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={handleRemoveAttachment}
+                  style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                  title="Remove attachment"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            )}
+
+            {/* Floating Rounded Query Input Bar */}
+            <form 
+              onSubmit={handleSubmit}
+              style={{
+                width: '100%',
+                background: '#FFFFFF',
+                border: '1.5px solid #CBD5E1',
+                borderRadius: '9999px',
+                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.06)',
+                padding: '5px 8px 5px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                marginBottom: '8px',
+                transition: 'border-color 0.15s, box-shadow 0.15s'
+              }}
+              onFocus={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 18px rgba(2, 132, 199, 0.15)';
+              }}
+              onBlur={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = '#CBD5E1';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(15, 23, 42, 0.06)';
+              }}
+            >
+              {/* Image upload button */}
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                style={{ 
+                  color: currentAttachment?.type.startsWith('image/') ? '#0284C7' : '#94A3B8', 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  padding: '6px',
+                  borderRadius: '9999px',
+                  transition: 'all 0.15s'
+                }}
+                title="Attach polar research photo or diagram"
+              >
+                <ImageIcon size={17} />
+              </button>
+
+              {/* Document upload button */}
+              <button 
+                type="button" 
+                onClick={() => fileInputRef.current?.click()}
+                style={{ 
+                  color: currentAttachment && !currentAttachment.type.startsWith('image/') ? '#0284C7' : '#94A3B8', 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  padding: '6px',
+                  borderRadius: '9999px',
+                  transition: 'all 0.15s'
+                }}
+                title="Attach research document or dataset"
+              >
+                <Paperclip size={17} />
+              </button>
+
+              {/* Query input field */}
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Ask a polar science question (e.g. 'what are poles', 'how does permafrost thaw?')..."
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '13.5px',
+                  color: '#0F172A',
+                  fontFamily: 'var(--font-body)'
+                }}
+                disabled={loading}
+              />
+
+              {/* Send Pill Button */}
+              <button
+                type="submit"
+                disabled={loading || (!query.trim() && !currentAttachment)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 20px',
+                  borderRadius: '9999px',
+                  background: '#0284C7',
+                  color: '#FFFFFF',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 10px rgba(2, 132, 199, 0.3)',
+                  opacity: loading || (!query.trim() && !currentAttachment) ? 0.5 : 1,
+                  transition: 'all 0.15s'
+                }}
+              >
+                <Send size={13} />
+                <span>Send</span>
+              </button>
+            </form>
+
+            {/* TRUST BADGES FOOTER */}
             <div 
               style={{
                 width: '100%',
                 display: 'flex',
+                flexWrap: 'wrap',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '5px 12px',
-                borderRadius: '8px',
-                background: '#F0F9FF',
-                border: '1px solid #BAE6FD',
-                marginBottom: '6px',
-                fontSize: '11.5px',
-                color: '#0284C7'
+                justifyContent: 'center',
+                gap: '20px',
+                fontSize: '11px',
+                color: '#64748B',
+                fontWeight: 500
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {currentAttachment.type.startsWith('image/') ? <ImageIcon size={13} /> : <Paperclip size={13} />}
-                <span style={{ fontWeight: 600 }}>Attached: {currentAttachment.name}</span>
-                <span style={{ color: '#64748B', fontSize: '10px' }}>({(currentAttachment.size / 1024).toFixed(0)} KB)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <ShieldCheck size={13} style={{ color: '#0284C7' }} />
+                <span>Grounded in NCPOR research</span>
               </div>
-              <button 
-                type="button" 
-                onClick={handleRemoveAttachment}
-                style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                title="Remove attachment"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
 
-          {/* Floating Rounded-Full Query Input Bar */}
-          <form 
-            onSubmit={handleSubmit}
-            style={{
-              width: '100%',
-              background: '#FFFFFF',
-              border: '1px solid #CBD5E1',
-              borderRadius: '9999px',
-              boxShadow: '0 4px 18px rgba(15, 23, 42, 0.05)',
-              padding: '4px 6px 4px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              marginBottom: '8px'
-            }}
-          >
-            {/* Image icon button (workable - triggers image file picker & saves in localStorage) */}
-            <button
-              type="button"
-              onClick={() => imageInputRef.current?.click()}
-              style={{ color: currentAttachment?.type.startsWith('image/') ? '#0284C7' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
-              title="Attach polar research photo or diagram"
-            >
-              <ImageIcon size={16} />
-            </button>
-
-            {/* Query input field */}
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask a polar science question..."
-              style={{
-                flex: 1,
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                fontSize: '13px',
-                color: '#0F172A',
-                fontFamily: 'var(--font-body)'
-              }}
-              disabled={loading}
-            />
-
-            {/* Paperclip icon button (workable - triggers document file picker & saves in localStorage) */}
-            <button 
-              type="button" 
-              onClick={() => fileInputRef.current?.click()}
-              style={{ color: currentAttachment && !currentAttachment.type.startsWith('image/') ? '#0284C7' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
-              title="Attach research document or dataset"
-            >
-              <Paperclip size={16} />
-            </button>
-
-            {/* Send Pill Button */}
-            <button
-              type="submit"
-              disabled={loading || (!query.trim() && !currentAttachment)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '7px 18px',
-                borderRadius: '9999px',
-                background: '#0284C7',
-                color: '#FFFFFF',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.28)',
-                opacity: loading || (!query.trim() && !currentAttachment) ? 0.5 : 1
-              }}
-            >
-              <Send size={12} />
-              <span>Send</span>
-            </button>
-          </form>
-
-          {/* 7. THREE FOOTER TRUST BADGES */}
-          <div 
-            style={{
-              width: '100%',
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '24px',
-              fontSize: '11.5px',
-              color: '#475569',
-              fontWeight: 500
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div 
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '9999px',
-                  background: '#E0F2FE',
-                  color: '#0284C7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <ShieldCheck size={12} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <FileText size={13} style={{ color: '#0284C7' }} />
+                <span>Section &amp; page citations provided</span>
               </div>
-              <span>Grounded in NCPOR research</span>
-            </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div 
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '9999px',
-                  background: '#E0F2FE',
-                  color: '#0284C7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <FileText size={12} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Lock size={12} style={{ color: '#0284C7' }} />
+                <span>Scientific &amp; verified provenance</span>
               </div>
-              <span>Section &amp; page citations provided</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div 
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '9999px',
-                  background: '#E0F2FE',
-                  color: '#0284C7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <Lock size={11} />
-              </div>
-              <span>Scientific &amp; verified information</span>
             </div>
           </div>
-
         </div>
 
       </div>
