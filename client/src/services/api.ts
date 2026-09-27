@@ -127,10 +127,11 @@ export const apiFetchPaperById = (id: string) =>
   }>(`/papers/${id}`);
 
 // 3. RAG Engine API
-export const apiAskRAG = (payload: { query: string; paperId?: string; region?: string; area?: string }) =>
+export const apiAskRAG = (payload: { query: string; paperId?: string; region?: string; area?: string; history?: any[]; mode?: string }) =>
   request<{
     query: string;
     answer: string;
+    mode?: string;
     sources: Array<{
       paperId: string;
       paperTitle: string;
@@ -307,6 +308,16 @@ export const apiVerifyClaim = (payload: {
   editedText?: string;
 }) =>
   request<{ message: string; claimId: string; decision: string; groundingStatus: string }>('/admin/claims/verify', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+export const apiBatchVerifyClaims = (payload: {
+  paperId: string;
+  decision?: 'Approved' | 'Rejected';
+  reviewerComment?: string;
+}) =>
+  request<{ message: string; paperId: string; decision: string }>('/admin/claims/batch-verify', {
     method: 'POST',
     body: JSON.stringify(payload)
   });

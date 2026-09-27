@@ -21,7 +21,10 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  BookOpen
+  BookOpen,
+  Mic,
+  MicOff,
+  Download
 } from 'lucide-react';
 import { apiAskRAG } from '../../services/api';
 
@@ -96,9 +99,26 @@ const RESEARCH_INQUIRIES = [
   }
 ];
 
+function downloadTableAsCsv(headers: string[], rows: string[][], filename = 'dhruva-polar-data.csv') {
+  const escapeCsv = (str: string) => `"${(str || '').replace(/"/g, '""')}"`;
+  const csvContent = [
+    headers.map(escapeCsv).join(','),
+    ...rows.map(row => row.map(escapeCsv).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 /**
  * Rich Formatted Markdown Renderer for DHRUVA AI Responses
- * Parses headers (###), blockquotes (>), bold (**), italics (*), bullet lists (• / -), numbered lists
+ * Parses headers (###), blockquotes (>), bold (**), italics (*), bullet lists (• / -), numbered lists, and markdown tables (|...|)
  */
 const FormattedMessageContent: React.FC<{ content: string; role: 'user' | 'assistant' }> = ({ content, role }) => {
   if (role === 'user') {
@@ -111,6 +131,8 @@ const FormattedMessageContent: React.FC<{ content: string; role: 'user' | 'assis
   let blockquoteBuffer: string[] = [];
   let inList = false;
   let listBuffer: string[] = [];
+  let inTable = false;
+  let tableBuffer: string[] = [];
 
   const renderInlineMarkdown = (text: string) => {
     const parts: React.ReactNode[] = [];
@@ -214,8 +236,78 @@ const FormattedMessageContent: React.FC<{ content: string; role: 'user' | 'assis
     }
   };
 
+  const flushTable = (key: string) => {
+    if (tableBuffer.length >= 2) {
+      const headerLine = tableBuffer[0];
+      const headers = headerLine.split('|').map(s => s.trim()).filter(Boolean);
+      const dataRows = tableBuffer.slice(2).map(r => r.split('|').map(s => s.trim()).filter(Boolean)).filter(r => r.length > 0);
+
+      renderedElements.push(
+        <div key={key} style={{ margin: '10px 0 14px 0', width: '100%', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
+            <button
+              onClick={() => downloadTableAsCsv(headers, dataRows)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                borderRadius: '6px',
+                background: '#F0F9FF',
+                border: '1px solid #BAE6FD',
+                color: '#0284C7',
+                fontSize: '10px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+              title="Export table as CSV"
+            >
+              <Download size={11} />
+              <span>Export CSV</span>
+            </button>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', background: '#FFFFFF', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+            <thead>
+              <tr style={{ background: '#F8FAFC', borderBottom: '1.5px solid #CBD5E1' }}>
+                {headers.map((h, hIdx) => (
+                  <th key={hIdx} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, color: '#0F172A' }}>
+                    {renderInlineMarkdown(h)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dataRows.map((row, rIdx) => (
+                <tr key={rIdx} style={{ borderBottom: '1px solid #F1F5F9', background: rIdx % 2 === 1 ? '#FAFAFA' : '#FFFFFF' }}>
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} style={{ padding: '7px 12px', color: '#334155', verticalAlign: 'top' }}>
+                      {renderInlineMarkdown(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    tableBuffer = [];
+    inTable = false;
+  };
+
   lines.forEach((line, i) => {
     const trimmed = line.trim();
+
+    // Check for Markdown table line
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      if (inList) flushList(`list-before-tbl-${i}`);
+      if (inBlockquote) flushBlockquote(`quote-before-tbl-${i}`);
+      inTable = true;
+      tableBuffer.push(trimmed);
+      return;
+    } else if (inTable) {
+      flushTable(`table-${i}`);
+    }
 
     // Check for blockquote
     if (trimmed.startsWith('>')) {
@@ -292,6 +384,7 @@ const FormattedMessageContent: React.FC<{ content: string; role: 'user' | 'assis
 
   if (inBlockquote) flushBlockquote('quote-final');
   if (inList) flushList('list-final');
+  if (inTable) flushTable('table-final');
 
   return <div style={{ display: 'flex', flexDirection: 'column' }}>{renderedElements}</div>;
 };
@@ -306,9 +399,60 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [query, setQuery] = useState(initialQuery || '');
   const [loading, setLoading] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentAttachment, setCurrentAttachment] = useState<StoredAttachment | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const toggleVoiceRecognition = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          setQuery(prev => (prev ? `${prev} ${transcript}` : transcript));
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition notice:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn('Speech recognition error:', err);
+      setIsListening(false);
+    }
+  };
 
   useEffect(() => {
     if (initialQuery) {
@@ -348,7 +492,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
           size: item.attachment.size,
           type: item.attachment.type
         } : undefined,
-        messages: item.messages.map(m => ({
+        messages: (item.messages || []).map(m => ({
           ...m,
           attachment: m.attachment ? {
             name: m.attachment.name,
@@ -415,6 +559,12 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
     if (!q && !currentAttachment) return;
     if (loading) return;
 
+    // Active session ID or create new session ID for this thread
+    const sessionId = currentSessionId || ('session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
+    if (!currentSessionId) {
+      setCurrentSessionId(sessionId);
+    }
+
     const attachedFile = currentAttachment;
     const userMessage: ChatMessage = { 
       role: 'user', 
@@ -429,7 +579,11 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
     setLoading(true);
 
     try {
-      const res = await apiAskRAG({ query: q });
+      const historyContext = newMessages.slice(-6).map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+      const res = await apiAskRAG({ query: q, history: historyContext });
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: res.answer || 'No direct synthesis available.',
@@ -439,46 +593,77 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
       const finalMessages = [...newMessages, assistantMessage];
       setMessages(finalMessages);
 
-      // Save to Search History in localStorage
-      const historyItem: SearchHistoryItem = {
-        id: 'hist_' + Date.now(),
-        query: q || (attachedFile ? attachedFile.name : 'Polar Inquiry'),
+      // Save/Update Conversation Thread in History (single thread per conversation session)
+      const existingSession = searchHistory.find(h => h.id === sessionId);
+      const threadTitle = existingSession ? existingSession.query : (q || (attachedFile ? attachedFile.name : 'Polar Inquiry'));
+      
+      const updatedSessionItem: SearchHistoryItem = {
+        id: sessionId,
+        query: threadTitle,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         messages: finalMessages,
-        attachment: attachedFile || undefined
+        attachment: existingSession?.attachment || attachedFile || undefined
       };
 
-      const updatedHistory = [historyItem, ...searchHistory.filter(h => h.query !== historyItem.query)].slice(0, 25);
+      const updatedHistory = [updatedSessionItem, ...searchHistory.filter(h => h.id !== sessionId)].slice(0, 30);
       saveHistory(updatedHistory);
     } catch (err: any) {
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: 'Error consulting polar science knowledge repository: ' + (err.message || 'Unknown network error.')
       };
-      setMessages([...newMessages, errorMessage]);
+      const finalMessagesWithErr = [...newMessages, errorMessage];
+      setMessages(finalMessagesWithErr);
+
+      const existingSession = searchHistory.find(h => h.id === sessionId);
+      const threadTitle = existingSession ? existingSession.query : (q || (attachedFile ? attachedFile.name : 'Polar Inquiry'));
+      
+      const updatedSessionItem: SearchHistoryItem = {
+        id: sessionId,
+        query: threadTitle,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        messages: finalMessagesWithErr,
+        attachment: existingSession?.attachment || attachedFile || undefined
+      };
+
+      const updatedHistory = [updatedSessionItem, ...searchHistory.filter(h => h.id !== sessionId)].slice(0, 30);
+      saveHistory(updatedHistory);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSelectHistoryItem = (item: SearchHistoryItem) => {
-    setMessages(item.messages || [{ role: 'user', content: item.query }]);
+    setCurrentSessionId(item.id);
+    setMessages(item.messages && item.messages.length > 0 ? item.messages : [{ role: 'user', content: item.query }]);
     setQuery('');
+    setCurrentAttachment(null);
   };
 
   const handleDeleteHistoryItem = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (currentSessionId === id) {
+      setCurrentSessionId(null);
+      setMessages([]);
+      setQuery('');
+      setCurrentAttachment(null);
+    }
     const updated = searchHistory.filter(h => h.id !== id);
     saveHistory(updated);
   };
 
   const handleClearAllHistory = () => {
-    if (window.confirm('Are you sure you want to clear all search history?')) {
+    if (window.confirm('Are you sure you want to clear all conversation history?')) {
+      setCurrentSessionId(null);
+      setMessages([]);
+      setQuery('');
+      setCurrentAttachment(null);
       saveHistory([]);
     }
   };
 
   const handleResetChat = () => {
+    setCurrentSessionId(null);
     setMessages([]);
     setQuery('');
     setCurrentAttachment(null);
@@ -513,7 +698,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
       />
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* LEFT SIDEBAR: Search History                                  */}
+      {/* LEFT SIDEBAR: Search & Conversation History                    */}
       {/* ───────────────────────────────────────────────────────────── */}
       <aside 
         style={{
@@ -536,8 +721,13 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Clock size={14} style={{ color: '#0284C7' }} />
                 <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Search History
+                  Chat History
                 </span>
+                {searchHistory.length > 0 && (
+                  <span style={{ fontSize: '10px', fontWeight: 700, background: '#F1F5F9', color: '#64748B', padding: '1px 6px', borderRadius: '10px' }}>
+                    {searchHistory.length}
+                  </span>
+                )}
               </div>
               <button 
                 onClick={() => setSidebarOpen(false)} 
@@ -557,9 +747,9 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                 width: '100%',
                 padding: '7px 12px',
                 borderRadius: '8px',
-                background: '#F0F9FF',
-                border: '1px solid #BAE6FD',
-                color: '#0284C7',
+                background: currentSessionId === null && messages.length === 0 ? '#0284C7' : '#F0F9FF',
+                border: currentSessionId === null && messages.length === 0 ? '1px solid #0284C7' : '1px solid #BAE6FD',
+                color: currentSessionId === null && messages.length === 0 ? '#FFFFFF' : '#0284C7',
                 fontSize: '11.5px',
                 fontWeight: 600,
                 display: 'flex',
@@ -578,76 +768,100 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '2px' }}>
               {searchHistory.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94A3B8', fontSize: '11px', lineHeight: 1.5 }}>
-                  No previous searches.<br />Your queries will be saved here automatically.
+                  No previous conversations.<br />Your chat sessions will be saved here automatically.
                 </div>
               ) : (
-                searchHistory.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => handleSelectHistoryItem(item)}
-                    style={{
-                      padding: '7px 10px',
-                      borderRadius: '8px',
-                      background: '#F8FAFC',
-                      border: '1px solid #E2E8F0',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                      transition: 'all 0.15s'
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.background = '#F0F9FF';
-                      (e.currentTarget as HTMLElement).style.borderColor = '#BAE6FD';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.background = '#F8FAFC';
-                      (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0';
-                    }}
-                  >
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {item.query}
-                      </div>
-                      <div style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px' }}>
-                        {item.timestamp}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                searchHistory.map((item) => {
+                  const isActive = item.id === currentSessionId;
+                  const inquiryCount = item.messages 
+                    ? Math.max(1, item.messages.filter(m => m.role === 'user').length)
+                    : 1;
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => handleSelectHistoryItem(item)}
                       style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '6px',
-                        background: 'transparent',
-                        border: '1px solid transparent',
-                        color: '#94A3B8',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        background: isActive ? '#E0F2FE' : '#F8FAFC',
+                        border: isActive ? '1px solid #38BDF8' : '1px solid #E2E8F0',
+                        borderLeft: isActive ? '3px solid #0284C7' : '1px solid #E2E8F0',
                         cursor: 'pointer',
-                        padding: 0,
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.18s',
-                        flexShrink: 0
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        transition: 'all 0.15s'
                       }}
                       onMouseEnter={(e) => {
-                        const el = e.currentTarget as HTMLElement;
-                        el.style.background = '#FEE2E2';
-                        el.style.color = '#DC2626';
+                        if (!isActive) {
+                          (e.currentTarget as HTMLElement).style.background = '#F0F9FF';
+                          (e.currentTarget as HTMLElement).style.borderColor = '#BAE6FD';
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        const el = e.currentTarget as HTMLElement;
-                        el.style.background = 'transparent';
-                        el.style.color = '#94A3B8';
+                        if (!isActive) {
+                          (e.currentTarget as HTMLElement).style.background = '#F8FAFC';
+                          (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0';
+                        }
                       }}
-                      title="Delete this search"
                     >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ 
+                          fontSize: '11.5px', 
+                          fontWeight: isActive ? 700 : 600, 
+                          color: isActive ? '#0369A1' : '#1E293B', 
+                          whiteSpace: 'nowrap', 
+                          overflow: 'hidden', 
+                          textOverflow: 'ellipsis' 
+                        }}>
+                          {item.query}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                          <span style={{ fontSize: '9px', color: isActive ? '#0284C7' : '#94A3B8' }}>
+                            {item.timestamp}
+                          </span>
+                          <span style={{ fontSize: '8.5px', background: isActive ? '#BAE6FD' : '#E2E8F0', color: isActive ? '#0369A1' : '#64748B', padding: '0px 4px', borderRadius: '4px', fontWeight: 600 }}>
+                            {inquiryCount} {inquiryCount === 1 ? 'inquiry' : 'inquiries'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '6px',
+                          background: 'transparent',
+                          border: '1px solid transparent',
+                          color: '#94A3B8',
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.18s',
+                          flexShrink: 0
+                        }}
+                        onMouseEnter={(e) => {
+                          const el = e.currentTarget as HTMLElement;
+                          el.style.background = '#FEE2E2';
+                          el.style.color = '#DC2626';
+                        }}
+                        onMouseLeave={(e) => {
+                          const el = e.currentTarget as HTMLElement;
+                          el.style.background = 'transparent';
+                          el.style.color = '#94A3B8';
+                        }}
+                        title="Delete this conversation"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
 
@@ -1418,6 +1632,27 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                 }}
                 disabled={loading}
               />
+
+              {/* Voice recognition microphone button */}
+              <button
+                type="button"
+                onClick={toggleVoiceRecognition}
+                style={{
+                  color: isListening ? '#EF4444' : '#64748B',
+                  background: isListening ? '#FEE2E2' : 'none',
+                  border: isListening ? '1px solid #FCA5A5' : 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '6px',
+                  borderRadius: '9999px',
+                  transition: 'all 0.15s',
+                  animation: isListening ? 'pulse 1.5s infinite' : 'none'
+                }}
+                title={isListening ? 'Listening (Click to stop)...' : 'Ask using voice (English / Hindi)'}
+              >
+                {isListening ? <MicOff size={17} /> : <Mic size={17} />}
+              </button>
 
               {/* Send Pill Button */}
               <button

@@ -1,0 +1,20 @@
+# Server dependencies
+node_modules/
+
+# Environment files
+.env
+*.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# SQLite
+*.sqlite
+*.sqlite3
+*.db

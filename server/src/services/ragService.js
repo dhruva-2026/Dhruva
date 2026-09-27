@@ -1,12 +1,14 @@
 /**
  * DHRUVA Research-Grade Polar Science RAG Service
- * Section-aware semantic vector indexing, BM25 term-frequency retrieval,
- * query expansion, multi-factor candidate reranking, conversation memory,
- * and scientific provenance synthesis.
+ * Hybrid Semantic (pgvector / dense cosine) + BM25 Retrieval,
+ * Reciprocal Rank Fusion (RRF), bilingual Hindi translation,
+ * in-memory LRU query cache, and scientific provenance synthesis.
  */
 
 const { 
   POLAR_VOCAB, 
+  detectLanguage,
+  translateHindiQuery,
   expandQuery, 
   detectResponseMode, 
   resolveConversationContext 
@@ -16,6 +18,29 @@ const {
   synthesizeRAGAnswer, 
   generateGeneralPolarAnswer 
 } = require('./llmService.js');
+
+// In-memory LRU cache for high-frequency RAG queries (10-minute TTL)
+const ragCache = new Map();
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 120;
+
+function getFromCache(key) {
+  const entry = ragCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    ragCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setToCache(key, data) {
+  if (ragCache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = ragCache.keys().next().value;
+    ragCache.delete(oldestKey);
+  }
+  ragCache.set(key, { data, timestamp: Date.now() });
+}
 
 /**
  * Generates a normalized semantic vector (dense representation) for any text
@@ -39,7 +64,7 @@ function generateEmbedding(text) {
   }
   norm = Math.sqrt(norm);
 
-  // If text doesn't contain explicit polar terms, fallback to character n-gram hashing
+  // Fallback to character n-gram hashing if no direct vocabulary keywords matched
   if (norm === 0) {
     for (let i = 0; i < lower.length - 2; i++) {
       const code = (lower.charCodeAt(i) * 31 + lower.charCodeAt(i + 1) * 17 + lower.charCodeAt(i + 2)) % vector.length;
@@ -94,12 +119,10 @@ function computeBM25Score(query, expandedQuery, text, avgDocLen = 180) {
 
   let bm25Sum = 0;
   expandedWords.forEach(word => {
-    // Term Frequency in chunk
     const regex = new RegExp(`\\b${word}\\b`, 'gi');
     const matches = textLower.match(regex);
     const tf = matches ? matches.length : 0;
     if (tf > 0) {
-      // BM25 sub-linear term saturation
       const tfWeight = (tf * (k1 + 1)) / (tf + k1 * lenNorm);
       bm25Sum += tfWeight;
     }
@@ -107,7 +130,7 @@ function computeBM25Score(query, expandedQuery, text, avgDocLen = 180) {
 
   const normalizedBM25 = Math.min(1.0, bm25Sum / (expandedWords.length * 1.5));
 
-  // Exact multi-word query phrase matching bonus
+  // Multi-word phrase matching bonus
   let phraseBonus = 0;
   if (queryLower.length > 8 && textLower.includes(queryLower.trim())) {
     phraseBonus = 0.35;
@@ -120,19 +143,29 @@ function computeBM25Score(query, expandedQuery, text, avgDocLen = 180) {
  * Helper to calculate keyword coverage of non-stopword query terms in retrieved text
  */
 function calculateQueryCoverage(query, text) {
-  const stopWords = new Set(['what', 'is', 'the', 'of', 'in', 'and', 'for', 'are', 'to', 'how', 'does', 'why', 'on', 'at', 'with', 'from', 'about', 'did', 'do', 'a', 'an', 'by', 'as']);
-  const qWords = query.toLowerCase().replace(/[^\w\s-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  const lang = detectLanguage(query);
+  let processedQuery = query;
+
+  // If Hindi, map terms before checking coverage against English corpus
+  if (lang === 'hi') {
+    processedQuery = translateHindiQuery(query);
+  }
+
+  const stopWords = new Set(['what', 'is', 'the', 'of', 'in', 'and', 'for', 'are', 'to', 'how', 'does', 'why', 'on', 'at', 'with', 'from', 'about', 'did', 'do', 'a', 'an', 'by', 'as', 'tell', 'me', 'please', 'kahan', 'hai', 'aur', 'kya']);
+  const qWords = processedQuery.toLowerCase().replace(/[^\w\s-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
   if (qWords.length === 0) return 1.0;
+
   const textLower = text.toLowerCase();
   let matched = 0;
   qWords.forEach(w => {
     if (textLower.includes(w)) matched++;
   });
+
   return matched / qWords.length;
 }
 
 /**
- * Retrieve top relevant chunks from database using hybrid vector + BM25 + multi-factor reranking
+ * Retrieve top relevant chunks from database using hybrid vector + BM25 + Reciprocal Rank Fusion (RRF)
  */
 async function searchChunks(db, query, options = {}) {
   const { 
@@ -177,8 +210,11 @@ async function searchChunks(db, query, options = {}) {
 
   const rows = await db.queryAll(sql, params);
 
-  // 2. Score candidate pool (hybrid dense vector + BM25 + title match + section weighting)
-  const scored = rows.map(row => {
+  // 2. Compute individual vector and BM25 scores for all candidates
+  const scoredDense = [];
+  const scoredBM25 = [];
+
+  rows.forEach(row => {
     let embedding = null;
     try {
       embedding = JSON.parse(row.embedding_json);
@@ -198,10 +234,7 @@ async function searchChunks(db, query, options = {}) {
     else if (sName.includes('discussion') || sName.includes('finding')) sectionMultiplier = 1.18;
     else if (sName.includes('method') || sName.includes('study area')) sectionMultiplier = 1.10;
 
-    // Composite reranking formula
-    const compositeScore = ((vectorSim * 0.40) + (bm25Score * 0.35) + (titleScore * 0.25)) * sectionMultiplier;
-
-    return {
+    const baseCandidate = {
       chunkId: row.id,
       paperId: row.paper_id,
       paperTitle: row.paper_title,
@@ -211,19 +244,49 @@ async function searchChunks(db, query, options = {}) {
       sectionName: row.section_name,
       pageNumber: row.page_number,
       text: row.text,
-      similarityScore: Math.round(compositeScore * 100) / 100,
-      confidencePercent: Math.min(99, Math.max(75, Math.round(compositeScore * 55) + 42))
+      vectorSim,
+      bm25Score,
+      titleScore,
+      sectionMultiplier
+    };
+
+    scoredDense.push(baseCandidate);
+    scoredBM25.push(baseCandidate);
+  });
+
+  // Rank by dense vector and BM25 separately
+  scoredDense.sort((a, b) => b.vectorSim - a.vectorSim);
+  scoredBM25.sort((a, b) => b.bm25Score - a.bm25Score);
+
+  const denseRankMap = new Map();
+  scoredDense.forEach((c, idx) => denseRankMap.set(c.chunkId, idx + 1));
+
+  const bm25RankMap = new Map();
+  scoredBM25.forEach((c, idx) => bm25RankMap.set(c.chunkId, idx + 1));
+
+  // 3. Reciprocal Rank Fusion (RRF) Reranking
+  const rrfK = 60;
+  const combinedScored = scoredDense.map(c => {
+    const rankDense = denseRankMap.get(c.chunkId) || 999;
+    const rankBM25 = bm25RankMap.get(c.chunkId) || 999;
+    const rrfScore = ((0.55 / (rrfK + rankDense)) + (0.45 / (rrfK + rankBM25)) + (c.titleScore * 0.05)) * c.sectionMultiplier;
+    const compositeSimilarity = Math.min(1.0, (c.vectorSim * 0.40) + (c.bm25Score * 0.35) + (c.titleScore * 0.25)) * c.sectionMultiplier;
+
+    return {
+      ...c,
+      rrfScore,
+      similarityScore: Math.round(compositeSimilarity * 100) / 100,
+      confidencePercent: Math.min(99, Math.max(75, Math.round(compositeSimilarity * 55) + 42))
     };
   });
 
-  // Sort descending by relevance score
-  scored.sort((a, b) => b.similarityScore - a.similarityScore);
+  combinedScored.sort((a, b) => b.rrfScore - a.rrfScore);
 
-  // 3. Deduplicate across adjacent duplicate chunks to maximize information diversity
+  // 4. Deduplicate across adjacent duplicate chunks to maximize information diversity
   const uniqueChunks = [];
   const seenSections = new Set();
 
-  for (const c of scored) {
+  for (const c of combinedScored) {
     const key = `${c.paperId}-${c.sectionName}`;
     if (!seenSections.has(key) || uniqueChunks.length < 2) {
       uniqueChunks.push(c);
@@ -240,19 +303,24 @@ async function searchChunks(db, query, options = {}) {
  */
 function handleConversationalQuery(query) {
   const q = query.trim().toLowerCase().replace(/[?!.,]/g, '');
+  const lang = detectLanguage(query);
 
-  // 1. Greetings
-  const greetings = ['hi', 'hello', 'hey', 'namaste', 'good morning', 'good afternoon', 'good evening', 'hola', 'hii', 'hiii', 'greetings'];
+  // 1. Greetings (English & Hindi)
+  const greetings = ['hi', 'hello', 'hey', 'namaste', 'good morning', 'good afternoon', 'good evening', 'hola', 'hii', 'hiii', 'greetings', 'नमस्ते', 'नमस्कार', 'प्रणाम'];
   if (greetings.includes(q)) {
+    const greetingText = lang === 'hi' 
+      ? `**नमस्ते! मैं ध्रुव (DHRUVA AI) हूँ**, **राष्ट्रीय ध्रुवीय एवं महासागर अनुसंधान केंद्र (NCPOR / पृथ्वी विज्ञान मंत्रालय, भारत सरकार)** का आधिकारिक ध्रुवीय विज्ञान अनुसंधान सहायक।\n\nमैं आपकी निम्नलिखित विषयों में सहायता कर सकता हूँ:\n• **ध्रुवीय अनुसंधान एवं खोजें**: आर्कटिक और अंटार्कटिक अभियानों के सहकर्मी-समीक्षित निष्कर्ष।\n• **भारत के अनुसंधान स्टेशन**: मैत्री, भारती, हिमाद्री, और इंडार्क (IndARC) वेधशाला।\n• **जलवायु और समुद्र विज्ञान**: बर्फ का पिघलना, पर्माफ्रॉस्ट, और भारतीय मानसून पर प्रभाव।\n• **शैक्षणिक शिक्षण**: बहुविकल्पीय प्रश्न (MCQs) और 3D फ्लैशकार्ड।\n\nआज आप किस ध्रुवीय विषय के बारे में जानना चाहते हैं?`
+      : `**Namaste! I am DHRUVA AI**, your Polar Science Intelligence Assistant created for the **National Centre for Polar and Ocean Research (NCPOR / Ministry of Earth Sciences, Government of India)**.\n\nI can assist you with:\n• **Polar Science & Discoveries**: Exploring findings from Arctic and Antarctic expeditions.\n• **India's Research Stations**: Maitri, Bharati, Himadri, and the IndARC mooring observatory.\n• **Climate Teleconnections**: How melting polar ice affects global monsoons and sea levels.\n• **Interactive Learning**: Summaries, MCQs, and 3D flashcards.\n\nHow can I assist your polar exploration today?`;
+
     return {
       query,
-      answer: `**Namaste! I am DHRUVA AI**, your Polar Science Intelligence Assistant created for the **National Centre for Polar and Ocean Research (NCPOR / Ministry of Earth Sciences, Government of India)**.\n\nI can assist you with:\n• **Polar Science & Discoveries**: Exploring findings from Arctic and Antarctic expeditions.\n• **India's Research Stations**: Maitri, Bharati, Himadri, and the IndARC mooring observatory.\n• **Climate Teleconnections**: How melting polar ice affects global monsoons and sea levels.\n• **Interactive Learning**: Summaries, MCQs, and 3D flashcards.\n\nHow can I assist your polar exploration today?`,
+      answer: greetingText,
       sources: []
     };
   }
 
   // 2. Platform Identity
-  if (q.includes('who are you') || q.includes('what is dhruva') || q.includes('what do you do') || q.includes('your name')) {
+  if (q.includes('who are you') || q.includes('what is dhruva') || q.includes('what do you do') || q.includes('your name') || q.includes('ध्रुव क्या है') || q.includes('आप कौन हैं')) {
     return {
       query,
       answer: `**DHRUVA (ध्रुव)** is India's flagship Polar Science Outreach, Knowledge Repository, and Media Dissemination Portal, maintained under the aegis of the **Ministry of Earth Sciences (MoES)** and **NCPOR**.\n\nAs your AI Research Assistant, I analyze peer-reviewed research papers, environmental telemetry from polar stations (*Himadri, Maitri, Bharati*), and deep-sea moorings (*IndARC*) to deliver grounded, verified scientific insights with exact provenance.`,
@@ -266,7 +334,9 @@ function handleConversationalQuery(query) {
     q.includes('what are the poles') || 
     q.includes('what is north pole and south pole') || 
     q.includes('tell me about poles') ||
-    q.includes('what are poles of earth')
+    q.includes('what are poles of earth') ||
+    q.includes('ध्रुव क्या हैं') ||
+    q.includes('ध्रुवों के बारे में')
   ) {
     return {
       query,
@@ -276,7 +346,7 @@ function handleConversationalQuery(query) {
   }
 
   // 4. What is Antarctica?
-  if (q === 'what is antarctica' || q.includes('tell me about antarctica')) {
+  if (q === 'what is antarctica' || q.includes('tell me about antarctica') || q.includes('अंटार्कटिका क्या है')) {
     return {
       query,
       answer: `**Antarctica** is Earth's southernmost continent, dedicated exclusively to peace and science under the Antarctic Treaty.\n\n• **Area**: ~14.2 million sq km (almost twice the size of Australia).\n• **Ice Sheet**: Contains **27 million cubic kilometers of ice**, representing 90% of Earth's ice and 70% of its fresh water.\n• **India's Antarctic Program**: Initiated in 1981 by NCPOR. India has completed over 43 annual scientific expeditions and operates **Maitri** (1989) and state-of-the-art **Bharati** (2012) stations.\n• **Key Science Areas**: Glaciology, climate modeling, atmospheric ozone dynamics, and extreme microbiology.`,
@@ -285,7 +355,7 @@ function handleConversationalQuery(query) {
   }
 
   // 5. What is the Arctic?
-  if (q === 'what is arctic' || q.includes('tell me about arctic') || q.includes('what is the arctic')) {
+  if (q === 'what is arctic' || q.includes('tell me about arctic') || q.includes('what is the arctic') || q.includes('आर्कटिक क्या है')) {
     return {
       query,
       answer: `The **Arctic** is the northern polar region comprising the Arctic Ocean and adjacent territories of eight Arctic nations.\n\n• **Climate Warming**: The Arctic is warming at **nearly 4 times the global average rate** (*Arctic Amplification*).\n• **India in the Arctic**: India gained permanent observer status on the Arctic Council in 2013 and has operated the **Himadri Station** in Svalbard, Norway since 2008.\n• **Ocean Observatory**: India deployed **IndARC** in 2014, an autonomous underwater mooring that collects continuous temperature, salinity, and acoustic velocity data at 192m depth.`,
@@ -314,11 +384,10 @@ async function answerQuery(db, query, options = {}) {
   const combinedCoverage = topChunks.length > 0 ? calculateQueryCoverage(query, combinedEvidenceText) : 0;
   const requiredCoverage = mode === 'compare_papers' ? combinedCoverage : primaryCoverage;
 
-
   if (
     topChunks.length === 0 || 
-    (topChunks[0].similarityScore < 0.22) || 
-    (requiredCoverage < 0.35)
+    (topChunks[0].similarityScore < 0.20) || 
+    (requiredCoverage < 0.30)
   ) {
     return {
       answer: `### ❄️ Insufficient Verified Scientific Evidence\n\nWhile our repository holds 20+ specialized expedition papers on glaciology, sea ice, permafrost, oceanography, and marine ecology, your query ("${query}") did not match verified scientific evidence in our published archives with sufficient confidence.\n\n**Suggested Verified Topics in DHRUVA Repository:**\n• *Antarctic sea ice variability in the Weddell Sea*\n• *Permafrost thaw and methane flux at Himadri Station, Svalbard*\n• *IndARC deep-water mooring observations at 192m in Kongsfjorden*\n• *Microplastics in Arctic snowpack around Ny-Ålesund*\n• *Phytoplankton blooms and primary productivity near Bharati Station*`,
@@ -327,8 +396,6 @@ async function answerQuery(db, query, options = {}) {
       query
     };
   }
-
-
 
   const primary = topChunks[0];
   const supporting = topChunks.slice(1);
@@ -366,14 +433,25 @@ async function answerQuery(db, query, options = {}) {
   };
 }
 
-
 /**
  * Async RAG query that uses live LLM (Groq / Gemini) with multi-chunk context assembly,
- * fallback cascade, and conversational memory resolution.
+ * fallback cascade, and in-memory LRU caching.
  */
 async function answerQueryAsync(db, query, options = {}) {
+  const cacheKey = `${query.trim().toLowerCase()}_${options.paperId || 'all'}_${options.mode || 'auto'}`;
+  const cached = getFromCache(cacheKey);
+  if (cached) {
+    return { ...cached, isCached: true };
+  }
+
   const baseResult = await answerQuery(db, query, options);
   const mode = detectResponseMode(query);
+
+  // If this was a recognized conversational query or insufficient evidence response, return baseResult directly
+  if (baseResult.sources.length === 0) {
+    setToCache(cacheKey, baseResult);
+    return baseResult;
+  }
 
   // If we have verified source chunks, synthesize grounded RAG answer using LLM
   if (baseResult.sources && baseResult.sources.length > 0) {
@@ -383,7 +461,7 @@ async function answerQueryAsync(db, query, options = {}) {
         history: options.history || []
       });
       if (llmResult && llmResult.answer) {
-        return {
+        const fullResult = {
           ...baseResult,
           mode,
           answer: llmResult.answer,
@@ -391,10 +469,13 @@ async function answerQueryAsync(db, query, options = {}) {
           llmProvider: llmResult.provider,
           llmModel: llmResult.model
         };
+        setToCache(cacheKey, fullResult);
+        return fullResult;
       }
     } catch (err) {
       console.warn('Live LLM synthesis note (falling back to grounded deterministic synthesis):', err.message);
     }
+    setToCache(cacheKey, baseResult);
     return baseResult;
   }
 
@@ -402,7 +483,7 @@ async function answerQueryAsync(db, query, options = {}) {
   try {
     const generalAnswer = await generateGeneralPolarAnswer(query, { mode });
     if (generalAnswer && generalAnswer.answer) {
-      return {
+      const fullResult = {
         query,
         mode,
         answer: generalAnswer.answer,
@@ -411,11 +492,14 @@ async function answerQueryAsync(db, query, options = {}) {
         llmProvider: generalAnswer.provider,
         llmModel: generalAnswer.model
       };
+      setToCache(cacheKey, fullResult);
+      return fullResult;
     }
   } catch (err) {
     console.warn('General LLM query note:', err.message);
   }
 
+  setToCache(cacheKey, baseResult);
   return baseResult;
 }
 

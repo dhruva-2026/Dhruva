@@ -1,7 +1,7 @@
 /**
  * DHRUVA Polar Science Domain Intelligence & Terminology Service
- * Research-grade polar lexicon, acronyms, synonyms, query expander,
- * conversation anaphora resolution, and response mode detector.
+ * Research-grade polar lexicon, acronyms, synonyms, bilingual Hindi-English query translation,
+ * query expander, conversation anaphora resolution, and response mode detector.
  */
 
 // 1. Research-Grade Polar Science Terminology Lexicon & Acronyms
@@ -53,7 +53,34 @@ const POLAR_SYNONYMS = {
   'animals': ['polar wildlife', 'penguins', 'polar bears', 'krill', 'benthic fauna', 'phytoplankton', 'antarctic toothfish']
 };
 
-// 3. Dense Embedding Vocabulary (72 curated terms for precise cosine vector matching)
+// 3. Devanagari Hindi to English Polar Domain Mapping
+const HINDI_POLAR_MAP = {
+  'हिमाद्री': 'Himadri Station Ny-Alesund Svalbard Arctic',
+  'हिमाद्रि': 'Himadri Station Ny-Alesund Svalbard Arctic',
+  'मैत्री': 'Maitri Station Schirmacher Oasis Antarctica',
+  'भारती': 'Bharati Station Larsemann Hills Prydz Bay Antarctica',
+  'दक्षिण गंगोत्री': 'Dakshin Gangotri Antarctica base',
+  'इंडार्क': 'IndARC Kongsfjorden underwater mooring 192m depth',
+  'ध्रुव': 'Earth Poles Arctic Antarctic',
+  'ध्रुवों': 'Poles Arctic Antarctic',
+  'बर्फ': 'ice sea ice glacier',
+  'पर्माफ्रॉस्ट': 'permafrost active layer thaw methanogenesis',
+  'पर्माफ्रास्ट': 'permafrost active layer thaw methanogenesis',
+  'मीथेन': 'methane flux emissions',
+  'ओजोन': 'ozone hole stratosphere polar vortex',
+  'ग्लेशियर': 'glacier mass balance retreat',
+  'हिमनद': 'glacier mass balance',
+  'एल्बिडो': 'albedo feedback solar reflectance',
+  'जलवायु': 'climate change warming',
+  'महासागर': 'oceanography ocean circulation',
+  'समुद्र': 'sea ocean marine',
+  'कहाँ': 'location situated coordinates',
+  'कार्य': 'mission research objective observations',
+  'अंटार्कटिका': 'Antarctica Southern Ocean',
+  'आर्कटिक': 'Arctic Svalbard Ny-Alesund'
+};
+
+// 4. Dense Embedding Vocabulary (128 curated terms for precise vector matching)
 const POLAR_VOCAB = [
   'sea ice', 'extent', 'variability', 'climate', 'antarctic', 'arctic', 'glaciology',
   'permafrost', 'methane', 'thaw', 'svalbard', 'ny-alesund', 'himadri', 'maitri',
@@ -65,15 +92,57 @@ const POLAR_VOCAB = [
   'ice core', 'isotopes', 'sediment', 'benthic', 'biodiversity', 'satellite', 'remote sensing',
   'radar', 'modis', 'cryosat', 'grace', 'meltwater', 'subglacial', 'aurora', 'third pole',
   'himalayas', 'karakoram', 'teleconnection', 'monsoon', 'active layer', 'methanogenesis',
-  'kongsfjorden', 'weddell', 'ross sea', 'talik', 'cyanobacteria', 'extremophile', 'polynya'
+  'kongsfjorden', 'weddell', 'ross sea', 'talik', 'cyanobacteria', 'extremophile', 'polynya',
+  'pycnocline', 'halocline', 'stratification', 'fram strait', 'barents sea', 'laptev sea',
+  'antarctic bottom water', 'aabw', 'atlantic water', 'thermohaline', 'rossby wave',
+  'microalgae', 'diatom', 'biogeochemistry', 'iron limitation', 'nutrient flux',
+  'siachen', 'chhota shigri', 'himansh', 'spiti valley', 'glof', 'glacio-hydrology',
+  'montreal protocol', 'cfc', 'polar stratospheric cloud', 'psc', 'chlorine activation',
+  'firn', 'ablation', 'grounding line', 'ice shelf', 'subglacial lake', 'frazil ice',
+  'grease ice', 'nilas', 'pancake ice', 'lead', 'flaw lead', 'anchor ice', 'cryoconite',
+  'black carbon deposition', 'radiative forcing', 'energy balance', 'heat flux'
 ];
 
 /**
- * Expand query by injecting scientific acronym meanings and related keywords
+ * Detects if a text is primarily Hindi / Devanagari script
+ */
+function detectLanguage(text) {
+  if (!text) return 'en';
+  const devanagariRegex = /[\u0900-\u097F]/;
+  return devanagariRegex.test(text) ? 'hi' : 'en';
+}
+
+/**
+ * Translates and expands Hindi queries into English search terms for RAG retrieval
+ */
+function translateHindiQuery(query) {
+  if (!query) return query;
+  let translated = query;
+  let hasHindi = false;
+
+  Object.keys(HINDI_POLAR_MAP).forEach(hiTerm => {
+    if (query.includes(hiTerm)) {
+      hasHindi = true;
+      translated += ' ' + HINDI_POLAR_MAP[hiTerm];
+    }
+  });
+
+  return translated;
+}
+
+/**
+ * Expand query by injecting scientific acronym meanings, domain synonyms, and Hindi mappings
  */
 function expandQuery(query) {
   if (!query) return '';
-  const lower = query.toLowerCase().trim();
+  const lang = detectLanguage(query);
+  let processedQuery = query;
+
+  if (lang === 'hi') {
+    processedQuery = translateHindiQuery(query);
+  }
+
+  const lower = processedQuery.toLowerCase().trim();
   const tokens = lower.replace(/[^\w\s-]/g, ' ').split(/\s+/).filter(Boolean);
   const expansions = new Set(tokens);
 
@@ -93,14 +162,14 @@ function expandQuery(query) {
     }
   });
 
-  // 3. Special intent expansions (e.g. "what are poles", "climate change", "teleconnections")
-  if (lower.includes('pole') || lower.includes('polar')) {
+  // 3. Special intent expansions
+  if (lower.includes('pole') || lower.includes('polar') || lower.includes('ध्रुव')) {
     expansions.add('arctic');
     expansions.add('antarctic');
     expansions.add('cryosphere');
   }
 
-  if (lower.includes('india') || lower.includes('indian')) {
+  if (lower.includes('india') || lower.includes('indian') || lower.includes('भारत')) {
     expansions.add('ncpor');
     expansions.add('moes');
     expansions.add('himadri');
@@ -122,7 +191,7 @@ function detectResponseMode(query) {
     q.includes('versus') || 
     q.includes(' vs ') || 
     q.includes('difference between') ||
-    q.includes('how does arctic differ from antarctic')
+    q.includes('तुलना')
   ) {
     return 'compare_papers';
   }
@@ -133,7 +202,8 @@ function detectResponseMode(query) {
     q.includes('instrument') || 
     q.includes('how was this measured') || 
     q.includes('sensor') || 
-    q.includes('sampling technique')
+    q.includes('sampling technique') ||
+    q.includes('विधि')
   ) {
     return 'methodology_analysis';
   }
@@ -144,7 +214,8 @@ function detectResponseMode(query) {
     q.includes('quantitative') || 
     q.includes('numbers') || 
     q.includes('statistics') || 
-    q.includes('data points')
+    q.includes('data points') ||
+    q.includes('निष्कर्ष')
   ) {
     return 'key_findings';
   }
@@ -154,7 +225,8 @@ function detectResponseMode(query) {
     q.includes('summary') || 
     q.includes('abstract') || 
     q.includes('executive summary') || 
-    q.includes('overview')
+    q.includes('overview') ||
+    q.includes('सारांश')
   ) {
     return 'research_summary';
   }
@@ -163,7 +235,8 @@ function detectResponseMode(query) {
     q.includes('analyze') || 
     q.includes('deep dive') || 
     q.includes('detailed paper analysis') || 
-    q.includes('paper breakdown')
+    q.includes('paper breakdown') ||
+    q.includes('विश्लेषण')
   ) {
     return 'paper_analysis';
   }
@@ -173,7 +246,8 @@ function detectResponseMode(query) {
     q.includes('for beginner') || 
     q.includes('for student') || 
     q.includes('like i am 5') || 
-    q.includes('simple words')
+    q.includes('simple words') ||
+    q.includes('सरल')
   ) {
     return 'student_beginner';
   }
@@ -192,12 +266,12 @@ function detectResponseMode(query) {
     q.includes('briefly') || 
     q.includes('in short') || 
     q.includes('quick answer') || 
-    q.includes('one line')
+    q.includes('one line') ||
+    q.includes('संक्षेप')
   ) {
     return 'quick_answer';
   }
 
-  // Default for research inquiries
   return 'detailed_explanation';
 }
 
@@ -220,12 +294,13 @@ function resolveConversationContext(query, history = []) {
     q.includes('the authors') ||
     q.includes('it conclude') ||
     q.includes('that station') ||
+    q.includes('उसका') ||
+    q.includes('वहाँ') ||
     q.length < 25
   );
 
   if (!isFollowUp) return query;
 
-  // Extract key topic entities from last user and assistant turns
   const previousTurns = history.slice(-4);
   let accumulatedContext = '';
 
@@ -236,7 +311,6 @@ function resolveConversationContext(query, history = []) {
     }
   }
 
-  // Find mentioned paper titles, stations, or polar terms in previous context
   const detectedKeywords = [];
   Object.keys(POLAR_SYNONYMS).forEach(term => {
     if (accumulatedContext.toLowerCase().includes(term)) {
@@ -254,7 +328,10 @@ function resolveConversationContext(query, history = []) {
 module.exports = {
   POLAR_ACRONYMS,
   POLAR_SYNONYMS,
+  HINDI_POLAR_MAP,
   POLAR_VOCAB,
+  detectLanguage,
+  translateHindiQuery,
   expandQuery,
   detectResponseMode,
   resolveConversationContext

@@ -326,4 +326,57 @@ router.get('/analytics', async (req, res) => {
   });
 });
 
+// POST /api/admin/claims/batch-verify - Batch verify all claims for a paper
+router.post('/claims/batch-verify', async (req, res) => {
+  const { paperId, decision = 'Approved', reviewerComment } = req.body;
+  if (!paperId) {
+    return res.status(400).json({ error: 'paperId is required for batch claim verification.' });
+  }
+
+  const groundingStatus = decision === 'Approved' ? 'Verified' : 'Unsupported';
+
+  await db.execute(`
+    UPDATE claims
+    SET decision = ?,
+        grounding_status = ?
+    WHERE paper_id = ?
+  `, [decision, groundingStatus, paperId]);
+
+  await db.execute(`
+    INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
+    VALUES (?, ?, 'admin', 'BATCH_CLAIMS_VERIFIED', ?, 'Needs Review', ?, ?)
+  `, [`audit-${Date.now()}`, req.user.name, paperId, decision, `All claims for ${paperId} batch-marked as ${decision}. Notes: ${reviewerComment || 'Batch operation'}`]);
+
+  res.json({ message: `All claims for paper ${paperId} updated to ${decision}.`, paperId, decision });
+});
+
+// POST /api/admin/papers/batch-decision - Batch approve or reject multiple papers
+router.post('/papers/batch-decision', async (req, res) => {
+  const { paperIds = [], decision = 'approve', comment } = req.body;
+  if (!Array.isArray(paperIds) || paperIds.length === 0) {
+    return res.status(400).json({ error: 'paperIds array is required.' });
+  }
+
+  const status = decision === 'approve' ? 'published' : 'rejected';
+  const visibility = decision === 'approve' ? 'public' : 'private';
+
+  for (const pid of paperIds) {
+    await db.execute(`
+      UPDATE papers 
+      SET status = ?,
+          visibility = ?,
+          admin_comment = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [status, visibility, comment || `Batch ${decision}`, pid]);
+
+    await db.execute(`
+      INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
+      VALUES (?, ?, 'admin', 'BATCH_PAPER_DECISION', ?, 'under_review', ?, ?)
+    `, [`audit-${Date.now()}-${pid}`, req.user.name, pid, status, `Batch decision: ${decision}`]);
+  }
+
+  res.json({ message: `Batch decision executed for ${paperIds.length} papers.`, paperIds, status });
+});
+
 module.exports = router;

@@ -23,7 +23,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage, 
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext !== '.pdf' && file.mimetype !== 'application/pdf') {
+      return cb(new Error('Only scientific PDF manuscripts are accepted for upload.'));
+    }
+    cb(null, true);
+  }
 });
 
 function splitPdfIntoSections(text, defaultAbstract) {
@@ -56,6 +63,36 @@ function splitPdfIntoSections(text, defaultAbstract) {
   }
 
   return sections.length > 0 ? sections : null;
+}
+
+// Helper for recursive paragraph chunking with overlap
+function splitSectionIntoChunks(text, maxChars = 900, overlap = 150) {
+  if (!text || text.length <= maxChars) {
+    return [text];
+  }
+  const chunks = [];
+  let start = 0;
+  while (start < text.length) {
+    let end = start + maxChars;
+    if (end < text.length) {
+      const lastPeriod = text.lastIndexOf('.', end);
+      const lastSpace = text.lastIndexOf(' ', end);
+      if (lastPeriod > start + maxChars * 0.6) {
+        end = lastPeriod + 1;
+      } else if (lastSpace > start + maxChars * 0.6) {
+        end = lastSpace + 1;
+      }
+    } else {
+      end = text.length;
+    }
+    const chunkText = text.substring(start, end).trim();
+    if (chunkText) {
+      chunks.push(chunkText);
+    }
+    start = end - overlap;
+    if (start >= text.length - overlap) break;
+  }
+  return chunks.length > 0 ? chunks : [text];
 }
 
 // All researcher endpoints require researcher or admin role
@@ -175,6 +212,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   if (req.file && (req.file.mimetype === 'application/pdf' || req.file.originalname.endsWith('.pdf'))) {
     try {
       const dataBuffer = fs.readFileSync(req.file.path);
+      // Validate PDF magic bytes: %PDF-
+      if (dataBuffer.length < 5 || dataBuffer.toString('utf8', 0, 5) !== '%PDF-') {
+        try { fs.unlinkSync(req.file.path); } catch (e) {}
+        return res.status(400).json({ error: 'Security validation failed: The uploaded file header does not match valid PDF specifications.' });
+      }
       const pdfResult = await pdfParse(dataBuffer);
       if (pdfResult && pdfResult.text) {
         extractedPdfText = pdfResult.text;
@@ -228,18 +270,33 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     for (let idx = 0; idx < finalSections.length; idx++) {
       const s = finalSections[idx];
       const secId = `sec-${paperId}-${idx + 1}`;
+      const secContent = s.content || '';
       await db.execute(`
         INSERT INTO paper_sections (id, paper_id, section_name, section_order, content, page_start, page_end)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `, [secId, paperId, s.name || s.section_name, s.order || idx + 1, s.content, s.page_start || idx + 1, s.page_end || idx + 2]);
+      `, [secId, paperId, s.name || s.section_name, s.order || idx + 1, secContent, s.page_start || idx + 1, s.page_end || idx + 2]);
 
-      // Generate RAG chunk & embedding
-      const embedding = generateEmbedding(s.content);
-      await db.execute(`
-        INSERT INTO paper_chunks (id, paper_id, section_id, section_name, chunk_index, text, page_number, embedding_json)
-        VALUES (?, ?, ?, ?, 1, ?, ?, ?)
-      `, [`chk-${paperId}-${idx + 1}`, paperId, secId, s.name || s.section_name, s.content, s.page_start || idx + 1, JSON.stringify(embedding)]);
+      // Generate recursive overlapping RAG chunks for granular paragraph matching
+      const sectionChunks = splitSectionIntoChunks(secContent, 900, 150);
+      for (let cIdx = 0; cIdx < sectionChunks.length; cIdx++) {
+        const chunkText = sectionChunks[cIdx];
+        const embedding = generateEmbedding(chunkText);
+        await db.execute(`
+          INSERT INTO paper_chunks (id, paper_id, section_id, section_name, chunk_index, text, page_number, embedding_json)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          `chk-${paperId}-${idx + 1}-${cIdx + 1}`, 
+          paperId, 
+          secId, 
+          s.name || s.section_name, 
+          cIdx + 1, 
+          chunkText, 
+          s.page_start || idx + 1, 
+          JSON.stringify(embedding)
+        ]);
+      }
     }
+
 
     // 4. Generate AI Outputs (English, Hindi, Key Findings, Terms, Social Draft)
     const { english_summary, hindi_summary, key_findings, important_terms, why_it_matters, social_media_draft, citation_text } = artifacts.aiOutput;

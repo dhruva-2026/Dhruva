@@ -4,7 +4,7 @@ import {
   FileText, Check, X, Edit3, Send, Clock, BookOpen, Layers, ShieldAlert, Eye,
   ExternalLink, CheckCircle, HelpCircle, Share2
 } from 'lucide-react';
-import { apiFetchAdminVerification, apiVerifyClaim, apiDecidePaper } from '../../services/api';
+import { apiFetchAdminVerification, apiVerifyClaim, apiBatchVerifyClaims, apiDecidePaper } from '../../services/api';
 
 interface AdminVerificationScreenProps {
   paperId: string;
@@ -390,9 +390,29 @@ export const AdminVerificationScreen: React.FC<AdminVerificationScreenProps> = (
             </p>
           </div>
 
-          <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{claims.filter((c: any) => c.decision === 'Approved').length} of {claims.length} Claims Approved</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={async () => {
+                if (window.confirm('Approve all AI claims for this manuscript?')) {
+                  try {
+                    await apiBatchVerifyClaims({ paperId, decision: 'Approved' });
+                    loadVerificationData();
+                  } catch (e: any) {
+                    alert('Error batch approving claims: ' + e.message);
+                  }
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl bg-sky-600 text-white hover:bg-sky-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+              title="Batch verify and approve all claims"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Approve All Claims</span>
+            </button>
+
+            <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{claims.filter((c: any) => c.decision === 'Approved').length} of {claims.length} Claims Approved</span>
+            </div>
           </div>
         </div>
 
