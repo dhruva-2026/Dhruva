@@ -1,8 +1,62 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
 const db = require('../db/db.js');
 const { requireRole } = require('../middleware/auth.js');
 const { generateEmbedding } = require('../services/ragService.js');
+
+const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.pdf';
+    cb(null, `paper-${Date.now()}-${Math.random().toString(36).substring(2, 7)}${ext}`);
+  }
+});
+
+const upload = multer({ 
+  storage, 
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+
+function splitPdfIntoSections(text, defaultAbstract) {
+  const sections = [];
+  const patterns = [
+    { name: 'Abstract', regex: /(?:abstract|summary)[\s\S]*?(?=(?:introduction|1[\.\s]|study area|method))/i },
+    { name: 'Introduction', regex: /(?:introduction|1[\.\s]+introduction)[\s\S]*?(?=(?:methodology|methods|2[\.\s]|study area))/i },
+    { name: 'Study Area', regex: /(?:study area|geographical setting)[\s\S]*?(?=(?:methodology|methods|results))/i },
+    { name: 'Methodology', regex: /(?:methodology|methods|materials and methods)[\s\S]*?(?=(?:results|findings|observations))/i },
+    { name: 'Results', regex: /(?:results|findings|observations)[\s\S]*?(?=(?:discussion|conclusion))/i },
+    { name: 'Discussion', regex: /(?:discussion)[\s\S]*?(?=(?:conclusion|summary|references))/i },
+    { name: 'Conclusion', regex: /(?:conclusion|concluding remarks)[\s\S]*?(?=(?:references|acknowledgements))/i },
+    { name: 'References', regex: /(?:references|bibliography)[\s\S]*/i }
+  ];
+
+  let order = 1;
+  for (const p of patterns) {
+    const match = text.match(p.regex);
+    if (match && match[0].trim().length > 40) {
+      let content = match[0].trim();
+      if (content.length > 2500) content = content.slice(0, 2500);
+      sections.push({
+        name: p.name,
+        order: order++,
+        page_start: order,
+        page_end: order + 1,
+        content
+      });
+    }
+  }
+
+  return sections.length > 0 ? sections : null;
+}
 
 // All researcher endpoints require researcher or admin role
 router.use(requireRole(['researcher', 'admin']));
@@ -75,7 +129,7 @@ router.get('/papers', (req, res) => {
 });
 
 // POST /api/researcher/upload - 8-Step Upload & Live AI Extraction Pipeline
-router.post('/upload', (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
   const researcherId = req.user.researcherId || 'res-1';
   const {
     title,
@@ -106,9 +160,28 @@ router.post('/upload', (req, res) => {
   const region = polar_region || 'Antarctic';
   const paperDoi = doi || `10.1016/j.polar.${new Date().getFullYear()}.${Math.floor(1000 + Math.random() * 9000)}`;
 
+  const documentUrl = req.file ? `/uploads/${req.file.filename}` : '/uploads/sample_uploaded_paper.pdf';
+
   // Status defaults to 'under_review'
   const initialStatus = 'under_review';
   const visibility = 'private';
+
+  // Check if real PDF was uploaded and parse text
+  let parsedPdfSections = null;
+  if (req.file && (req.file.mimetype === 'application/pdf' || req.file.originalname.endsWith('.pdf'))) {
+    try {
+      const dataBuffer = fs.readFileSync(req.file.path);
+      const pdfResult = await pdfParse(dataBuffer);
+      if (pdfResult && pdfResult.text) {
+        parsedPdfSections = splitPdfIntoSections(pdfResult.text, abstract);
+      }
+    } catch (parseErr) {
+      console.warn('PDF parsing note:', parseErr.message);
+    }
+  }
+
+  // Atomically wrap all inserts in a transaction
+  db.exec('BEGIN TRANSACTION;');
 
   try {
     // 1. Insert Paper Record
@@ -121,7 +194,7 @@ router.post('/upload', (req, res) => {
     `, [
       paperId, title, abstract, authorList, inst, area, region,
       location_id || 'loc-1', keywords || 'polar science, antarctic, arctic',
-      pubYear, paperDoi, '/uploads/sample_uploaded_paper.pdf',
+      pubYear, paperDoi, documentUrl,
       'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop',
       initialStatus, visibility, embargo_enabled ? 1 : 0, embargo_until, researcherId || 'res-1'
     ]);
@@ -134,8 +207,8 @@ router.post('/upload', (req, res) => {
       `, [`emb-${paperId}`, paperId, embargo_until, embargo_reason || 'Researcher requested embargo']);
     }
 
-    // 3. Process Paper Sections (simulate full structure)
-    const sections = custom_sections || [
+    // 3. Process Paper Sections (Priority: custom_sections -> parsedPdfSections -> structured templates)
+    const sections = custom_sections || parsedPdfSections || [
       { name: 'Abstract', order: 1, page_start: 1, page_end: 1, content: abstract },
       { name: 'Introduction', order: 2, page_start: 2, page_end: 3, content: `Recent observations in the ${region} polar biome indicate rapid responses of the cryosphere and ocean to radiative forcing. This paper presents empirical field data collected during scientific expeditions.` },
       { name: 'Methodology', order: 3, page_start: 4, page_end: 5, content: 'Data was gathered through continuous sensor logging, multi-spectral satellite telemetry, and in-situ CTD and aerosol sampling grids.' },
@@ -230,8 +303,11 @@ router.post('/upload', (req, res) => {
 
     db.execute(`
       INSERT INTO audit_logs (id, actor, role, action, paper_id, previous_value, new_value, details)
-      VALUES (?, 'System Pipeline', 'system', 'AI_PROCESSING_COMPLETED', ?, 'submitted', 'under_review', 'Extracted 8 sections, generated vector embeddings, bilingual summary, MCQs, and 1 grounding claim')
+      VALUES (?, 'System Pipeline', 'system', 'AI_PROCESSING_COMPLETED', ?, 'submitted', 'under_review', 'Extracted sections, generated vector embeddings, bilingual summary, MCQs, and grounding claims')
     `, [`audit-${Date.now()}-2`, paperId]);
+
+    // Commit Transaction
+    db.exec('COMMIT;');
 
     res.status(201).json({
       message: 'Paper successfully uploaded, processed by AI pipeline, and queued for Admin Verification.',
@@ -239,10 +315,14 @@ router.post('/upload', (req, res) => {
       status: initialStatus
     });
   } catch (err) {
+    try {
+      db.exec('ROLLBACK;');
+    } catch (rbErr) {}
     console.error('Upload Error:', err);
     res.status(500).json({ error: 'Failed to process paper submission: ' + err.message });
   }
 });
+
 
 // POST /api/researcher/resubmit/:id - Resubmit a rejected paper
 router.post('/resubmit/:id', (req, res) => {

@@ -61,6 +61,37 @@ router.post('/sessions', (req, res) => {
   }
 });
 
+// GET /api/chat/sessions/:id - Get a single session with its messages
+router.get('/sessions/:id', (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const session = db.queryGet('SELECT * FROM chat_sessions WHERE id = ?', [id]);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const rawMessages = db.queryAll(
+      'SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC',
+      [id]
+    );
+
+    const messages = rawMessages.map(m => ({
+      id: m.id,
+      sessionId: m.session_id,
+      role: m.role,
+      content: m.content,
+      sources: m.sources_json ? JSON.parse(m.sources_json) : [],
+      createdAt: m.created_at
+    }));
+
+    res.json({ session, messages });
+  } catch (err) {
+    console.error('Error fetching chat session:', err);
+    res.status(500).json({ error: 'Failed to fetch conversation session' });
+  }
+});
+
 // PUT /api/chat/sessions/:id - Rename a session
 router.put('/sessions/:id', (req, res) => {
   const { id } = req.params;

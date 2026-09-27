@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const archiver = require('archiver');
 const db = require('../db/db.js');
+
 
 // GET /api/papers - Public Research Search with rich filtering
 router.get('/', (req, res) => {
@@ -83,12 +85,78 @@ router.get('/', (req, res) => {
     sql += ` ORDER BY p.publication_year DESC, p.created_at DESC`;
   }
 
-  const papers = db.queryAll(sql, params);
-  res.json({ count: papers.length, papers });
+  const allPapers = db.queryAll(sql, params);
+  const totalCount = allPapers.length;
+
+  // Pagination support with full backwards compatibility
+  if (req.query.page || req.query.limit) {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 12));
+    const offset = (page - 1) * limit;
+    const paginatedPapers = allPapers.slice(offset, offset + limit);
+    return res.json({
+      count: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit),
+      papers: paginatedPapers
+    });
+  }
+
+  res.json({ count: totalCount, papers: allPapers });
+});
+
+// GET /api/papers/search/fts - Fast Full-Text Search with Porter Stemming & BM25
+router.get('/search/fts', (req, res) => {
+  const { q } = req.query;
+  if (!q || !q.trim()) {
+    return res.status(400).json({ error: 'Search query parameter (q) is required.' });
+  }
+
+  try {
+    // Sanitize query for FTS5 syntax
+    const terms = q.trim().replace(/[^\w\s]/g, '').trim().split(/\s+/).filter(w => w.length > 1);
+    if (terms.length === 0) {
+      return res.json({ engine: 'SQLite FTS5', count: 0, papers: [] });
+    }
+    const ftsQuery = terms.map(w => `${w}*`).join(' ');
+
+    const rows = db.queryAll(`
+      SELECT 
+        p.id, p.title, p.abstract, p.authors, p.institution, p.research_area,
+        p.polar_region, p.publication_year, p.doi, p.thumbnail_url, p.view_count,
+        bm25(papers_fts) as relevance_score
+      FROM papers_fts f
+      JOIN papers p ON f.paper_id = p.id
+      WHERE papers_fts MATCH ? 
+        AND p.status = 'published'
+        AND (p.embargo_enabled = 0 OR p.embargo_until <= datetime('now'))
+      ORDER BY relevance_score ASC
+      LIMIT 20
+    `, [ftsQuery]);
+
+    res.json({
+      engine: 'SQLite FTS5 Porter Stemmer',
+      query: q,
+      count: rows.length,
+      papers: rows
+    });
+  } catch (err) {
+    console.warn('FTS query error, falling back to LIKE:', err.message);
+    const fallback = db.queryAll(`
+      SELECT id, title, abstract, authors, institution, research_area, polar_region, publication_year, doi, thumbnail_url, view_count
+      FROM papers
+      WHERE status = 'published' AND (title LIKE ? OR abstract LIKE ? OR keywords LIKE ?)
+        AND (embargo_enabled = 0 OR embargo_until <= datetime('now'))
+      LIMIT 20
+    `, [`%${q}%`, `%${q}%`, `%${q}%`]);
+    res.json({ engine: 'Fallback LIKE', query: q, count: fallback.length, papers: fallback });
+  }
 });
 
 // GET /api/papers/featured
 router.get('/featured', (req, res) => {
+
   const featured = db.queryAll(`
     SELECT 
       p.id, p.title, p.abstract, p.authors, p.institution, p.research_area, 
@@ -186,4 +254,168 @@ router.get('/:id', (req, res) => {
   });
 });
 
+// GET /api/papers/:id/citation - Export citation in BibTeX, RIS, or formatted plain text
+router.get('/:id/citation', (req, res) => {
+  const paperId = req.params.id;
+  const format = (req.query.format || 'bibtex').toLowerCase();
+
+  const paper = db.queryGet('SELECT * FROM papers WHERE id = ?', [paperId]);
+  if (!paper) {
+    return res.status(404).json({ error: 'Paper not found' });
+  }
+
+  const firstAuthor = paper.authors.split(/[,;]/)[0].trim().replace(/\s+/g, '_');
+  const citeKey = `${firstAuthor}${paper.publication_year}`;
+
+  if (format === 'bibtex') {
+    const bibtex = `@article{${citeKey},
+  title = {${paper.title}},
+  author = {${paper.authors}},
+  year = {${paper.publication_year}},
+  institution = {${paper.institution}},
+  doi = {${paper.doi || 'N/A'}},
+  url = {https://dhruva.gov.in/papers/${paper.id}},
+  journal = {DHRUVA Polar Science Repository - NCPOR}
+}`;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${citeKey}.bib"`);
+    return res.send(bibtex);
+  } else if (format === 'ris') {
+    const ris = `TY  - JOUR
+TI  - ${paper.title}
+AU  - ${paper.authors}
+PY  - ${paper.publication_year}
+PB  - National Centre for Polar and Ocean Research (NCPOR)
+DO  - ${paper.doi || ''}
+UR  - https://dhruva.gov.in/papers/${paper.id}
+ER  - `;
+    res.setHeader('Content-Type', 'application/x-research-info-systems; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${citeKey}.ris"`);
+    return res.send(ris);
+  }
+
+  // Default APA string
+  res.json({
+    apa: `${paper.authors} (${paper.publication_year}). ${paper.title}. DHRUVA Research Repository. https://doi.org/${paper.doi || paper.id}`,
+    bibtexUrl: `/api/papers/${paper.id}/citation?format=bibtex`,
+    risUrl: `/api/papers/${paper.id}/citation?format=ris`,
+    pressKitUrl: `/api/papers/${paper.id}/press-kit`
+  });
+});
+
+// GET /api/papers/:id/press-kit - Download One-Click Media & Press Kit (.zip)
+router.get('/:id/press-kit', (req, res) => {
+  const paperId = req.params.id;
+
+  const paper = db.queryGet(`
+    SELECT p.*, l.name as location_name, l.station_type
+    FROM papers p
+    LEFT JOIN locations l ON p.location_id = l.id
+    WHERE p.id = ?
+  `, [paperId]);
+
+  if (!paper) {
+    return res.status(404).json({ error: 'Paper not found' });
+  }
+
+  const aiOutput = db.queryGet('SELECT * FROM ai_outputs WHERE paper_id = ?', [paperId]);
+  const sections = db.queryAll('SELECT section_name, content FROM paper_sections WHERE paper_id = ? ORDER BY section_order ASC', [paperId]);
+
+  const archive = archiver('zip', { zlib: { level: 9 } });
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="DHRUVA_PressKit_${paper.id}.zip"`);
+
+  archive.on('error', (err) => {
+    console.error('Archive error:', err);
+    res.status(500).end();
+  });
+
+  archive.pipe(res);
+
+  // 1. English Summary & Factsheet
+  const summaryEn = `=======================================================
+DHRUVA POLAR SCIENCE PRESS RELEASE & FACTSHEET
+National Centre for Polar and Ocean Research (NCPOR)
+Ministry of Earth Sciences (MoES), Government of India
+=======================================================
+
+TITLE: ${paper.title}
+RESEARCHERS / AUTHORS: ${paper.authors}
+INSTITUTION: ${paper.institution}
+POLAR SECTOR: ${paper.polar_region} (${paper.location_name || 'Polar Grid'})
+PUBLICATION YEAR: ${paper.publication_year}
+DOI / IDENTIFIER: ${paper.doi || paper.id}
+
+--- SIMPLE ENGLISH SUMMARY (FOR MEDIA & EDUCATORS) ---
+${aiOutput?.english_summary || paper.abstract}
+
+--- WHY IT MATTERS TO CITIZENS ---
+${aiOutput?.why_it_matters || 'Polar research serves as the planetary climate indicator, revealing environmental shifts that govern monsoons and sea level rise.'}
+
+--- SOCIAL MEDIA COPY ---
+${aiOutput?.social_media_draft || `❄️ New scientific findings from India's polar expedition: "${paper.title}". Discover more on the DHRUVA portal.`}
+`;
+  archive.append(summaryEn, { name: '01_English_Summary_and_Factsheet.txt' });
+
+  // 2. Hindi Summary
+  if (aiOutput?.hindi_summary) {
+    const summaryHi = `=======================================================
+ध्रुव (DHRUVA) ध्रुवीय विज्ञान प्रेस विज्ञप्ति
+राष्ट्रीय ध्रुवीय एवं समुद्री अनुसंधान केंद्र (NCPOR)
+पृथ्वी विज्ञान मंत्रालय, भारत सरकार
+=======================================================
+
+शीर्षक: ${paper.title}
+वैज्ञानिक: ${paper.authors}
+संस्थान: ${paper.institution}
+क्षेत्र: ${paper.polar_region === 'Antarctic' ? 'अंटार्कटिक' : 'आर्कटिक'} (${paper.location_name || 'ध्रुवीय केंद्र'})
+
+--- हिंदी सारांश ---
+${aiOutput.hindi_summary}
+`;
+    archive.append(summaryHi, { name: '02_Hindi_Summary_हिंदी_सारांश.txt' });
+  }
+
+  // 3. Metadata JSON
+  const metaObj = {
+    dhruva_portal: 'https://dhruva.gov.in',
+    paper_id: paper.id,
+    title: paper.title,
+    authors: paper.authors,
+    institution: paper.institution,
+    polar_region: paper.polar_region,
+    station: paper.location_name,
+    doi: paper.doi,
+    sections_count: sections.length,
+    download_timestamp: new Date().toISOString()
+  };
+  archive.append(JSON.stringify(metaObj, null, 2), { name: 'metadata.json' });
+
+  // 4. Citation BibTeX
+  const citeKey = `${paper.authors.split(/[,;]/)[0].trim().replace(/\s+/g, '_')}${paper.publication_year}`;
+  const bibtex = `@article{${citeKey},
+  title = {${paper.title}},
+  author = {${paper.authors}},
+  year = {${paper.publication_year}},
+  institution = {${paper.institution}},
+  doi = {${paper.doi || 'N/A'}},
+  url = {https://dhruva.gov.in/papers/${paper.id}},
+  journal = {DHRUVA Polar Science Repository - NCPOR}
+}`;
+  archive.append(bibtex, { name: 'citation.bib' });
+
+  // 5. NCPOR Terms & Media Guidelines
+  const terms = `DHRUVA MEDIA USAGE GUIDELINES
+Under Ministry of Earth Sciences (MoES) Open Outreach Policy:
+1. All textual summaries and factsheets may be freely syndicated in print, digital, or broadcast journalism with attribution to "NCPOR / DHRUVA Portal".
+2. Direct quotes from the paper must cite the primary authors.
+3. For television or video footage inquiries, contact: outreach@ncpor.res.in`;
+  archive.append(terms, { name: 'MEDIA_TERMS_AND_ATTRIBUTION.txt' });
+
+  archive.finalize();
+});
+
 module.exports = router;
+
+

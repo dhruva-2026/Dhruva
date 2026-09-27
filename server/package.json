@@ -7,14 +7,28 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "seed": "node src/db/seed.js",
-    "backup": "node backup_project.js"
+    "backup": "node backup_project.js",
+    "backend:check": "node test_backend.js",
+    "db:check": "node test_db_readiness.js",
+    "ai:check": "node test_ai_readiness.js",
+    "ai:api:test": "node test_ai_api.js",
+    "test:e2e": "node test_e2e.js",
+    "readiness:check": "node test_full_readiness.js",
+    "test": "node test_backend.js"
   },
   "dependencies": {
+    "archiver": "^8.0.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^4.6.0",
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.23.0",
+    "pgvector": "^0.3.0"
   }
 }

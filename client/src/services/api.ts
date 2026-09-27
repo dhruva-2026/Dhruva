@@ -144,6 +144,111 @@ export const apiAskRAG = (payload: { query: string; paperId?: string; region?: s
     body: JSON.stringify(payload)
   });
 
+// 3.1 Dedicated AI Subsystem APIs
+export const apiAiHealth = () =>
+  request<{
+    status: string;
+    aiEngine: string;
+    embeddingService: any;
+    scoringFormula: string;
+    database: any;
+    liveLlmProvider: string;
+  }>('/ai/health');
+
+export const apiAiSearch = (payload: { query: string; limit?: number; filters?: Record<string, any> }) =>
+  request<{
+    query: string;
+    total: number;
+    scoring: string;
+    results: Array<{
+      chunkId: string;
+      paperId: string;
+      paperTitle: string;
+      polarRegion: string;
+      researchArea: string;
+      section: string;
+      page: number;
+      snippet: string;
+      cosineScore: number;
+      keywordScore: number;
+      hybridScore: number;
+      confidence: number;
+      provenance: any;
+    }>;
+  }>('/ai/search', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+export const apiAiAsk = (payload: { query: string; paperId?: string; region?: string; area?: string }) =>
+  request<{
+    answer: string;
+    sources: any[];
+    confidence: number;
+    retrieval: any;
+  }>('/ai/ask', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+export const apiAiSummarize = (paperId: string) =>
+  request<{
+    paperId: string;
+    paperTitle: string;
+    englishSummary: string;
+    hindiSummary: string;
+    keyFindings: string[];
+    importantTerms: Array<{ term: string; definition: string }>;
+    whyItMatters: string;
+    socialMediaDraft: string;
+    citationText: string;
+    generatedAt: string;
+  }>('/ai/summarize', {
+    method: 'POST',
+    body: JSON.stringify({ paperId })
+  });
+
+export const apiAiClaims = (paperId: string) =>
+  request<{
+    paperId: string;
+    totalClaims: number;
+    claims: any[];
+  }>('/ai/claims', {
+    method: 'POST',
+    body: JSON.stringify({ paperId })
+  });
+
+export const apiAiVerifyClaim = (claimId: string, payload: {
+  paperId?: string;
+  decision: 'Approved' | 'Edited' | 'Rejected';
+  reviewerComment?: string;
+  editedText?: string;
+}) =>
+  request<{ message: string; claimId: string; decision: string; groundingStatus: string }>(`/ai/claims/${claimId}/verify`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+export const apiAiGenerateMCQs = (paperId: string) =>
+  request<{
+    paperId: string;
+    totalMCQs: number;
+    mcqs: any[];
+  }>('/ai/mcqs/generate', {
+    method: 'POST',
+    body: JSON.stringify({ paperId })
+  });
+
+export const apiAiGenerateFlashcards = (paperId: string) =>
+  request<{
+    paperId: string;
+    totalFlashcards: number;
+    flashcards: any[];
+  }>('/ai/flashcards/generate', {
+    method: 'POST',
+    body: JSON.stringify({ paperId })
+  });
+
 // 4. Polar Locations & Media
 export const apiFetchLocations = () =>
   request<{ locations: any[] }>('/locations');

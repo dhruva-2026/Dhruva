@@ -21,11 +21,11 @@
       "uploaded_by": "res-1",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 1423,
+      "view_count": 1420,
       "download_count": 312,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:02",
-      "updated_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51",
+      "updated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "paper-002",
@@ -48,11 +48,11 @@
       "uploaded_by": "res-3",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 1187,
+      "view_count": 1180,
       "download_count": 245,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:02",
-      "updated_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51",
+      "updated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "paper-003",
@@ -75,11 +75,11 @@
       "uploaded_by": "res-4",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 943,
+      "view_count": 940,
       "download_count": 180,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:02",
-      "updated_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51",
+      "updated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "paper-004",
@@ -102,11 +102,11 @@
       "uploaded_by": "res-3",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 811,
+      "view_count": 810,
       "download_count": 160,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:51",
+      "updated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "paper-005",
@@ -129,11 +129,11 @@
       "uploaded_by": "res-1",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 731,
+      "view_count": 730,
       "download_count": 142,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:51",
+      "updated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "paper-006",
@@ -156,11 +156,11 @@
       "uploaded_by": "res-2",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 657,
+      "view_count": 661,
       "download_count": 120,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-007",
@@ -183,11 +183,11 @@
       "uploaded_by": "res-10",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 593,
+      "view_count": 590,
       "download_count": 98,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-008",
@@ -210,11 +210,11 @@
       "uploaded_by": "res-6",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 511,
+      "view_count": 510,
       "download_count": 88,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-009",
@@ -237,11 +237,11 @@
       "uploaded_by": "res-1",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 41,
+      "view_count": 40,
       "download_count": 5,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-010",
@@ -257,18 +257,18 @@
       "doi": "10.1038/s41564-024-01680-w",
       "document_url": "/uploads/sample_polar_paper_10.pdf",
       "thumbnail_url": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop",
-      "status": "published",
-      "visibility": "public",
-      "embargo_enabled": 0,
-      "embargo_until": null,
+      "status": "embargoed",
+      "visibility": "embargoed",
+      "embargo_enabled": 1,
+      "embargo_until": "2026-12-31 23:59:59",
       "uploaded_by": "res-10",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 11,
+      "view_count": 10,
       "download_count": 0,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-011",
@@ -284,18 +284,18 @@
       "doi": "10.1121/10.0028912",
       "document_url": "/uploads/sample_polar_paper_11.pdf",
       "thumbnail_url": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop",
-      "status": "published",
-      "visibility": "public",
+      "status": "rejected",
+      "visibility": "private",
       "embargo_enabled": 0,
       "embargo_until": null,
       "uploaded_by": "res-4",
       "rejection_reason": "Insufficient Calibration Data and Heavy Ship Noise Artifacts",
       "admin_comment": "The 30-day hydrophone time-series contains uncorrected vessel engine harmonics that overlap with whale call frequencies. Please apply spectral noise notch filters, include hydrophone calibration certificates, and expand the observation window before resubmitting.",
-      "view_count": 16,
+      "view_count": 15,
       "download_count": 2,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-012",
@@ -311,18 +311,18 @@
       "doi": "10.1016/j.isprs.2024.08.012",
       "document_url": "/uploads/sample_polar_paper_12.pdf",
       "thumbnail_url": "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop",
-      "status": "published",
-      "visibility": "public",
+      "status": "draft",
+      "visibility": "private",
       "embargo_enabled": 0,
       "embargo_until": null,
       "uploaded_by": "res-1",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 6,
+      "view_count": 5,
       "download_count": 0,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-013",
@@ -345,11 +345,11 @@
       "uploaded_by": "res-7",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 121,
+      "view_count": 120,
       "download_count": 25,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-014",
@@ -372,11 +372,11 @@
       "uploaded_by": "res-9",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 166,
+      "view_count": 165,
       "download_count": 33,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-015",
@@ -399,11 +399,11 @@
       "uploaded_by": "res-2",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 211,
+      "view_count": 210,
       "download_count": 41,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-016",
@@ -426,11 +426,11 @@
       "uploaded_by": "res-5",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 256,
+      "view_count": 255,
       "download_count": 49,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "paper-017",
@@ -453,11 +453,11 @@
       "uploaded_by": "res-10",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 301,
+      "view_count": 300,
       "download_count": 57,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:53",
+      "updated_at": "2026-09-27 10:29:53"
     },
     {
       "id": "paper-018",
@@ -473,18 +473,18 @@
       "doi": "10.1016/j.polar.2025.0025",
       "document_url": "/uploads/sample_polar_paper_18.pdf",
       "thumbnail_url": "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop",
-      "status": "published",
-      "visibility": "public",
+      "status": "under_review",
+      "visibility": "private",
       "embargo_enabled": 0,
       "embargo_until": null,
       "uploaded_by": "res-6",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 346,
+      "view_count": 345,
       "download_count": 65,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:53",
+      "updated_at": "2026-09-27 10:29:53"
     },
     {
       "id": "paper-019",
@@ -507,11 +507,11 @@
       "uploaded_by": "res-9",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 391,
+      "view_count": 390,
       "download_count": 73,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:53",
+      "updated_at": "2026-09-27 10:29:53"
     },
     {
       "id": "paper-020",
@@ -527,18 +527,18 @@
       "doi": "10.1016/j.polar.2027.0027",
       "document_url": "/uploads/sample_polar_paper_20.pdf",
       "thumbnail_url": "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop",
-      "status": "published",
-      "visibility": "public",
-      "embargo_enabled": 0,
-      "embargo_until": null,
+      "status": "embargoed",
+      "visibility": "embargoed",
+      "embargo_enabled": 1,
+      "embargo_until": "2026-11-15 00:00:00",
       "uploaded_by": "res-2",
       "rejection_reason": null,
       "admin_comment": null,
-      "view_count": 436,
+      "view_count": 435,
       "download_count": 81,
       "is_demo": 1,
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:53",
+      "updated_at": "2026-09-27 10:29:53"
     }
   ],
   "paper_sections": [
@@ -1868,7 +1868,7 @@
       "why_it_matters": "Sea ice reflects up to 80% of incoming sunlight back into space. When sea ice shrinks, dark ocean water absorbs more solar heat, accelerating global climate warming and disrupting polar penguin and whale habitats.",
       "social_media_draft": "🧊 New Polar Research from NCPOR: Satellite & ocean glider data reveals Antarctic sea ice in the Weddell Sea is forming 14 days later, reaching record lows in 2023. Warmer deep water upwelling is driving this rapid transformation. Read the full paper on DHRUVA! #PolarScience #Antarctica #ClimateAction",
       "citation_text": "Sharma, A., Rao, A., & Nair, V. (2024). Seasonal Variability of Antarctic Sea Ice Extent in the Weddell Sea Sector (2018–2024). Polar Science Review, 42(1), 1011. doi:10.1016/j.polar.2024.03.011",
-      "generated_at": "2026-09-11 14:11:02"
+      "generated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "ai-paper-002",
@@ -1880,7 +1880,7 @@
       "why_it_matters": "Methane is over 28 times more effective at trapping heat than carbon dioxide over a 100-year timescale. Thawing permafrost risks creating a dangerous feedback loop: warmer temperatures thaw more soil, releasing more methane, causing even faster global warming.",
       "social_media_draft": "🔬 Arctic Alert from Himadri Station: Research published on DHRUVA reveals Svalbard permafrost thaw depth reached 1.46m in 2023, triggering a 3.4x surge in methane emissions! Explore how our scientists are tracking the thawing cryosphere: #ArcticScience #Permafrost #DHRUVA #ClimateChange",
       "citation_text": "Sen, M., Menon, R., & Al-Mansoor, T. (2024). Permafrost Active-Layer Deepening and Methanogenesis in Ny-Ålesund, Svalbard. Nature Climate & Polar Dynamics, 14(2), 204–218. doi:10.1038/s41558-024-01994-x",
-      "generated_at": "2026-09-11 14:11:02"
+      "generated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "ai-paper-003",
@@ -1892,7 +1892,7 @@
       "why_it_matters": "Polar phytoplankton blooms consume vast quantities of carbon dioxide from the atmosphere, acting as one of the Earth’s most vital natural buffers against global heating.",
       "social_media_draft": "🌿 Ocean Discovery from Bharati Station! Indian marine scientists find Prydz Bay phytoplankton blooms produce up to 7.8 mg/m3 of chlorophyll, fueled by glacial iron runoff. Discover how microscopic algae feed Antarctic giants: #PolarBiology #Bharati #OceanScience",
       "citation_text": "Das, R., Rao, A., & Sharma, A. (2023). Phytoplankton Bloom Dynamics and Primary Productivity in Prydz Bay, East Antarctica. Deep-Sea Research Part II, 208, 105230. doi:10.1016/j.dsr2.2023.105230",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "ai-paper-004",
@@ -1904,7 +1904,7 @@
       "why_it_matters": "When dark soot settles on white snow, it turns a natural mirror into a solar heat collector, speeding up glacier melting across the Arctic and contributing to global sea level rise.",
       "social_media_draft": "🛰️ Atmospheric Science at Himadri: Indian researchers report black carbon peaks at 74.5 ng/m3 over Svalbard, dimming snow reflectivity. See how soot from thousands of miles away impacts the Arctic cryosphere: #Arctic #Atmosphere #Himadri #CleanAir",
       "citation_text": "Sen, M., Kulkarni, S., & Nair, V. (2023). Aerosol Optical Depth and Black Carbon Transport over Himadri Station, Arctic. Atmospheric Environment, 298, 119854. doi:10.1016/j.atmosenv.2023.119854",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "ai-paper-005",
@@ -1916,7 +1916,7 @@
       "why_it_matters": "Even in East Antarctica, considered the most stable part of the continent, glaciers are showing measurable thinning and increased summer melting due to rising polar temperatures.",
       "social_media_draft": "❄️ Field Data from Maitri Station: Indian glaciologists report a -0.22 m/yr thinning rate along the Schirmacher Oasis ice margin and an 18% increase in meltwater lakes. Explore the geodetic data on DHRUVA: #Maitri #Antarctica #Glaciology",
       "citation_text": "Sharma, A., Ghosh, A., & Varma, P. (2023). Glacier Mass Balance Fluctuations and Supraglacial Lake Evolution in the Schirmacher Oasis. Journal of Glaciology, 69(276), 450–462. doi:10.1017/jog.2023.45",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:51"
     },
     {
       "id": "ai-paper-006",
@@ -1928,7 +1928,7 @@
       "why_it_matters": "As warm ocean water floods Arctic fjords, it melts marine-terminating glaciers from underneath, leading to faster ice collapse and rising global sea levels.",
       "social_media_draft": "🌊 Beneath the Arctic Ice: India’s IndARC underwater observatory records unprecedented Atlantic water intrusions, causing fjord freeze days to drop from 95 to 18. Dive into the data on DHRUVA: #IndARC #ArcticOcean #Oceanography",
       "citation_text": "Rao, A., Das, R., & Sen, M. (2024). Atlantic Water Inflow and Deep-Water Mooring Observations at IndARC Observatory, Kongsfjorden. Journal of Geophysical Research: Oceans, 129(4), e2023JC020412.",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-007",
@@ -1940,7 +1940,7 @@
       "why_it_matters": "Microplastics have now penetrated the most isolated polar regions, contaminating the base of the Arctic marine food web and speeding up ice melt.",
       "social_media_draft": "🧪 Polar Environmental Alert: DHRUVA publishes findings on microplastics in Svalbard snow and glacier dust (up to 126.8 particles/kg). Even the High Arctic is affected by airborne plastic fibers. Read more: #Microplastics #Arctic #Himadri #Environment",
       "citation_text": "Al-Mansoor, T., Sen, M., & Sharma, A. (2024). Microplastic Contamination in Cryoconite Holes and Surface Snow across Ny-Ålesund, Svalbard. Environmental Pollution, 345, 123890. doi:10.1016/j.envpol.2024.123890",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-008",
@@ -1952,7 +1952,7 @@
       "why_it_matters": "The ozone layer protects all life on Earth from cancer-causing solar ultraviolet (UV) radiation. Understanding polar vortex shifts is crucial for predicting Southern Hemisphere climate.",
       "social_media_draft": "🎈 Sounding the Stratosphere: India’s Maitri Station in Antarctica tracks the 2023 ozone hole down to 112 Dobson Units using weather balloons. Read the scientific analysis on DHRUVA: #OzoneHole #Maitri #Atmosphere #PolarScience",
       "citation_text": "Kulkarni, S., Nair, V., & Sharma, A. (2023). Stratospheric Ozone Depletion and Polar Vortex Dynamics Observed from Maitri Station. Geophysical Research Letters, 50(18), e2023GL103841.",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-009",
@@ -1964,7 +1964,7 @@
       "why_it_matters": "Ice shelves act as natural buttresses holding back continental glaciers. If they thin or break apart, glaciers flow into the sea much faster, driving global sea level rise.",
       "social_media_draft": "🛰️ New Research Submitted: NCPOR glaciologists map 220m-tall hidden channels beneath Antarctica’s Amery Ice Shelf using helicopter radar. Basal melt reaches 18.4 m/yr! Awaiting review on DHRUVA: #Amery #Glaciology #Antarctica",
       "citation_text": "Sharma, A., Ghosh, A., & Rao, A. (2024). Subglacial Meltwater Plumes and Basal Ice Dynamics of Amery Ice Shelf Front. Nature Geoscience (In Review).",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-010",
@@ -1976,7 +1976,7 @@
       "why_it_matters": "Cold-loving microbes not only teach us how life survives in the most extreme conditions on Earth and outer space, but also provide enzymes for medicine and green biotechnology.",
       "social_media_draft": "🧬 Extremophiles in Antarctica: NCPOR microbiologists discover 8 novel bacteria strains in Lake Priyadarshini that survive down to -15°C with unique antifreeze proteins! Embargoed until publication: #PolarGenomics #Biotech",
       "citation_text": "Al-Mansoor, T., Das, R., & Sharma, A. (2024). Genomic Adaptations of Novel Psychrophilic Extremophiles in Lake Priyadarshini, Schirmacher Oasis. Nature Microbiology (Under Embargo).",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-011",
@@ -1988,7 +1988,7 @@
       "why_it_matters": "Tracking whale calls helps scientists protect endangered species from shipping lanes and understand how climate change alters migration routes.",
       "social_media_draft": "🐋 Bioacoustics in Antarctica: Recording blue whale songs near Bharati Station. Under revision on DHRUVA: #Whales #Bioacoustics",
       "citation_text": "Das, R., & Rao, A. (2024). Preliminary Acoustic Profiling of Antarctic Blue Whales in Larsemann Hills. (Under Revision).",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-012",
@@ -2000,7 +2000,7 @@
       "why_it_matters": "Helps scientists understand the history of ice sheet elevation over past millennia.",
       "social_media_draft": "Draft manuscript on nunataks mapping in Antarctica.",
       "citation_text": "Sharma, A., & Nair, V. (2024). High-Resolution Drone Photogrammetry of Nunataks. Draft.",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-013",
@@ -2012,7 +2012,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Cosmic Ray Flux and Geomagnetic Pulsations Recorded at Maitri Station published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2023). Cosmic Ray Flux and Geomagnetic Pulsations Recorded at Maitri Station. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:03"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-014",
@@ -2024,7 +2024,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Tectonic Evolution and Crustal Structure of Prydz Bay Rifting Zone published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2022). Tectonic Evolution and Crustal Structure of Prydz Bay Rifting Zone. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:04"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-015",
@@ -2036,7 +2036,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Trace Metal Biogeochemistry and Iron Limitation in the Indian Sector of the Southern Ocean published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2023). Trace Metal Biogeochemistry and Iron Limitation in the Indian Sector of the Southern Ocean. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:04"
+      "generated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "ai-paper-016",
@@ -2048,7 +2048,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Sea-Ice Thickness Estimation from Sentinel-1 Dual-Polarization SAR in Svalbard Fjords published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2024). Sea-Ice Thickness Estimation from Sentinel-1 Dual-Polarization SAR in Svalbard Fjords. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:04"
+      "generated_at": "2026-09-27 10:29:53"
     },
     {
       "id": "ai-paper-017",
@@ -2060,7 +2060,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Microbial Mats and Biogeochemical Cycling in Glacial Meltwater Streams of Ny-Ålesund published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2023). Microbial Mats and Biogeochemical Cycling in Glacial Meltwater Streams of Ny-Ålesund. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:04"
+      "generated_at": "2026-09-27 10:29:53"
     },
     {
       "id": "ai-paper-018",
@@ -2072,7 +2072,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Katabatic Wind Climatology and Boundary Layer Turbulence over East Antarctic Ice Slopes published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2022). Katabatic Wind Climatology and Boundary Layer Turbulence over East Antarctic Ice Slopes. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:04"
+      "generated_at": "2026-09-27 10:29:53"
     },
     {
       "id": "ai-paper-019",
@@ -2084,7 +2084,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Sediment Geochemistry of Holocene Glacial Retreat in Kongsfjorden, High Arctic published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2024). Sediment Geochemistry of Holocene Glacial Retreat in Kongsfjorden, High Arctic. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:04"
+      "generated_at": "2026-09-27 10:29:53"
     },
     {
       "id": "ai-paper-020",
@@ -2096,7 +2096,7 @@
       "why_it_matters": "Polar research provides the clearest early warnings of planetary climate transformation, guiding global conservation and mitigation policy.",
       "social_media_draft": "🔬 Polar Discovery: New research on Southern Ocean Polynyas: Multi-Sensor Observation of Heat Flux and Water Mass Transformation published on DHRUVA portal. Explore the data: #PolarScience #DHRUVA",
       "citation_text": "Sharma, A. et al. (2024). Southern Ocean Polynyas: Multi-Sensor Observation of Heat Flux and Water Mass Transformation. Polar Research Journal.",
-      "generated_at": "2026-09-11 14:11:04"
+      "generated_at": "2026-09-27 10:29:53"
     }
   ],
   "mcqs": [
@@ -3328,8 +3328,8 @@
       "source_section": "Abstract",
       "source_page": 1,
       "confidence_score": 0.96,
-      "grounding_status": "Unsupported",
-      "decision": "Rejected"
+      "grounding_status": "Verified",
+      "decision": "Approved"
     },
     {
       "id": "claim-paper-001-3",
@@ -3670,7 +3670,7 @@
       "source_page": 6,
       "confidence_score": 0.94,
       "grounding_status": "Verified",
-      "decision": "Approved"
+      "decision": "Pending"
     },
     {
       "id": "claim-paper-018-2",
@@ -3681,7 +3681,7 @@
       "source_page": 10,
       "confidence_score": 0.96,
       "grounding_status": "Verified",
-      "decision": "Approved"
+      "decision": "Pending"
     },
     {
       "id": "claim-paper-018-3",
@@ -3692,7 +3692,7 @@
       "source_page": 4,
       "confidence_score": 0.92,
       "grounding_status": "Verified",
-      "decision": "Approved"
+      "decision": "Pending"
     },
     {
       "id": "claim-paper-019-1",
@@ -3703,7 +3703,7 @@
       "source_page": 6,
       "confidence_score": 0.94,
       "grounding_status": "Verified",
-      "decision": "Pending"
+      "decision": "Approved"
     },
     {
       "id": "claim-paper-019-2",
@@ -3714,7 +3714,7 @@
       "source_page": 10,
       "confidence_score": 0.96,
       "grounding_status": "Verified",
-      "decision": "Pending"
+      "decision": "Approved"
     },
     {
       "id": "claim-paper-019-3",
@@ -3725,7 +3725,7 @@
       "source_page": 4,
       "confidence_score": 0.92,
       "grounding_status": "Verified",
-      "decision": "Pending"
+      "decision": "Approved"
     },
     {
       "id": "claim-paper-020-1",
@@ -3915,7 +3915,7 @@
       "polar_region": "Both",
       "bio": "Lead investigator for Antarctic ice shelf stability and Himalayan-polar cryospheric teleconnections. Veteran of 4 Indian Antarctic Expeditions (33rd, 36th, 39th, 42nd ISEA).",
       "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-2",
@@ -3928,7 +3928,7 @@
       "polar_region": "Antarctic",
       "bio": "Specialist in Southern Ocean circulation, eddy heat transport, and Antarctic Bottom Water mass transformations using autonomous ocean gliders and Argo floats.",
       "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-3",
@@ -3941,7 +3941,7 @@
       "polar_region": "Arctic",
       "bio": "Expert on atmospheric aerosols, Arctic amplification, and black carbon long-range transport over Himadri Station in Svalbard.",
       "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-4",
@@ -3954,7 +3954,7 @@
       "polar_region": "Antarctic",
       "bio": "Pioneering marine biologist studying Antarctic krill (Euphausia superba) swarming dynamics, benthos biodiversity, and Southern Ocean food webs under ocean acidification.",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-5",
@@ -3967,7 +3967,7 @@
       "polar_region": "Both",
       "bio": "Space scientist utilizing Synthetic Aperture Radar (SAR) and altimetry data from RISAT, CryoSat-2, and Sentinel for polar sea-ice roughness and thickness mapping.",
       "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-6",
@@ -3980,7 +3980,7 @@
       "polar_region": "Antarctic",
       "bio": "Specialist in the Antarctic ozone hole recovery dynamics, katabatic wind structures, and surface radiation balance over Maitri and Bharati stations.",
       "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-7",
@@ -3993,7 +3993,7 @@
       "polar_region": "Arctic",
       "bio": "Conducts ground-penetrating radar surveys of permafrost active-layer thickness and geomagnetosphere pulsations in Ny-Ålesund and Northern Scandinavia.",
       "avatar": "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-8",
@@ -4006,7 +4006,7 @@
       "polar_region": "Antarctic",
       "bio": "Numerical modeler focusing on subglacial meltwater channels, ice stream calving laws, and Amery Ice Shelf structural rift propagation.",
       "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-9",
@@ -4019,7 +4019,7 @@
       "polar_region": "Both",
       "bio": "Isotope geochemist analyzing stable water isotopes (delta-18O, delta-D) in shallow ice cores from coastal Antarctica to reconstruct past monsoon teleconnections.",
       "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "res-10",
@@ -4032,7 +4032,7 @@
       "polar_region": "Arctic",
       "bio": "Extremophile microbiologist investigating cold-active enzymes, psychrophilic bacteria, and microplastic biofilms in Arctic fjords and glacial cryoconite holes.",
       "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop",
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     }
   ],
   "users": [
@@ -4040,121 +4040,121 @@
       "id": "usr-admin-1",
       "name": "Dr. K. Swaminathan (Admin Reviewer)",
       "email": "admin@dhruva.gov.in",
-      "password_hash": "$2a$10$o/SfzRTlvo0oTQquhyVBCeYsRhl.THkyFB377gYgCLdvCJY9/fahG",
+      "password_hash": "$2a$10$l0w5UG9dBspP43qcAl2bq.3/CR2lAGtEeSOxKHayJYAGNquUYhane",
       "role": "admin",
       "institution": "NCPOR / Ministry of Earth Sciences",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-1",
       "name": "Dr. Ananya Sharma",
       "email": "dr.ananya@ncaor.gov.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "National Centre for Polar and Ocean Research (NCPOR), Goa",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-2",
       "name": "Dr. Arjun Rao",
       "email": "arjun.rao@iitr.ac.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "Department of Earth Sciences, IIT Roorkee",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-3",
       "name": "Dr. Meera Sen",
       "email": "meera.sen@iiserpune.ac.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "Center for Climate & Environmental Studies, IISER Pune",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-4",
       "name": "Dr. Rohan Das",
       "email": "rohan.das@nio.res.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "CSIR - National Institute of Oceanography (NIO), Goa",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-5",
       "name": "Dr. Vikram Nair",
       "email": "vikram.nair@sac.isro.gov.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "Space Applications Centre (ISRO), Ahmedabad",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-6",
       "name": "Dr. Sunita Kulkarni",
       "email": "sunita.k@imd.gov.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "India Meteorological Department (IMD), New Delhi",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-7",
       "name": "Dr. Rajeshwari Menon",
       "email": "r.menon@bhu.ac.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "Banaras Hindu University, Dept of Geophysics",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-8",
       "name": "Dr. Amitav Ghosh",
       "email": "amitav.ghosh@iisc.ac.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "Divecha Centre for Climate Change, IISc Bengaluru",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-9",
       "name": "Dr. Preeti Varma",
       "email": "preeti.varma@wadia.res.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "Wadia Institute of Himalayan Geology",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-res-10",
       "name": "Dr. Tariq Al-Mansoor",
       "email": "tariq.m@ncpor.res.in",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "researcher",
       "institution": "National Centre for Polar and Ocean Research (NCPOR), Goa",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     },
     {
       "id": "usr-pub-1",
       "name": "Siddharth Patel (Student Explorer)",
       "email": "student@dhruva.edu",
-      "password_hash": "$2a$10$7d7x8efryDFd.sRF.bnGfuGnFx9xQFlFoaq3IP7hkJL9wB1kvXsti",
+      "password_hash": "$2a$10$iPDPwq2zPY3Vm5aGE0e7COSTnNTXTBKKETNw4Py4vIaXxETNN.9IG",
       "role": "public",
       "institution": "Delhi University",
       "avatar_url": null,
-      "created_at": "2026-09-11 14:11:02"
+      "created_at": "2026-09-27 10:29:51"
     }
   ],
   "media": [
@@ -4248,12 +4248,12 @@
       "id": "emb-paper-010",
       "paper_id": "paper-010",
       "embargo_enabled": 1,
-      "embargo_until": "2026-12-31 00:00:00",
+      "embargo_until": "2026-12-31 23:59:59",
       "reason": "Commercial patent pending and journal press embargo",
       "approved_by": null,
       "status": "Active",
-      "created_at": "2026-09-11 14:11:03",
-      "updated_at": "2026-09-11 14:11:03"
+      "created_at": "2026-09-27 10:29:52",
+      "updated_at": "2026-09-27 10:29:52"
     },
     {
       "id": "emb-paper-020",
@@ -4263,8 +4263,8 @@
       "reason": "Commercial patent pending and journal press embargo",
       "approved_by": null,
       "status": "Active",
-      "created_at": "2026-09-11 14:11:04",
-      "updated_at": "2026-09-11 14:11:04"
+      "created_at": "2026-09-27 10:29:53",
+      "updated_at": "2026-09-27 10:29:53"
     }
   ],
   "audit_logs": [
@@ -4274,7 +4274,7 @@
       "role": "researcher",
       "action": "PAPER_SUBMITTED",
       "paper_id": "paper-001",
-      "timestamp": "2026-09-10 23:11:05",
+      "timestamp": "2026-09-26 19:29:53",
       "previous_value": "draft",
       "new_value": "submitted",
       "details": "Initial manuscript upload with 8 structured sections"
@@ -4285,7 +4285,7 @@
       "role": "system",
       "action": "AI_EXTRACTION_COMPLETED",
       "paper_id": "paper-001",
-      "timestamp": "2026-09-11 00:11:05",
+      "timestamp": "2026-09-26 20:29:53",
       "previous_value": "submitted",
       "new_value": "under_review",
       "details": "Extracted 8 sections, generated summary, 4 MCQs, 3 claims with 96% avg confidence"
@@ -4296,7 +4296,7 @@
       "role": "admin",
       "action": "CLAIM_VERIFIED",
       "paper_id": "paper-001",
-      "timestamp": "2026-09-11 01:11:05",
+      "timestamp": "2026-09-26 21:29:53",
       "previous_value": "Needs Review",
       "new_value": "Approved",
       "details": "Claim: Sea ice extent decreased by 8.4% grounded in Results p.8"
@@ -4307,7 +4307,7 @@
       "role": "admin",
       "action": "PAPER_APPROVED",
       "paper_id": "paper-001",
-      "timestamp": "2026-09-11 02:11:05",
+      "timestamp": "2026-09-26 22:29:53",
       "previous_value": "under_review",
       "new_value": "approved",
       "details": "All AI claims verified. Ready for public release."
@@ -4318,7 +4318,7 @@
       "role": "admin",
       "action": "PAPER_PUBLISHED",
       "paper_id": "paper-001",
-      "timestamp": "2026-09-11 03:11:05",
+      "timestamp": "2026-09-26 23:29:53",
       "previous_value": "approved",
       "new_value": "published",
       "details": "Published to DHRUVA Public Knowledge Portal"
@@ -4329,7 +4329,7 @@
       "role": "researcher",
       "action": "PAPER_SUBMITTED",
       "paper_id": "paper-002",
-      "timestamp": "2026-09-11 04:11:05",
+      "timestamp": "2026-09-27 00:29:53",
       "previous_value": "draft",
       "new_value": "submitted",
       "details": "Permafrost thaw metagenomics study"
@@ -4340,7 +4340,7 @@
       "role": "admin",
       "action": "PAPER_PUBLISHED",
       "paper_id": "paper-002",
-      "timestamp": "2026-09-11 05:11:05",
+      "timestamp": "2026-09-27 01:29:53",
       "previous_value": "approved",
       "new_value": "published",
       "details": "Approved & Published"
@@ -4351,7 +4351,7 @@
       "role": "researcher",
       "action": "PAPER_SUBMITTED",
       "paper_id": "paper-011",
-      "timestamp": "2026-09-11 06:11:05",
+      "timestamp": "2026-09-27 02:29:53",
       "previous_value": "draft",
       "new_value": "submitted",
       "details": "Blue whale bioacoustics study"
@@ -4362,7 +4362,7 @@
       "role": "admin",
       "action": "PAPER_REJECTED",
       "paper_id": "paper-011",
-      "timestamp": "2026-09-11 07:11:05",
+      "timestamp": "2026-09-27 03:29:53",
       "previous_value": "under_review",
       "new_value": "rejected",
       "details": "Heavy ship noise cavitation artifacts overlap whale frequencies. Returned for re-filtering."
@@ -4373,7 +4373,7 @@
       "role": "researcher",
       "action": "EMBARGO_REQUESTED",
       "paper_id": "paper-010",
-      "timestamp": "2026-09-11 08:11:05",
+      "timestamp": "2026-09-27 04:29:53",
       "previous_value": "None",
       "new_value": "2026-12-31",
       "details": "Commercial enzyme patent pending under Antarctic Treaty"
@@ -4384,7 +4384,7 @@
       "role": "admin",
       "action": "EMBARGO_APPROVED",
       "paper_id": "paper-010",
-      "timestamp": "2026-09-11 09:11:05",
+      "timestamp": "2026-09-27 05:29:53",
       "previous_value": "pending",
       "new_value": "embargoed",
       "details": "Embargo set until Dec 31, 2026. Hidden from public searches."
@@ -4395,7 +4395,7 @@
       "role": "researcher",
       "action": "PAPER_SUBMITTED",
       "paper_id": "paper-009",
-      "timestamp": "2026-09-11 10:11:05",
+      "timestamp": "2026-09-27 06:29:53",
       "previous_value": "draft",
       "new_value": "submitted",
       "details": "Amery Ice Shelf subglacial meltwater channels"
@@ -4406,54 +4406,307 @@
       "role": "system",
       "action": "AI_PROCESSING_COMPLETED",
       "paper_id": "paper-009",
-      "timestamp": "2026-09-11 11:11:05",
+      "timestamp": "2026-09-27 07:29:53",
       "previous_value": "submitted",
       "new_value": "under_review",
       "details": "2 claims generated; flagged for admin verification"
     },
     {
-      "id": "rag-log-1789144670135",
+      "id": "rag-log-1790514914722",
       "actor": "Public Explorer",
       "role": "public",
       "action": "RAG_QUERY_ANSWERED",
       "paper_id": null,
-      "timestamp": "2026-09-11 16:37:50",
+      "timestamp": "2026-09-27 13:15:14",
       "previous_value": null,
-      "new_value": "What causes permafrost thaw in svalbard",
-      "details": "Retrieved 4 grounded source citations with top confidence 97%"
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 grounded source citations with top confidence 85%"
     },
     {
-      "id": "audit-1789145181740",
+      "id": "rag-log-1790516168363",
+      "actor": "Public Explorer",
+      "role": "public",
+      "action": "RAG_QUERY_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:36:08",
+      "previous_value": null,
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 grounded source citations with top confidence 85%"
+    },
+    {
+      "id": "rag-log-1790516229458",
+      "actor": "Public Explorer",
+      "role": "public",
+      "action": "RAG_QUERY_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:37:09",
+      "previous_value": null,
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 grounded source citations with top confidence 85%"
+    },
+    {
+      "id": "rag-log-1790516310402",
+      "actor": "Public Explorer",
+      "role": "public",
+      "action": "RAG_QUERY_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:38:30",
+      "previous_value": null,
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 grounded source citations with top confidence 85%"
+    },
+    {
+      "id": "audit-1790516310446",
       "actor": "Dr. K. Swaminathan (Admin Reviewer)",
       "role": "admin",
       "action": "CLAIM_VERIFIED",
       "paper_id": "paper-001",
-      "timestamp": "2026-09-11 16:46:21",
+      "timestamp": "2026-09-27 13:38:30",
       "previous_value": "Needs Review",
       "new_value": "Approved",
-      "details": "Claim: claim-paper-001-2 marked Approved. Comment: Claim marked as Approved by NCPOR Reviewer."
+      "details": "Claim: claim-paper-001-1 marked Approved. Comment: Verified against Section 4 Results."
     },
     {
-      "id": "audit-1789145187488",
+      "id": "ai-ask-1790517315952",
+      "actor": "Public User",
+      "role": "public",
+      "action": "AI_QUESTION_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:55:15",
+      "previous_value": null,
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 sources with top confidence 85%"
+    },
+    {
+      "id": "audit-1790517315978",
       "actor": "Dr. K. Swaminathan (Admin Reviewer)",
       "role": "admin",
       "action": "CLAIM_VERIFIED",
       "paper_id": "paper-001",
-      "timestamp": "2026-09-11 16:46:27",
-      "previous_value": "Needs Review",
-      "new_value": "Rejected",
-      "details": "Claim: claim-paper-001-2 marked Rejected. Comment: Claim marked as Rejected by NCPOR Reviewer."
+      "timestamp": "2026-09-27 13:55:15",
+      "previous_value": "Verified",
+      "new_value": "Verified",
+      "details": "Claim claim-paper-001-1 verified as Approved. Comment: Verified by DHRUVA Senior AI Reviewer"
     },
     {
-      "id": "rag-log-1789160347077",
+      "id": "tx1-1790517457031",
+      "actor": "TX Bot",
+      "role": "admin",
+      "action": "TX1",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:57:37",
+      "previous_value": null,
+      "new_value": null,
+      "details": null
+    },
+    {
+      "id": "ai-ask-1790517457221",
+      "actor": "Public User",
+      "role": "public",
+      "action": "AI_QUESTION_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:57:37",
+      "previous_value": null,
+      "new_value": "What is IndARC?",
+      "details": "Retrieved 4 sources with top confidence 77%"
+    },
+    {
+      "id": "tx1-1790517528844",
+      "actor": "TX Bot",
+      "role": "admin",
+      "action": "TX1",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:58:48",
+      "previous_value": null,
+      "new_value": null,
+      "details": null
+    },
+    {
+      "id": "ai-ask-1790517529043",
+      "actor": "Public User",
+      "role": "public",
+      "action": "AI_QUESTION_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 13:58:49",
+      "previous_value": null,
+      "new_value": "What is IndARC?",
+      "details": "Retrieved 4 sources with top confidence 77%"
+    },
+    {
+      "id": "tx1-1790517641524",
+      "actor": "TX Bot",
+      "role": "admin",
+      "action": "TX1",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:00:41",
+      "previous_value": null,
+      "new_value": null,
+      "details": null
+    },
+    {
+      "id": "ai-ask-1790517641707",
+      "actor": "Public User",
+      "role": "public",
+      "action": "AI_QUESTION_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:00:41",
+      "previous_value": null,
+      "new_value": "What is IndARC?",
+      "details": "Retrieved 4 sources with top confidence 77%"
+    },
+    {
+      "id": "rag-log-1790517650179",
       "actor": "Public Explorer",
       "role": "public",
       "action": "RAG_QUERY_ANSWERED",
       "paper_id": null,
-      "timestamp": "2026-09-11 20:59:07",
+      "timestamp": "2026-09-27 14:00:50",
       "previous_value": null,
-      "new_value": "How does permafrost thaw in Svalbard affect methane emissions?",
-      "details": "Retrieved 4 grounded source citations with top confidence 93%"
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 grounded source citations with top confidence 85%"
+    },
+    {
+      "id": "audit-1790517650223",
+      "actor": "Dr. K. Swaminathan (Admin Reviewer)",
+      "role": "admin",
+      "action": "CLAIM_VERIFIED",
+      "paper_id": "paper-001",
+      "timestamp": "2026-09-27 14:00:50",
+      "previous_value": "Needs Review",
+      "new_value": "Approved",
+      "details": "Claim: claim-paper-001-1 marked Approved. Comment: Verified against Section 4 Results."
+    },
+    {
+      "id": "rag-log-1790517774074",
+      "actor": "Public Explorer",
+      "role": "public",
+      "action": "RAG_QUERY_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:02:54",
+      "previous_value": null,
+      "new_value": "Arctic sea ice permafrost methane microbiome study",
+      "details": "Retrieved 4 grounded source citations with top confidence 65%"
+    },
+    {
+      "id": "rag-log-1790517865714",
+      "actor": "Public Explorer",
+      "role": "public",
+      "action": "RAG_QUERY_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:04:25",
+      "previous_value": null,
+      "new_value": "What is IndARC observatory?",
+      "details": "Retrieved 4 grounded source citations with top confidence 88%"
+    },
+    {
+      "id": "rag-log-1790518000142",
+      "actor": "Public Explorer",
+      "role": "public",
+      "action": "RAG_QUERY_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:06:40",
+      "previous_value": null,
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 grounded source citations with top confidence 85%"
+    },
+    {
+      "id": "audit-1790518000197",
+      "actor": "Dr. K. Swaminathan (Admin Reviewer)",
+      "role": "admin",
+      "action": "CLAIM_VERIFIED",
+      "paper_id": "paper-001",
+      "timestamp": "2026-09-27 14:06:40",
+      "previous_value": "Needs Review",
+      "new_value": "Approved",
+      "details": "Claim: claim-paper-001-1 marked Approved. Comment: Verified against Section 4 Results."
+    },
+    {
+      "id": "tx1-1790518018399",
+      "actor": "TX Bot",
+      "role": "admin",
+      "action": "TX1",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:06:58",
+      "previous_value": null,
+      "new_value": null,
+      "details": null
+    },
+    {
+      "id": "ai-ask-1790518019208",
+      "actor": "Public User",
+      "role": "public",
+      "action": "AI_QUESTION_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:06:59",
+      "previous_value": null,
+      "new_value": "What is IndARC?",
+      "details": "Retrieved 4 sources with top confidence 77%"
+    },
+    {
+      "id": "rag-log-1790518905850",
+      "actor": "Public Explorer",
+      "role": "public",
+      "action": "RAG_QUERY_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:21:45",
+      "previous_value": null,
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 grounded source citations with top confidence 85%"
+    },
+    {
+      "id": "audit-1790518905896",
+      "actor": "Dr. K. Swaminathan (Admin Reviewer)",
+      "role": "admin",
+      "action": "CLAIM_VERIFIED",
+      "paper_id": "paper-001",
+      "timestamp": "2026-09-27 14:21:45",
+      "previous_value": "Needs Review",
+      "new_value": "Approved",
+      "details": "Claim: claim-paper-001-1 marked Approved. Comment: Verified against Section 4 Results."
+    },
+    {
+      "id": "tx1-1790518924454",
+      "actor": "TX Bot",
+      "role": "admin",
+      "action": "TX1",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:22:04",
+      "previous_value": null,
+      "new_value": null,
+      "details": null
+    },
+    {
+      "id": "ai-ask-1790518924649",
+      "actor": "Public User",
+      "role": "public",
+      "action": "AI_QUESTION_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:22:04",
+      "previous_value": null,
+      "new_value": "What is IndARC?",
+      "details": "Retrieved 4 sources with top confidence 77%"
+    },
+    {
+      "id": "ai-ask-1790518951882",
+      "actor": "Public User",
+      "role": "public",
+      "action": "AI_QUESTION_ANSWERED",
+      "paper_id": null,
+      "timestamp": "2026-09-27 14:22:31",
+      "previous_value": null,
+      "new_value": "What are the main observations from IndARC in Kongsfjorden?",
+      "details": "Retrieved 4 sources with top confidence 85%"
+    },
+    {
+      "id": "audit-1790518951906",
+      "actor": "Dr. K. Swaminathan (Admin Reviewer)",
+      "role": "admin",
+      "action": "CLAIM_VERIFIED",
+      "paper_id": "paper-001",
+      "timestamp": "2026-09-27 14:22:31",
+      "previous_value": "Verified",
+      "new_value": "Verified",
+      "details": "Claim claim-paper-001-1 verified as Approved. Comment: Verified by DHRUVA Senior AI Reviewer"
     }
   ]
 }

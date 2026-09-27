@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/db.js');
-const { answerQuery, searchChunks } = require('../services/ragService.js');
+const { answerQuery, answerQueryAsync, searchChunks } = require('../services/ragService.js');
 
 // POST /api/rag/ask - Query the DHRUVA Grounded RAG Pipeline
-router.post('/ask', (req, res) => {
+router.post('/ask', async (req, res) => {
   const { query, paperId, region, area } = req.body;
 
   if (!query || !query.trim()) {
@@ -12,7 +12,8 @@ router.post('/ask', (req, res) => {
   }
 
   try {
-    const result = answerQuery(db, query.trim(), { paperId, region, area, topK: 4 });
+    const result = await answerQueryAsync(db, query.trim(), { paperId, region, area, topK: 4 });
+
 
     // Log query in audit logs for analytics
     db.execute(
@@ -36,6 +37,47 @@ router.post('/ask', (req, res) => {
     res.status(500).json({ error: 'Error processing polar science RAG query' });
   }
 });
+
+// GET /api/rag/stream - Server-Sent Events (SSE) Streaming RAG Answer
+router.get('/stream', async (req, res) => {
+  const { query, paperId, region, area } = req.query;
+
+  if (!query || !query.trim()) {
+    return res.status(400).json({ error: 'A query string is required.' });
+  }
+
+  // Set SSE Headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  try {
+    const result = await answerQueryAsync(db, query.trim(), { paperId, region, area, topK: 4 });
+
+    // 1. Send sources metadata event first
+    res.write(`event: sources\ndata: ${JSON.stringify(result.sources)}\n\n`);
+
+    // 2. Stream tokens smoothly
+    const fullText = result.answer || '';
+    const words = fullText.split(/(\s+)/); // Preserves whitespace
+
+    for (let i = 0; i < words.length; i++) {
+      res.write(`event: token\ndata: ${JSON.stringify({ token: words[i] })}\n\n`);
+      // Micro-delay for smooth token delivery
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+
+    // 3. Send completion event
+    res.write(`event: done\ndata: ${JSON.stringify({ completed: true })}\n\n`);
+    res.end();
+  } catch (err) {
+    console.error('SSE Stream Error:', err);
+    res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
+  }
+});
+
 
 // POST /api/rag/semantic-search - Return top chunks directly
 router.post('/semantic-search', (req, res) => {

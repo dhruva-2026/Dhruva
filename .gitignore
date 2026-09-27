@@ -36,5 +36,9 @@ Thumbs.db
 *.sln
 *.sw?
 *.bak
-*.tmp
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+dhruva.sqlite
 

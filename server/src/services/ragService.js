@@ -162,6 +162,53 @@ function searchChunks(db, query, options = {}) {
 }
 
 /**
+/**
+ * Synthesize with live LLM (Groq / Gemini) when API key is provided
+ */
+async function synthesizeWithLLM(query, sources) {
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey || !groqKey.trim()) return null;
+
+  try {
+    const contextPrompt = sources.map((c, i) => `[Source ${i+1}: "${c.paperTitle}", Section: ${c.sectionName}, Page: ${c.pageNumber}]\n${c.snippet || c.text}`).join('\n\n');
+    
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqKey.trim()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are DHRUVA AI, the scientific intelligence assistant for India\'s National Centre for Polar and Ocean Research (NCPOR / Ministry of Earth Sciences). Answer the user\'s polar science question strictly and accurately based on the provided research context chunks. Include in-text citations referencing the paper titles, sections, and pages. Do not hallucinate or speculate beyond the provided sources.'
+          },
+          {
+            role: 'user',
+            content: `Verified Research Context:\n${contextPrompt}\n\nQuestion:\n${query}`
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 750
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (content && content.trim()) {
+        return content.trim();
+      }
+    }
+  } catch (err) {
+    console.warn('Live LLM synthesis note (falling back to grounded synthesis):', err.message);
+  }
+  return null;
+}
+
+/**
  * Generate a grounded answer with verified source citations
  */
 function answerQuery(db, query, options = {}) {
@@ -209,9 +256,33 @@ function answerQuery(db, query, options = {}) {
   };
 }
 
+/**
+ * Async RAG query that uses live LLM if available, falling back to deterministic synthesis
+ */
+async function answerQueryAsync(db, query, options = {}) {
+  const baseResult = answerQuery(db, query, options);
+  if (baseResult.sources.length === 0) return baseResult;
+
+  const llmAnswer = await synthesizeWithLLM(query, baseResult.sources);
+  if (llmAnswer) {
+    return {
+      ...baseResult,
+      answer: llmAnswer,
+      isLlmSynthesized: true
+    };
+  }
+
+  return baseResult;
+}
+
 module.exports = {
+  POLAR_VOCAB,
+  EMBEDDING_DIM: POLAR_VOCAB.length,
   generateEmbedding,
   cosineSimilarity,
+  keywordScore,
   searchChunks,
-  answerQuery
+  answerQuery,
+  answerQueryAsync
 };
+

@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: dhruva-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dhruva_db
+      POSTGRES_USER: dhruva_user
+      POSTGRES_PASSWORD: dhruva_secure_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dhruva_user -d dhruva_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  dhruva-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dhruva-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DATABASE_URL=postgresql://dhruva_user:dhruva_secure_password_2026@postgres:5432/dhruva_db
+      - JWT_SECRET=dhruva-polar-science-sih-2026-secret-key-prod-grade
+      - CLIENT_URL=http://localhost:5173
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  pgdata:
