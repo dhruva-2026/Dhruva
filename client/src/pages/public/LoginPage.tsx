@@ -16,6 +16,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { apiLogin, apiRegister, setAuthToken, clearAuthToken, setStoredUser } from '../../services/api';
+import { SignOutModal } from '../../components/SignOutModal';
 
 interface LoginPageProps {
   onNavigate: (tab: string) => void;
@@ -42,6 +43,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 }) => {
   const [selectedRole, setSelectedRole] = useState<'public' | 'researcher' | 'admin'>(initialRole);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [signOutWarningOpen, setSignOutWarningOpen] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -151,63 +153,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       />
 
       <div className="relative z-10 w-full max-w-[480px]">
-        {/* Navigation & Status Header: Only the Arrow as requested */}
-        <div className="flex items-center justify-between mb-4 px-1">
-          <div 
-            className="flex items-center gap-1 p-1 rounded-full transition-all select-none"
-            style={{
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 249, 255, 0.92))',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              border: '1px solid rgba(14, 116, 144, 0.22)',
-              boxShadow: '0 2px 10px -2px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset'
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                if (onGoBack && canGoBack) {
-                  onGoBack();
-                } else {
-                  onNavigate('home');
-                }
-              }}
-              title="Previous page"
-              aria-label="Previous page"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 group text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer"
-            >
-              <ArrowLeft size={16} strokeWidth={2.4} className="transition-transform group-hover:-translate-x-0.5" />
-            </button>
-            {canGoForward && onGoForward && (
-              <>
-                <div className="w-[1px] h-3.5 bg-gradient-to-b from-transparent via-slate-300 to-transparent mx-0.5" />
-                <button
-                  type="button"
-                  onClick={onGoForward}
-                  title="Next page"
-                  aria-label="Next page"
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 group text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer"
-                >
-                  <ArrowRight size={16} strokeWidth={2.4} className="transition-transform group-hover:translate-x-0.5" />
-                </button>
-              </>
-            )}
-          </div>
-
-          {isAuthenticated && (
-            <button
-              onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer shadow-2xs"
-            >
-              <LogOut size={12} />
-              <span>Sign Out</span>
-            </button>
-          )}
-        </div>
-
-        {/* Main Card */}
+        {/* Main Card (Popup Modal) */}
         <div
-          className="rounded-3xl p-6 sm:p-8 transition-all"
+          className="rounded-3xl p-6 sm:p-8 transition-all relative overflow-hidden"
           style={{
             background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(20px)',
@@ -216,8 +164,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(14, 116, 144, 0.06)'
           }}
         >
+          {/* Back Button inside the popup modal */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onGoBack && canGoBack) {
+                onGoBack();
+              } else {
+                onNavigate('home');
+              }
+            }}
+            title="Go back to previous page"
+            aria-label="Go back to previous page"
+            className="absolute top-5 left-5 sm:top-6 sm:left-6 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 group text-slate-700 bg-white/95 shadow-xs border border-slate-200/80 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20"
+          >
+            <ArrowLeft size={16} strokeWidth={2.4} className="transition-transform group-hover:-translate-x-0.5" />
+          </button>
+
+          {/* Sign Out Button inside popup (if logged in) */}
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => setSignOutWarningOpen(true)}
+              className="absolute top-5 right-5 sm:top-6 sm:right-6 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-full transition-colors cursor-pointer shadow-2xs z-20"
+            >
+              <LogOut size={12} />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          )}
+
           {/* Brand Header */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-6 pt-1">
             <div className="inline-flex items-center justify-center mb-3">
               <div
                 className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-md"
@@ -280,7 +257,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={handleSignOut}
+                    onClick={() => setSignOutWarningOpen(true)}
                     className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
                   >
                     <LogOut size={12} />
@@ -514,7 +491,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <span className="text-xs text-slate-500">Signed in as {currentUser.name}?</span>
               <button
                 type="button"
-                onClick={handleSignOut}
+                onClick={() => setSignOutWarningOpen(true)}
                 className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <LogOut size={12} />
@@ -531,6 +508,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Sign Out Confirmation Warning Dialog */}
+      <SignOutModal
+        isOpen={signOutWarningOpen}
+        onClose={() => setSignOutWarningOpen(false)}
+        onConfirm={handleSignOut}
+        userName={currentUser?.name}
+        userRole={currentUser?.role}
+      />
     </div>
   );
 };

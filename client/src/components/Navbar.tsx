@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Compass, BookOpen, Sparkles, Image, Shield, UploadCloud, UserCheck, Globe, Menu, X, ChevronDown, Check, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
+import { Compass, BookOpen, Sparkles, Image, Shield, UploadCloud, UserCheck, Globe, Menu, X, ChevronDown, Check, ArrowRight, ArrowLeft, LogOut, Search } from 'lucide-react';
+import { GlobalSearchBar } from './GlobalSearchBar';
+import { SignOutModal } from './SignOutModal';
 
 interface NavbarProps {
   currentTab: string;
@@ -12,6 +14,11 @@ interface NavbarProps {
   canGoForward?: boolean;
   onGoBack?: () => void;
   onGoForward?: () => void;
+  onReadPaper?: (id: string) => void;
+  onSelectTheme?: (theme: string) => void;
+  onSelectStation?: (stationId: string, stationName?: string) => void;
+  onSearchExplore?: (query: string) => void;
+  onAskDhruva?: (query: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,11 +31,30 @@ export const Navbar: React.FC<NavbarProps> = ({
   canGoBack,
   canGoForward,
   onGoBack,
-  onGoForward
+  onGoForward,
+  onReadPaper,
+  onSelectTheme,
+  onSelectStation,
+  onSearchExplore,
+  onAskDhruva
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [searchBarOpen, setSearchBarOpen] = useState(false);
+  const [signOutWarningOpen, setSignOutWarningOpen] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Global Ctrl+K / Cmd+K listener to open search anywhere
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchBarOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -194,14 +220,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Quick Search Button */}
           <button
-            onClick={() => setCurrentTab('explore')}
-            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-400 flex items-center justify-center text-slate-600 hover:text-cyan-700 transition-all shadow-xs shrink-0 cursor-pointer"
-            title="Search polar research"
+            type="button"
+            onClick={() => setSearchBarOpen((prev) => !prev)}
+            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-400 flex items-center justify-center text-slate-600 hover:text-cyan-700 transition-all shadow-xs shrink-0 cursor-pointer group"
+            title={lang === 'en' ? 'Search polar research (Ctrl+K)' : 'ध्रुवीय अनुसंधान खोजें (Ctrl+K)'}
+            aria-label="Search polar research"
           >
             <span className="sr-only">Search</span>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <Search className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
           </button>
 
           {/* Bilingual Language Pill Toggle */}
@@ -396,9 +422,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        onRoleSwitch('public');
                         setRoleDropdownOpen(false);
-                        setCurrentTab('home');
+                        setSignOutWarningOpen(true);
                       }}
                       className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition-colors"
                     >
@@ -432,8 +457,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onRoleSwitch('public');
-                  setCurrentTab('home');
+                  setSignOutWarningOpen(true);
                 }}
                 title="Sign Out"
                 className="text-xs px-2.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer whitespace-nowrap bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 flex items-center gap-1"
@@ -457,8 +481,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* Mobile menu trigger */}
+        {/* Mobile menu trigger & search button */}
         <div className="lg:hidden flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSearchBarOpen((prev) => !prev)}
+            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-400 flex items-center justify-center text-slate-600 hover:text-cyan-700 transition-all shadow-xs cursor-pointer"
+            title={lang === 'en' ? 'Search polar research' : 'ध्रुवीय अनुसंधान खोजें'}
+            aria-label="Open search"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 text-slate-700 hover:text-cyan-700"
@@ -471,6 +505,24 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden px-4 pt-2 pb-6 border-t border-slate-100 bg-white/95 shadow-xl space-y-3">
+          {/* Quick Search Bar Trigger in Drawer */}
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setSearchBarOpen(true);
+            }}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-300 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5">
+              <Search className="w-4 h-4 text-cyan-600" />
+              <span>{lang === 'en' ? 'Search polar research...' : 'ध्रुवीय अनुसंधान खोजें...'}</span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200">
+              Ctrl+K
+            </span>
+          </button>
+
           <div className="grid grid-cols-2 gap-2">
             {navLinks.map(link => (
               <button
@@ -542,10 +594,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {currentUser && currentUser.role !== 'public' && (
               <button
+                type="button"
                 onClick={() => {
-                  onRoleSwitch('public');
                   setMobileMenuOpen(false);
-                  setCurrentTab('home');
+                  setSignOutWarningOpen(true);
                 }}
                 className="w-full h-[38px] text-xs font-semibold flex items-center justify-center gap-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors"
               >
@@ -556,6 +608,42 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       )}
+
+      {/* Clean Global Search Dropdown */}
+      <GlobalSearchBar
+        isOpen={searchBarOpen}
+        onClose={() => setSearchBarOpen(false)}
+        onReadPaper={(id) => {
+          setSearchBarOpen(false);
+          if (onReadPaper) {
+            onReadPaper(id);
+          } else {
+            setCurrentTab('paper-detail');
+          }
+        }}
+        onSearchExplore={(q) => {
+          setSearchBarOpen(false);
+          if (onSearchExplore) {
+            onSearchExplore(q);
+          } else {
+            setCurrentTab('explore');
+          }
+        }}
+        lang={lang}
+      />
+
+      {/* Sign Out Confirmation Warning Dialog */}
+      <SignOutModal
+        isOpen={signOutWarningOpen}
+        onClose={() => setSignOutWarningOpen(false)}
+        onConfirm={() => {
+          onRoleSwitch('public');
+          setCurrentTab('home');
+        }}
+        userName={currentUser?.name}
+        userRole={currentUser?.role}
+        lang={lang}
+      />
     </header>
   );
 };

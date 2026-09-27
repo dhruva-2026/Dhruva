@@ -873,6 +873,38 @@ textarea:focus {
   animation: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* ─── GLOBAL SEARCH BAR MODAL TRANSITIONS ─── */
+@keyframes searchBackdropEnter {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+@keyframes searchModalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.search-backdrop-anim {
+  animation: searchBackdropEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.search-modal-anim {
+  animation: searchModalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
 /* Staggered animation delays */
 .delay-75 { animation-delay: 75ms; }
 .delay-100 { animation-delay: 100ms; }

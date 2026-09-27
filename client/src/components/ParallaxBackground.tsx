@@ -2,9 +2,9 @@ import React from 'react';
 
 export const ParallaxBackground: React.FC = () => {
   return (
-    <div 
+    <div
       className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden select-none"
-      style={{ 
+      style={{
         zIndex: -1,
         willChange: 'transform',
         transform: 'translateZ(0)'
@@ -12,7 +12,7 @@ export const ParallaxBackground: React.FC = () => {
       aria-hidden="true"
     >
       {/* Pristine Polar Base Gradient */}
-      <div 
+      <div
         className="absolute inset-0 w-full h-full"
         style={{
           background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 45%, #F0F7FF 100%)',
@@ -20,7 +20,7 @@ export const ParallaxBackground: React.FC = () => {
       />
 
       {/* Subtle Polar Frost Ambient Radial Gradients */}
-      <div 
+      <div
         className="absolute inset-0 w-full h-full"
         style={{
           background: `
@@ -50,3 +50,4 @@ export const ParallaxBackground: React.FC = () => {
     </div>
   );
 };
+

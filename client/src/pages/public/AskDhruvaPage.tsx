@@ -62,6 +62,7 @@ interface AskDhruvaPageProps {
   lang: 'en' | 'hi';
   currentUser?: any;
   onNavigate?: (tab: string) => void;
+  initialQuery?: string;
 }
 
 const RESEARCH_INQUIRIES = [
@@ -101,14 +102,21 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
   onReadPaper, 
   lang, 
   currentUser, 
-  onNavigate 
+  onNavigate,
+  initialQuery
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery || '');
   const [loading, setLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentAttachment, setCurrentAttachment] = useState<StoredAttachment | null>(null);
+
+  useEffect(() => {
+    if (initialQuery) {
+      setQuery(initialQuery);
+    }
+  }, [initialQuery]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

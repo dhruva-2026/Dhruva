@@ -11,6 +11,7 @@ interface ExploreResearchPageProps {
   onAskPaper: (paper: any) => void;
   lang: 'en' | 'hi';
   initialArea?: string;
+  initialSearch?: string;
 }
 
 const RESEARCH_AREAS = [
@@ -126,10 +127,10 @@ function getFilteredBackupPapers(params: {
 
 const ITEMS_PER_PAGE = 6;
 
-export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onReadPaper, onAskPaper, lang, initialArea }) => {
+export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onReadPaper, onAskPaper, lang, initialArea, initialSearch }) => {
   const [papers, setPapers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch || '');
   const [selectedRegion, setSelectedRegion] = useState('All');
   const [selectedArea, setSelectedArea] = useState(initialArea || 'All');
   const [selectedYear, setSelectedYear] = useState('All');
@@ -149,6 +150,13 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
       setSelectedArea(initialArea);
     }
   }, [initialArea]);
+
+  useEffect(() => {
+    if (initialSearch !== undefined) {
+      setSearchTerm(initialSearch);
+      setPage(1);
+    }
+  }, [initialSearch]);
 
   const loadPapers = async () => {
     setLoading(true);

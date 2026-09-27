@@ -72,8 +72,26 @@ export function App() {
 
   const [selectedPaperId, setSelectedPaperId] = useState<string>('paper-001');
   const [selectedTheme, setSelectedTheme] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [askInitialQuery, setAskInitialQuery] = useState<string>('');
   const [lang, setLang] = useState<'en' | 'hi'>('en');
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const handleSelectTheme = (theme: string) => {
+    setSelectedTheme(theme);
+    setSearchQuery('');
+    setCurrentTab('explore');
+  };
+
+  const handleSearchExplore = (query: string) => {
+    setSearchQuery(query);
+    setCurrentTab('explore');
+  };
+
+  const handleAskDhruva = (query: string) => {
+    setAskInitialQuery(query);
+    setCurrentTab('ask');
+  };
 
   // Initialize user from local storage or set default public
   useEffect(() => {
@@ -179,6 +197,10 @@ export function App() {
         canGoForward={canGoForward}
         onGoBack={handleGoBack}
         onGoForward={handleGoForward}
+        onReadPaper={handleReadPaper}
+        onSelectTheme={handleSelectTheme}
+        onSearchExplore={handleSearchExplore}
+        onAskDhruva={handleAskDhruva}
       />
 
       {/* Main Content Area — keyed by tab so each tab gets entry animation */}
@@ -191,6 +213,7 @@ export function App() {
               setSelectedPaperId={handleReadPaper}
               onSelectTheme={(theme) => {
                 setSelectedTheme(theme);
+                setSearchQuery('');
                 setCurrentTab('explore');
               }}
               lang={lang}
@@ -207,6 +230,7 @@ export function App() {
                 setCurrentTab('paper-detail');
               }}
               initialArea={selectedTheme}
+              initialSearch={searchQuery}
               lang={lang}
             />
           </div>
@@ -265,6 +289,7 @@ export function App() {
               lang={lang}
               currentUser={currentUser}
               onNavigate={setCurrentTab}
+              initialQuery={askInitialQuery}
             />
           </div>
         )}
