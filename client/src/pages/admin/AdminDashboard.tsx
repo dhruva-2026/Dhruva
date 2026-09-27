@@ -48,15 +48,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="site-container py-10 space-y-10 animate-fadeIn">
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-rose-50 via-white to-sky-50 border border-rose-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Header with Polar Ocean Blue Gradient */}
+      <div className="bg-gradient-to-r from-sky-50/90 via-white to-indigo-50/70 border border-sky-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100/80 border border-rose-200 text-rose-800 text-xs font-bold uppercase tracking-wider shadow-2xs">
-            <Shield className="w-3.5 h-3.5 text-rose-600" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100/90 border border-sky-200 text-sky-800 text-xs font-bold uppercase tracking-wider shadow-2xs">
+            <Shield className="w-3.5 h-3.5 text-sky-600" />
             <span>NCPOR Scientific Review Board & Governance</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight font-heading">
-            Admin Verification & <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent">Dissemination Console</span>
+            Admin Verification & <span className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 bg-clip-text text-transparent">Dissemination Console</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
             Welcome, Dr. K. Swaminathan. Audit AI-generated claims, verify source evidence, manage publication embargoes, and approve scientific manuscripts for public release.
@@ -65,7 +65,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <button
           onClick={onNavigateQueue}
-          className="px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-rose-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          className="px-5 py-3 rounded-xl bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
         >
           <Clock className="w-4 h-4" />
           <span>Open Verification Queue ({metrics.pendingVerification})</span>
@@ -151,7 +151,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* QUICK ACTIONS & MODULES */}
       <div className="space-y-4">
         <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-rose-600" />
+          <Layers className="w-4 h-4 text-sky-600" />
           <span>Governance & Review Modules</span>
         </h2>
 
@@ -160,20 +160,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* Module 1: Verification Queue */}
           <div 
             onClick={onNavigateQueue}
-            className="bg-white border border-slate-200 hover:border-rose-400 p-6 sm:p-7 rounded-3xl flex flex-col justify-between hover:shadow-md cursor-pointer transition-all group"
+            className="bg-white border border-slate-200 hover:border-sky-400 p-6 sm:p-7 rounded-3xl flex flex-col justify-between hover:shadow-md cursor-pointer transition-all group"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shadow-2xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 shadow-2xs group-hover:scale-105 transition-transform">
                 <ShieldAlert className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition-colors">
                 Verification & Audit Queue
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 Review newly submitted manuscripts, audit AI-extracted claims against original source text, and verify interactive learning modules for public dissemination.
               </p>
             </div>
-            <div className="mt-6 flex items-center gap-2 text-xs font-bold text-rose-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+            <div className="mt-6 flex items-center gap-2 text-xs font-bold text-sky-600 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
               <span>Open Queue ({metrics.pendingVerification} Pending)</span>
               <ArrowRight className="w-4 h-4" />
             </div>

@@ -33,15 +33,15 @@ export const AdminVerificationQueue: React.FC<AdminVerificationQueueProps> = ({ 
   return (
     <div className="site-container py-10 space-y-8 animate-fadeIn">
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-rose-50 via-white to-sky-50 border border-rose-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Header with Polar Ocean Blue Gradient */}
+      <div className="bg-gradient-to-r from-sky-50/90 via-white to-indigo-50/70 border border-sky-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100/80 border border-rose-200 text-rose-800 text-xs font-bold uppercase tracking-wider shadow-2xs">
-            <Shield className="w-3.5 h-3.5 text-rose-600" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100/90 border border-sky-200 text-sky-800 text-xs font-bold uppercase tracking-wider shadow-2xs">
+            <Shield className="w-3.5 h-3.5 text-sky-600" />
             <span>Peer Review & Grounding Verification</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight font-heading">
-            Admin <span className="bg-gradient-to-r from-rose-600 to-indigo-600 bg-clip-text text-transparent">Verification Queue</span>
+            Admin <span className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 bg-clip-text text-transparent">Verification Queue</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
             Manuscript submissions requiring scientific audit. Examine original paper sections, verify AI-extracted claims, inspect confidence scores, and approve or reject submissions.
@@ -144,7 +144,7 @@ export const AdminVerificationQueue: React.FC<AdminVerificationQueueProps> = ({ 
                 <div className="shrink-0 flex items-center gap-2 md:self-center">
                   <button
                     onClick={() => onOpenVerification(p.id)}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-md shadow-rose-500/20 hover:shadow-lg transition-all cursor-pointer whitespace-nowrap"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-md shadow-sky-500/20 hover:shadow-lg transition-all cursor-pointer whitespace-nowrap"
                   >
                     <span>Split-Screen Review</span>
                     <ArrowRight className="w-4 h-4" />
