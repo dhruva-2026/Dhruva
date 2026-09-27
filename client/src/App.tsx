@@ -13,6 +13,7 @@ import { MediaDisseminationPage } from './pages/public/MediaDisseminationPage';
 import { AskDhruvaPage } from './pages/public/AskDhruvaPage';
 import { AboutPage } from './pages/public/AboutPage';
 import { LoginPage } from './pages/public/LoginPage';
+import { AccountPage } from './pages/public/AccountPage';
 
 // Researcher Pages
 import { ResearcherDashboard } from './pages/researcher/ResearcherDashboard';
@@ -29,6 +30,8 @@ import { AdminAnalytics } from './pages/admin/AdminAnalytics';
 
 import {
   apiLogin,
+  apiGetProfile,
+  getAuthToken,
   getStoredUser,
   setStoredUser,
   setAuthToken,
@@ -94,7 +97,7 @@ export function App() {
     setCurrentTab('ask');
   };
 
-  // Initialize user from local storage or set default public
+  // Initialize user from local storage & sync with server /api/auth/me
   useEffect(() => {
     const stored = getStoredUser();
     if (stored) {
@@ -102,6 +105,20 @@ export function App() {
     } else {
       // Default to Public Portal
       setCurrentUser({ role: 'public', name: 'Public Explorer' });
+    }
+
+    const token = getAuthToken();
+    if (token) {
+      apiGetProfile()
+        .then(res => {
+          if (res && res.user) {
+            setCurrentUser(res.user);
+            setStoredUser(res.user);
+          }
+        })
+        .catch(err => {
+          console.warn('Session profile sync note:', err?.message || err);
+        });
     }
   }, []);
 
@@ -261,6 +278,18 @@ export function App() {
               canGoForward={canGoForward}
               onGoBack={handleGoBack}
               onGoForward={handleGoForward}
+            />
+          </div>
+        )}
+
+        {/* USER ACCOUNT & PROFILE PORTAL (PROTECTED) */}
+        {currentTab === 'account' && (
+          <div className="animate-fadeIn w-full" key="account">
+            <AccountPage
+              currentUser={currentUser}
+              setCurrentUser={setCurrentUser}
+              onNavigate={setCurrentTab}
+              lang={lang}
             />
           </div>
         )}

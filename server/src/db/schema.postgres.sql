@@ -17,6 +17,12 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(32) NOT NULL CHECK(role IN ('public', 'researcher', 'admin')),
     institution VARCHAR(255),
+    phone VARCHAR(32),
+    date_of_birth VARCHAR(32),
+    status VARCHAR(32) DEFAULT 'active',
+    bio TEXT,
+    research_domain VARCHAR(255),
+    last_login TIMESTAMPTZ,
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

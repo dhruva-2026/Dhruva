@@ -56,17 +56,49 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return data as T;
 }
 
-// 1. Auth API
+// 1. Auth & User Profile API
 export const apiLogin = (email: string, password?: string, expectedRole?: string) =>
   request<{ message: string; token: string; user: any }>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password, expectedRole })
   });
 
-export const apiRegister = (payload: { name: string; email: string; password: string; role: string; institution?: string }) =>
+export const apiRegister = (payload: { 
+  name: string; 
+  email: string; 
+  password: string; 
+  confirmPassword?: string;
+  role?: string; 
+  institution?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  researchDomain?: string;
+  bio?: string;
+}) =>
   request<{ message: string; token: string; user: any }>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload)
+  });
+
+export const apiGetProfile = () =>
+  request<{ user: any }>('/auth/me');
+
+export const apiUpdateProfile = (payload: {
+  name?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  institution?: string;
+  researchDomain?: string;
+  bio?: string;
+}) =>
+  request<{ message: string; user: any }>('/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+
+export const apiLogout = () =>
+  request<{ message: string }>('/auth/logout', {
+    method: 'POST'
   });
 
 export const apiGetDemoAccounts = () =>

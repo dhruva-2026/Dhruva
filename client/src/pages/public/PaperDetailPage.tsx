@@ -540,7 +540,7 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
               }}
             >
               <MessageSquare size={14} style={{ color: '#4338CA' }} />
-              <span>Ask <span className="dhruva-brand-text font-bold">DHRUVA</span> (AI RAG)</span>
+              <span>Ask <span className="dhruva-brand-text font-bold">DHRUVA</span></span>
             </button>
 
             <button
