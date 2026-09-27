@@ -123,7 +123,7 @@ router.post('/upload', (req, res) => {
       location_id || 'loc-1', keywords || 'polar science, antarctic, arctic',
       pubYear, paperDoi, '/uploads/sample_uploaded_paper.pdf',
       'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop',
-      initialStatus, visibility, embargo_enabled ? 1 : 0, embargo_until
+      initialStatus, visibility, embargo_enabled ? 1 : 0, embargo_until, researcherId || 'res-1'
     ]);
 
     // 2. Insert Embargo Record if specified

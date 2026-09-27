@@ -1243,10 +1243,10 @@ const papers = [
     doi: '10.1038/s41564-024-01680-w',
     document_url: '/uploads/sample_polar_paper_10.pdf',
     thumbnail_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop',
-    status: 'published', // Published from backup
-    visibility: 'public',
-    embargo_enabled: 0,
-    embargo_until: null,
+    status: 'embargoed',
+    visibility: 'embargoed',
+    embargo_enabled: 1,
+    embargo_until: '2026-12-31 23:59:59',
     uploaded_by: 'res-10',
     view_count: 10,
     download_count: 0,
@@ -1320,8 +1320,8 @@ const papers = [
     doi: '10.1121/10.0028912',
     document_url: '/uploads/sample_polar_paper_11.pdf',
     thumbnail_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop',
-    status: 'published', // Published from backup
-    visibility: 'public',
+    status: 'rejected',
+    visibility: 'private',
     embargo_enabled: 0,
     embargo_until: null,
     uploaded_by: 'res-4',
@@ -1397,8 +1397,8 @@ const papers = [
     doi: '10.1016/j.isprs.2024.08.012',
     document_url: '/uploads/sample_polar_paper_12.pdf',
     thumbnail_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=800&auto=format&fit=crop',
-    status: 'published', // Published from backup
-    visibility: 'public',
+    status: 'draft',
+    visibility: 'private',
     embargo_enabled: 0,
     embargo_until: null,
     uploaded_by: 'res-1',
@@ -1430,9 +1430,9 @@ const extraPaperTopics = [
   { id: 'paper-015', title: 'Trace Metal Biogeochemistry and Iron Limitation in the Indian Sector of the Southern Ocean', area: 'Oceanography', region: 'Antarctic', loc: 'loc-7', author: 'res-2', year: 2023, status: 'published' },
   { id: 'paper-016', title: 'Sea-Ice Thickness Estimation from Sentinel-1 Dual-Polarization SAR in Svalbard Fjords', area: 'Remote Sensing', region: 'Arctic', loc: 'loc-6', author: 'res-5', year: 2024, status: 'published' },
   { id: 'paper-017', title: 'Microbial Mats and Biogeochemical Cycling in Glacial Meltwater Streams of Ny-Ålesund', area: 'Polar Biology', region: 'Arctic', loc: 'loc-3', author: 'res-10', year: 2023, status: 'published' },
-  { id: 'paper-018', title: 'Katabatic Wind Climatology and Boundary Layer Turbulence over East Antarctic Ice Slopes', area: 'Climate Science', region: 'Antarctic', loc: 'loc-1', author: 'res-6', year: 2022, status: 'published' },
+  { id: 'paper-018', title: 'Katabatic Wind Climatology and Boundary Layer Turbulence over East Antarctic Ice Slopes', area: 'Climate Science', region: 'Antarctic', loc: 'loc-1', author: 'res-6', year: 2022, status: 'under_review' },
   { id: 'paper-019', title: 'Sediment Geochemistry of Holocene Glacial Retreat in Kongsfjorden, High Arctic', area: 'Geology', region: 'Arctic', loc: 'loc-5', author: 'res-9', year: 2024, status: 'published' },
-  { id: 'paper-020', title: 'Southern Ocean Polynyas: Multi-Sensor Observation of Heat Flux and Water Mass Transformation', area: 'Oceanography', region: 'Antarctic', loc: 'loc-10', author: 'res-2', year: 2024, status: 'published' }
+  { id: 'paper-020', title: 'Southern Ocean Polynyas: Multi-Sensor Observation of Heat Flux and Water Mass Transformation', area: 'Oceanography', region: 'Antarctic', loc: 'loc-10', author: 'res-2', year: 2024, status: 'embargoed' }
 ];
 
 extraPaperTopics.forEach((item, idx) => {

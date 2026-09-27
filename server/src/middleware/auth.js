@@ -11,6 +11,29 @@ function authenticateToken(req, res, next) {
     return next();
   }
 
+  // Support demo convenience tokens seamlessly
+  if (token === 'token-admin-active' || token === 'token-admin') {
+    req.user = { 
+      userId: 'usr-admin-1', 
+      name: 'Dr. K. Swaminathan (Admin Reviewer)', 
+      email: 'admin@dhruva.gov.in', 
+      role: 'admin',
+      institution: 'NCPOR / Ministry of Earth Sciences'
+    };
+    return next();
+  }
+  if (token === 'token-researcher-active' || token === 'token-researcher') {
+    req.user = { 
+      userId: 'usr-res-1', 
+      name: 'Dr. Ananya Sharma', 
+      email: 'dr.ananya@ncaor.gov.in', 
+      role: 'researcher', 
+      researcherId: 'res-1',
+      institution: 'National Centre for Polar and Ocean Research (NCPOR), Goa'
+    };
+    return next();
+  }
+
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       req.user = null;
