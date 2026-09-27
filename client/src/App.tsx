@@ -74,6 +74,7 @@ export function App() {
   const [selectedTheme, setSelectedTheme] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [askInitialQuery, setAskInitialQuery] = useState<string>('');
+  const [researcherRepoFilter, setResearcherRepoFilter] = useState<string>('all');
   const [lang, setLang] = useState<'en' | 'hi'>('en');
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -310,6 +311,7 @@ export function App() {
               <ResearcherDashboard
                 onNavigateUpload={() => setCurrentTab('researcher-upload')}
                 onNavigateRepository={(status) => {
+                  setResearcherRepoFilter(status || 'all');
                   setCurrentTab('researcher-repository');
                 }}
                 onReadPaper={handleReadPaper}
@@ -332,7 +334,7 @@ export function App() {
           currentUser && (currentUser.role === 'researcher' || currentUser.role === 'admin') ? (
             <div className="animate-fadeIn" key="researcher-repository">
               <ResearcherRepository
-                initialStatus="all"
+                initialStatus={researcherRepoFilter}
                 onReadPaper={handleReadPaper}
                 lang={lang}
               />

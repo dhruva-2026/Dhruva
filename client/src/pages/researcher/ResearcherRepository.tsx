@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Filter, CheckCircle2, AlertTriangle, XCircle, RotateCcw, 
-  Eye, Calendar, MapPin, Sparkles, Send, X, ShieldAlert, FileText 
+  Eye, Calendar, MapPin, Sparkles, Send, X, ShieldAlert, FileText,
+  Clock, ArrowRight, Check
 } from 'lucide-react';
 import { apiFetchResearcherPapers, apiResubmitPaper } from '../../services/api';
 
@@ -12,10 +13,10 @@ interface ResearcherRepositoryProps {
 }
 
 const TABS = [
-  { id: 'all', label: 'All Papers' },
+  { id: 'all', label: 'All Manuscripts' },
   { id: 'under_review', label: 'Under Review' },
   { id: 'published', label: 'Published' },
-  { id: 'rejected', label: 'Rejected (Requires Action)' },
+  { id: 'rejected', label: 'Revisions Required' },
   { id: 'embargoed', label: 'Embargoed' },
   { id: 'draft', label: 'Drafts' }
 ];
@@ -29,12 +30,20 @@ export const ResearcherRepository: React.FC<ResearcherRepositoryProps> = ({
   const [papers, setPapers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Sync activeTab when initialStatus prop changes from outside (e.g. Dashboard click)
+  useEffect(() => {
+    if (initialStatus) {
+      setActiveTab(initialStatus);
+    }
+  }, [initialStatus]);
+
   // Resubmit Modal state
   const [resubmitTarget, setResubmitTarget] = useState<any | null>(null);
   const [revisedTitle, setRevisedTitle] = useState('');
   const [revisedAbstract, setRevisedAbstract] = useState('');
   const [revisionNotes, setRevisionNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
 
   const loadPapers = async () => {
     setLoading(true);
@@ -54,8 +63,8 @@ export const ResearcherRepository: React.FC<ResearcherRepositoryProps> = ({
 
   const openResubmitModal = (paper: any) => {
     setResubmitTarget(paper);
-    setRevisedTitle(paper.title);
-    setRevisedAbstract(paper.abstract);
+    setRevisedTitle(paper.title || '');
+    setRevisedAbstract(paper.abstract || '');
     setRevisionNotes('');
   };
 
@@ -70,56 +79,85 @@ export const ResearcherRepository: React.FC<ResearcherRepositoryProps> = ({
         abstract: revisedAbstract,
         revision_notes: revisionNotes
       });
-      alert('Paper successfully updated and resubmitted to Admin Verification Queue!');
+      setNotification('Manuscript successfully revised and resubmitted to the Admin Verification Queue!');
+      setTimeout(() => setNotification(null), 4000);
       setResubmitTarget(null);
       loadPapers();
     } catch (e: any) {
-      alert('Error resubmitting paper: ' + e.message);
+      alert('Error resubmitting paper: ' + (e.message || 'Unknown error'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="site-container py-12 space-y-10">
+    <div className="site-container py-10 space-y-8">
       
-      {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-wider">
-          <BookOpen className="w-4 h-4" />
-          <span>My Research Repository</span>
+      {/* Toast Notification */}
+      {notification && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center justify-between shadow-sm animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <span>{notification}</span>
+          </div>
+          <button onClick={() => setNotification(null)} className="text-emerald-700 hover:text-emerald-900">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <h1 className="text-3xl font-extrabold text-white">
-          Manage Manuscripts & Peer Reviews
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-300">
-          Track verification workflows, examine admin review feedback, manage embargoes, and resubmit papers.
-        </p>
+      )}
+
+      {/* Header */}
+      <div className="bg-gradient-to-r from-sky-50 via-white to-blue-50 border border-sky-100 rounded-3xl p-6 sm:p-8 shadow-sm">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100/80 border border-sky-200 text-sky-800 text-xs font-semibold">
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Researcher Repository & Submission Tracker</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Manuscript Library & <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">Peer Review Log</span>
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
+            Track verification states, examine admin review feedback, inspect metadata schemas, manage scientific embargoes, and submit revisions.
+          </p>
+        </div>
       </div>
 
       {/* TABS */}
-      <div className="tab-list">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`tab-btn text-xs sm:text-sm ${activeTab === tab.id ? 'active' : ''}`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-200 no-scrollbar">
+        {TABS.map(tab => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+                isActive
+                  ? 'bg-sky-600 text-white shadow-sm shadow-sky-500/20'
+                  : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* PAPERS LIST */}
       {loading ? (
         <div className="space-y-4 animate-pulse">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-44 rounded-xl bg-slate-900/60 border border-slate-800" />
+            <div key={i} className="h-44 rounded-2xl bg-slate-100 border border-slate-200" />
           ))}
         </div>
       ) : papers.length === 0 ? (
-        <div className="glass-panel p-12 text-center text-xs text-slate-400">
-          No papers found under this category filter.
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-sky-50 border border-sky-100 text-sky-600 flex items-center justify-center mx-auto">
+            <FileText className="w-6 h-6" />
+          </div>
+          <h3 className="text-slate-800 font-bold text-sm">No manuscripts found under this filter</h3>
+          <p className="text-slate-500 text-xs max-w-sm mx-auto">
+            There are currently no research submissions matching the "{TABS.find(t => t.id === activeTab)?.label}" category.
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -127,46 +165,63 @@ export const ResearcherRepository: React.FC<ResearcherRepositoryProps> = ({
             const isRejected = p.status === 'rejected';
             const isUnderReview = p.status === 'under_review';
             const isEmbargoed = p.status === 'embargoed';
+            const isPublished = p.status === 'published';
 
             return (
               <div 
                 key={p.id}
-                className={`glass-panel p-6 space-y-4 transition-all ${
-                  isRejected ? 'border-rose-500/40 bg-rose-950/10' : ''
+                className={`bg-white border rounded-2xl p-6 space-y-4 transition-all shadow-sm hover:shadow-md ${
+                  isRejected 
+                    ? 'border-rose-300 bg-rose-50/20' 
+                    : isEmbargoed
+                    ? 'border-purple-200 bg-purple-50/10'
+                    : 'border-slate-200 hover:border-sky-300'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div className="space-y-1">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className={`badge ${p.polar_region === 'Antarctic' ? 'badge-antarctic' : 'badge-arctic'}`}>
-                        {p.polar_region}
-                      </span>
-                      <span className="badge bg-slate-800 text-cyan-300 border border-slate-700">
-                        {p.research_area}
-                      </span>
-                      <span className={`badge ${
-                        p.status === 'published' ? 'badge-published' :
-                        p.status === 'under_review' ? 'badge-review' :
-                        p.status === 'rejected' ? 'badge-rejected' :
-                        p.status === 'embargoed' ? 'badge-embargo' : 'bg-slate-800 text-slate-300'
+                      {p.polar_region && (
+                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                          p.polar_region === 'Antarctic' 
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                            : 'bg-cyan-50 text-cyan-700 border border-cyan-200'
+                        }`}>
+                          {p.polar_region}
+                        </span>
+                      )}
+
+                      {p.research_area && (
+                        <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                          {p.research_area}
+                        </span>
+                      )}
+
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                        isPublished ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        isUnderReview ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                        isRejected ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                        isEmbargoed ? 'bg-purple-50 text-purple-700 border border-purple-200' : 
+                        'bg-slate-100 text-slate-700 border border-slate-200'
                       }`}>
-                        {p.status.replace('_', ' ')}
+                        {p.status ? p.status.replace('_', ' ').toUpperCase() : 'SUBMITTED'}
                       </span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-white">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
                       {p.title}
                     </h3>
-                    <p className="text-xs text-slate-400">
-                      {p.authors} • <span className="text-slate-300">{p.institution}</span>
+                    <p className="text-xs text-slate-500">
+                      <span className="font-semibold text-slate-700">{p.authors}</span>
+                      {p.institution ? ` • ${p.institution}` : ''}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:self-start flex-shrink-0">
+                  <div className="flex items-center gap-2 sm:self-start shrink-0">
                     {isRejected && (
                       <button
                         onClick={() => openResubmitModal(p)}
-                        className="btn-danger text-xs py-1.5 px-3 flex items-center gap-1.5"
+                        className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         <span>Edit & Resubmit</span>
@@ -175,32 +230,32 @@ export const ResearcherRepository: React.FC<ResearcherRepositoryProps> = ({
 
                     <button
                       onClick={() => onReadPaper(p.id)}
-                      className="btn-cyan text-xs py-1.5 px-3"
+                      className="px-3.5 py-2 rounded-xl bg-sky-50 border border-sky-200 hover:bg-sky-100 text-sky-700 text-xs font-bold flex items-center gap-1.5 transition-all"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>View Paper</span>
+                      <span>{isPublished ? 'Read Published Paper' : 'View Manuscript Record'}</span>
                     </button>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
                   {p.abstract}
                 </p>
 
                 {/* SPECIAL REJECTION CALLOUT BOX */}
                 {isRejected && (
-                  <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 space-y-2">
-                    <div className="flex items-center gap-2 text-rose-300 font-bold text-xs">
-                      <AlertTriangle className="w-4 h-4 text-rose-400" />
-                      <span>Reviewer Decision: Manuscript Returned with Corrections</span>
+                  <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-2">
+                    <div className="flex items-center gap-2 text-rose-800 font-bold text-xs">
+                      <AlertTriangle className="w-4 h-4 text-rose-600" />
+                      <span>Reviewer Feedback: Manuscript Requires Scientific Corrections</span>
                     </div>
                     {p.rejection_reason && (
-                      <div className="text-xs text-rose-200 font-semibold">
-                        Reason: <span className="font-normal text-rose-100">{p.rejection_reason}</span>
+                      <div className="text-xs text-rose-900 font-semibold">
+                        Primary Reason: <span className="font-normal text-rose-800">{p.rejection_reason}</span>
                       </div>
                     )}
                     {p.admin_comment && (
-                      <div className="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded border border-rose-900/40 italic">
+                      <div className="text-xs text-slate-700 bg-white p-3 rounded-lg border border-rose-100 italic">
                         "{p.admin_comment}"
                       </div>
                     )}
@@ -209,24 +264,31 @@ export const ResearcherRepository: React.FC<ResearcherRepositoryProps> = ({
 
                 {/* SPECIAL EMBARGO CALLOUT BOX */}
                 {isEmbargoed && (
-                  <div className="p-3 rounded-lg bg-purple-950/40 border border-purple-500/30 text-xs text-purple-200 flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-purple-400" />
-                      <span>Active Scientific Embargo in Effect</span>
+                  <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 font-semibold">
+                      <ShieldAlert className="w-4 h-4 text-purple-600" />
+                      <span>Scientific Data Embargo Active (Pre-publication protection)</span>
                     </span>
-                    <span className="font-mono text-[11px] text-purple-300">
-                      Until: {p.embargo_until ? p.embargo_until.slice(0, 10) : 'End of 2026'}
+                    <span className="font-mono text-xs text-purple-700 bg-purple-100/80 px-2.5 py-1 rounded-md">
+                      Protected Until: {p.embargo_until ? new Date(p.embargo_until).toLocaleDateString() : 'End of Cycle'}
                     </span>
                   </div>
                 )}
 
                 {/* Footer Metadata */}
-                <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-                  <div className="flex items-center gap-3">
-                    <span>DOI: <span className="font-mono text-cyan-300">{p.doi || 'Pending'}</span></span>
-                    <span>Views: {p.view_count || 0}</span>
+                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                  <div className="flex items-center gap-4">
+                    <span>DOI: <span className="font-mono text-sky-700 font-semibold">{p.doi || 'Assigned Post-Review'}</span></span>
+                    {p.location_id && (
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <MapPin className="w-3 h-3 text-sky-600" />
+                        <span>Station/Sector: {p.location_id}</span>
+                      </span>
+                    )}
                   </div>
-                  <div>Submitted: {p.created_at ? p.created_at.slice(0, 10) : '2024'}</div>
+                  <div>
+                    Submitted: <span className="text-slate-600 font-medium">{p.created_at ? new Date(p.created_at).toLocaleDateString() : 'Recent'}</span>
+                  </div>
                 </div>
               </div>
             );
@@ -236,82 +298,92 @@ export const ResearcherRepository: React.FC<ResearcherRepositoryProps> = ({
 
       {/* EDIT & RESUBMIT MODAL */}
       {resubmitTarget && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-5 border-cyan-400/50 relative">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-5 border border-slate-200 shadow-2xl relative">
             <button
               onClick={() => setResubmitTarget(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-rose-400 uppercase tracking-wider mb-1">
+              <div className="flex items-center gap-2 text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">
                 <RotateCcw className="w-4 h-4" />
-                <span>Revision & Resubmission</span>
+                <span>Revision & Resubmission Workflow</span>
               </div>
-              <h2 className="text-xl font-bold text-white">Resubmit Corrected Manuscript</h2>
-              <p className="text-xs text-slate-300 mt-1">
-                Paper ID: <span className="font-mono text-cyan-300">{resubmitTarget.id}</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900">Resubmit Corrected Manuscript</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Manuscript ID: <span className="font-mono text-sky-600 font-semibold">{resubmitTarget.id}</span>
               </p>
             </div>
 
             {/* Admin critique reminder */}
-            <div className="p-3 rounded-lg bg-rose-950/30 border border-rose-500/30 text-xs text-rose-200 space-y-1">
-              <div className="font-bold">Admin Feedback to Address:</div>
-              <div className="italic text-slate-300">"{resubmitTarget.admin_comment}"</div>
-            </div>
+            {resubmitTarget.admin_comment && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1">
+                <div className="font-bold">Reviewer Feedback to Address:</div>
+                <div className="italic text-slate-700 bg-white p-2.5 rounded-lg border border-rose-100">
+                  "{resubmitTarget.admin_comment}"
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleResubmitSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Paper Title</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                  Paper Title
+                </label>
                 <input
                   type="text"
                   value={revisedTitle}
                   onChange={(e) => setRevisedTitle(e.target.value)}
                   required
-                  className="text-xs py-2 px-3"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Revised Abstract</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                  Revised Abstract & Methodological Highlights
+                </label>
                 <textarea
                   value={revisedAbstract}
                   onChange={(e) => setRevisedAbstract(e.target.value)}
                   rows={4}
                   required
-                  className="text-xs py-2 px-3"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all resize-y"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Researcher Revision Notes / Response to Reviewer</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                  Response to Reviewer / Correction Notes
+                </label>
                 <textarea
                   value={revisionNotes}
                   onChange={(e) => setRevisionNotes(e.target.value)}
-                  placeholder="Explain how vessel noise filters were applied and hydrophone calibration certificates were integrated..."
+                  placeholder="Detail the exact corrections made (e.g., updated calibration curves, clarified sensor depths, revised error margins)..."
                   rows={3}
                   required
-                  className="text-xs py-2 px-3"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all resize-y"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setResubmitTarget(null)}
-                  className="btn-secondary text-xs py-2 px-4"
+                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn-primary text-xs py-2 px-5"
+                  className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md shadow-sky-500/20 flex items-center gap-1.5 transition-all disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{submitting ? 'Submitting...' : 'Resubmit for Verification'}</span>
+                  <span>{submitting ? 'Resubmitting...' : 'Resubmit to Review Queue'}</span>
                 </button>
               </div>
             </form>
