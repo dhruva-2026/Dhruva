@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import {
   Search, Bookmark, ArrowRight, BookOpen, Layers, BarChart2, Users,
   ChevronRight, HelpCircle, GraduationCap, Gamepad2, LayoutGrid,
-  Globe, Mountain, Sliders, Activity
+  Globe, Mountain, Sliders, Activity, X
 } from 'lucide-react';
 
 import { apiFetchPapers } from '../../services/api';
 
 interface LearnPortalPageProps {
-  onOpenPaper: (id: string) => void;
+  onOpenPaper: (id: string, initialTab?: 'summary' | 'abstract' | 'paper' | 'learn' | 'ask' | 'sources') => void;
   lang: 'en' | 'hi';
 }
 
@@ -177,7 +177,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
             padding: 'clamp(2.5rem, 4vw, 4rem) clamp(1.2rem, 3vw, 3rem) 2rem',
           }}
         >
-          {/* Top row: Eyebrow badge + Quote */}
+          {/* Top row: Eyebrow badge */}
           <div
             style={{
               display: 'flex',
@@ -192,35 +192,6 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
             <div className="section-eyebrow">
               <GraduationCap size={14} />
               <span>{lang === 'en' ? 'Polar Science Education Hub' : 'ध्रुवीय विज्ञान शिक्षा केंद्र'}</span>
-            </div>
-
-            {/* Right quote with accent bar */}
-            <div style={{ textAlign: 'right', maxWidth: '260px' }}>
-              <p
-                style={{
-                  fontSize: '13px',
-                  fontStyle: 'italic',
-                  color: '#64748B',
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}
-              >
-                "Knowledge today.
-                <br />
-                A brighter tomorrow
-                <br />
-                for our polar regions."
-              </p>
-              <div
-                style={{
-                  width: '36px',
-                  height: '3px',
-                  background: '#0284C7',
-                  marginTop: '8px',
-                  marginLeft: 'auto',
-                  borderRadius: '2px',
-                }}
-              />
             </div>
           </div>
 
@@ -256,16 +227,8 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               : 'भारतीय अभियानों के संस्थागत अनुसंधान को संरचित शिक्षण मॉड्यूल, क्विज़ और फ्लैशकार्ड में बदलना।'}
           </p>
 
-          {/* 4 Feature Badges */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '24px',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              marginBottom: '32px',
-            }}
-          >
+          {/* 4 Feature Badges (Responsive Grid) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
             {[
               { icon: BookOpen, text: 'Research-backed Content' },
               { icon: Gamepad2, text: 'Interactive Learning' },
@@ -274,96 +237,43 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
             ].map(({ icon: Icon, text }) => (
               <div
                 key={text}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#334155',
-                }}
+                className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-white/85 border border-slate-200/80 shadow-xs backdrop-blur-xs text-xs font-semibold text-slate-700"
               >
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    border: '1px solid rgba(2, 132, 199, 0.25)',
-                    background: 'rgba(2, 132, 199, 0.08)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#0284C7',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={16} />
+                <div className="w-8 h-8 rounded-full border border-sky-500/25 bg-sky-50 flex items-center justify-center text-sky-600 shrink-0">
+                  <Icon size={15} />
                 </div>
-                <span>{text}</span>
+                <span className="leading-tight">{text}</span>
               </div>
             ))}
           </div>
 
-          {/* ═══ Sleek Search + Filter Bar Container ═══ */}
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.94)',
-              border: '1px solid rgba(14, 116, 144, 0.18)',
-              borderRadius: '9999px',
-              padding: '6px 8px 6px 16px',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              flexWrap: 'wrap',
-              boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
-            }}
-          >
-            {/* Search Input */}
-            <div
-              style={{
-                position: 'relative',
-                flex: '1 1 240px',
-                minWidth: '200px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
+          {/* ═══ Sleek Search + Filter Bar ═══ */}
+          <div className="w-full space-y-3.5">
+            {/* Search Input Bar */}
+            <div className="w-full flex items-center bg-white/95 border border-slate-200 hover:border-sky-400 focus-within:border-sky-500 rounded-xl sm:rounded-full px-4 py-2.5 shadow-xs backdrop-blur-md transition-all">
               <Search
                 size={16}
-                style={{
-                  color: '#0284C7',
-                  marginRight: '10px',
-                  flexShrink: 0,
-                }}
+                className="text-sky-600 mr-2.5 shrink-0"
               />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search learning modules, topics, or keywords..."
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  padding: '8px 0',
-                  fontSize: '13px',
-                  color: '#0F172A',
-                  fontFamily: 'inherit',
-                }}
+                className="w-full bg-transparent border-none outline-none text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-medium"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
             {/* Filter Pills */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '6px',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
-            >
+            <div className="flex flex-wrap gap-2 items-center">
               {FILTER_BUTTONS.map(f => {
                 const active = activeFilter === f.id;
                 const IconComponent = f.icon;
@@ -371,38 +281,14 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                   <button
                     key={f.id}
                     onClick={() => setActiveFilter(f.id)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '7px 16px',
-                      borderRadius: '9999px',
-                      border: active ? 'none' : '1px solid #E2E8F0',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      transition: 'all 0.18s ease',
-                      background: active
-                        ? 'linear-gradient(135deg, #0284C7, #0369A1)'
-                        : '#F1F5F9',
-                      color: active ? '#FFFFFF' : '#64748B',
-                      boxShadow: active ? '0 2px 10px rgba(2, 132, 199, 0.35)' : 'none',
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = '#E2E8F0';
-                        (e.currentTarget as HTMLElement).style.color = '#0F172A';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = '#F1F5F9';
-                        (e.currentTarget as HTMLElement).style.color = '#64748B';
-                      }
-                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      active
+                        ? 'bg-gradient-to-r from-sky-600 to-cyan-700 text-white shadow-sm shadow-sky-600/30 border border-transparent'
+                        : 'bg-white/90 text-slate-600 border border-slate-200/90 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
                   >
                     <IconComponent size={13} />
-                    {f.label}
+                    <span>{f.label}</span>
                   </button>
                 );
               })}
@@ -497,6 +383,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
               return (
                 <div
                   key={mod.id}
+                  onClick={() => onOpenPaper(mod.paperId, 'learn')}
                   style={{
                     borderRadius: '16px',
                     overflow: 'hidden',
@@ -506,6 +393,7 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                     flexDirection: 'column',
                     transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                     boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
+                    cursor: 'pointer',
                   }}
                   onMouseEnter={e => {
                     (e.currentTarget as HTMLElement).style.borderColor = 'rgba(2, 132, 199, 0.45)';
@@ -649,7 +537,10 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
                   >
                     {/* Title */}
                     <h3
-                      onClick={() => onOpenPaper(mod.paperId)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenPaper(mod.paperId, 'learn');
+                      }}
                       style={{
                         fontSize: '15px',
                         fontWeight: 700,
@@ -748,7 +639,10 @@ export const LearnPortalPage: React.FC<LearnPortalPageProps> = ({ onOpenPaper, l
 
                     {/* Circular Arrow Button */}
                     <button
-                      onClick={() => onOpenPaper(mod.paperId)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenPaper(mod.paperId, 'learn');
+                      }}
                       style={{
                         width: '34px',
                         height: '34px',

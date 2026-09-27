@@ -558,7 +558,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
           <div 
             style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))', 
               gap: '18px' 
             }}
           >
@@ -725,7 +725,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
           <div 
             style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))', 
               gap: '18px' 
             }}
           >
@@ -886,7 +886,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setCurrentTab, setSelectedPa
           <div 
             style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))', 
               gap: '18px' 
             }}
           >

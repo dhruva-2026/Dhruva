@@ -401,7 +401,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   const [currentAttachment, setCurrentAttachment] = useState<StoredAttachment | null>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -462,8 +462,34 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputDockRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Mobile virtual keyboard handling - lifts the message input dock smoothly above the keyboard
+  useEffect(() => {
+    const handleViewportChange = () => {
+      if (typeof window !== 'undefined' && window.visualViewport && inputDockRef.current) {
+        const offsetFromBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+        if (offsetFromBottom > 15) {
+          inputDockRef.current.style.transform = `translateY(-${Math.max(0, offsetFromBottom)}px)`;
+        } else {
+          inputDockRef.current.style.transform = 'none';
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined' && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      }
+    };
+  }, []);
 
   // Load search history from localStorage on mount
   useEffect(() => {
@@ -697,21 +723,25 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
         onChange={handleImageSelect} 
       />
 
+      {/* Mobile Drawer Backdrop when history is open on mobile/tablet */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-30 lg:hidden animate-fadeIn"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ───────────────────────────────────────────────────────────── */}
       {/* LEFT SIDEBAR: Search & Conversation History                    */}
       {/* ───────────────────────────────────────────────────────────── */}
       <aside 
+        className={`transition-all duration-200 bg-white flex flex-col z-40 overflow-hidden ${
+          sidebarOpen 
+            ? 'fixed lg:relative inset-y-0 left-0 w-72 lg:w-[260px] lg:min-w-[260px] border-r border-slate-200 shadow-2xl lg:shadow-none' 
+            : 'hidden lg:flex w-0 min-w-0 border-none'
+        }`}
         style={{
-          width: sidebarOpen ? '260px' : '0px',
-          minWidth: sidebarOpen ? '260px' : '0px',
-          transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
-          height: '100%',
-          background: '#FFFFFF',
-          borderRight: sidebarOpen ? '1px solid #E2E8F0' : 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 20,
-          overflow: 'hidden'
+          height: '100%'
         }}
       >
         {sidebarOpen && (
@@ -782,7 +812,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                       key={item.id}
                       onClick={() => handleSelectHistoryItem(item)}
                       style={{
-                        padding: '8px 10px',
+                        padding: '6px 8px',
                         borderRadius: '8px',
                         background: isActive ? '#E0F2FE' : '#F8FAFC',
                         border: isActive ? '1px solid #38BDF8' : '1px solid #E2E8F0',
@@ -791,8 +821,9 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: '8px',
-                        transition: 'all 0.15s'
+                        gap: '6px',
+                        transition: 'all 0.15s',
+                        whiteSpace: 'nowrap'
                       }}
                       onMouseEnter={(e) => {
                         if (!isActive) {
@@ -807,35 +838,32 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                         }
                       }}
                     >
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ 
-                          fontSize: '11.5px', 
+                      <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ 
+                          fontSize: '11px', 
                           fontWeight: isActive ? 700 : 600, 
                           color: isActive ? '#0369A1' : '#1E293B', 
                           whiteSpace: 'nowrap', 
                           overflow: 'hidden', 
-                          textOverflow: 'ellipsis' 
+                          textOverflow: 'ellipsis',
+                          flex: 1,
+                          minWidth: 0
                         }}>
                           {item.query}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                          <span style={{ fontSize: '9px', color: isActive ? '#0284C7' : '#94A3B8' }}>
-                            {item.timestamp}
-                          </span>
-                          <span style={{ fontSize: '8.5px', background: isActive ? '#BAE6FD' : '#E2E8F0', color: isActive ? '#0369A1' : '#64748B', padding: '0px 4px', borderRadius: '4px', fontWeight: 600 }}>
-                            {inquiryCount} {inquiryCount === 1 ? 'inquiry' : 'inquiries'}
-                          </span>
-                        </div>
+                        </span>
+                        <span style={{ fontSize: '9px', color: isActive ? '#0284C7' : '#94A3B8', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {item.timestamp}
+                        </span>
                       </div>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteHistoryItem(item.id, e)}
                         style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '6px',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '4px',
                           background: 'transparent',
-                          border: '1px solid transparent',
+                          border: 'none',
                           color: '#94A3B8',
                           cursor: 'pointer',
                           padding: 0,
@@ -857,7 +885,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                         }}
                         title="Delete this conversation"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   );
@@ -1503,16 +1531,18 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
 
         {/* ── BOTTOM DOCKED SECTION (SEARCH INPUT + ATTACHMENTS + TRUST BADGES) ── */}
         <div 
+          ref={inputDockRef}
           style={{ 
             width: '100%', 
-            padding: '10px 24px 14px 24px',
+            padding: '8px clamp(10px, 3vw, 24px) 12px clamp(10px, 3vw, 24px)',
             background: 'linear-gradient(to top, #FFFFFF 85%, rgba(255,255,255,0.7) 100%)',
             borderTop: '1px solid #E2E8F0',
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center',
             flexShrink: 0,
-            zIndex: 10
+            zIndex: 20,
+            transition: 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           <div style={{ width: '100%', maxWidth: '880px' }}>
@@ -1558,10 +1588,10 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                 border: '1.5px solid #CBD5E1',
                 borderRadius: '9999px',
                 boxShadow: '0 4px 16px rgba(15, 23, 42, 0.06)',
-                padding: '5px 8px 5px 18px',
+                padding: '4px 6px 4px clamp(10px, 2.5vw, 18px)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: 'clamp(4px, 1.5vw, 10px)',
                 marginBottom: '8px',
                 transition: 'border-color 0.15s, box-shadow 0.15s'
               }}
@@ -1585,7 +1615,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                   cursor: 'pointer', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  padding: '6px',
+                  padding: '4px',
                   borderRadius: '9999px',
                   transition: 'all 0.15s'
                 }}
@@ -1605,7 +1635,7 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                   cursor: 'pointer', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  padding: '6px',
+                  padding: '4px',
                   borderRadius: '9999px',
                   transition: 'all 0.15s'
                 }}
@@ -1620,15 +1650,21 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask a polar science question (e.g. 'what are poles', 'how does permafrost thaw?')..."
+                onFocus={(e) => {
+                  setTimeout(() => {
+                    e.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                  }, 120);
+                }}
+                placeholder="Ask a polar science question..."
                 style={{
                   flex: 1,
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  fontSize: '13.5px',
+                  fontSize: 'clamp(12px, 2vw, 13.5px)',
                   color: '#0F172A',
-                  fontFamily: 'var(--font-body)'
+                  fontFamily: 'var(--font-body)',
+                  minWidth: 0
                 }}
                 disabled={loading}
               />
@@ -1644,14 +1680,14 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '6px',
+                  padding: '4px',
                   borderRadius: '9999px',
                   transition: 'all 0.15s',
                   animation: isListening ? 'pulse 1.5s infinite' : 'none'
                 }}
                 title={isListening ? 'Listening (Click to stop)...' : 'Ask using voice (English / Hindi)'}
               >
-                {isListening ? <MicOff size={17} /> : <Mic size={17} />}
+                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
               </button>
 
               {/* Send Pill Button */}
@@ -1661,21 +1697,22 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 20px',
+                  gap: '4px',
+                  padding: '6px clamp(10px, 2.5vw, 18px)',
                   borderRadius: '9999px',
                   background: '#0284C7',
                   color: '#FFFFFF',
-                  fontSize: '12.5px',
+                  fontSize: '12px',
                   fontWeight: 700,
                   border: 'none',
                   cursor: 'pointer',
                   boxShadow: '0 2px 10px rgba(2, 132, 199, 0.3)',
                   opacity: loading || (!query.trim() && !currentAttachment) ? 0.5 : 1,
-                  transition: 'all 0.15s'
+                  transition: 'all 0.15s',
+                  flexShrink: 0
                 }}
               >
-                <Send size={13} />
+                <Send size={12} />
                 <span>Send</span>
               </button>
             </form>
@@ -1688,24 +1725,24 @@ export const AskDhruvaPage: React.FC<AskDhruvaPageProps> = ({
                 flexWrap: 'wrap',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '20px',
-                fontSize: '11px',
+                gap: 'clamp(8px, 2.5vw, 20px)',
+                fontSize: '10.5px',
                 color: '#64748B',
                 fontWeight: 500
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <ShieldCheck size={13} style={{ color: '#0284C7' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <ShieldCheck size={12} style={{ color: '#0284C7' }} />
                 <span>Grounded in NCPOR research</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <FileText size={13} style={{ color: '#0284C7' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <FileText size={12} style={{ color: '#0284C7' }} />
                 <span>Section &amp; page citations provided</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Lock size={12} style={{ color: '#0284C7' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Lock size={11} style={{ color: '#0284C7' }} />
                 <span>Scientific &amp; verified provenance</span>
               </div>
             </div>

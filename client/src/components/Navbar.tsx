@@ -127,52 +127,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     >
       <div className="site-container-wide h-20 flex items-center justify-between gap-3 lg:gap-6 relative">
         
-        {/* Brand Logo & Global Previous / Next Page Navigation */}
+        {/* Brand Logo */}
         <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
-          {/* Global Platform Navigation Pill (Previous / Next Page) */}
-          <div 
-            className="flex items-center gap-1 p-1 rounded-full transition-all select-none shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 249, 255, 0.92))',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              border: '1px solid rgba(14, 116, 144, 0.22)',
-              boxShadow: '0 2px 10px -2px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset'
-            }}
-          >
-            <button
-              type="button"
-              onClick={onGoBack}
-              disabled={!canGoBack}
-              title={canGoBack ? "Go to previous page" : "No previous page in history"}
-              aria-label="Previous page"
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 group ${
-                canGoBack
-                  ? 'text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer'
-                  : 'text-slate-300 bg-transparent border-transparent cursor-not-allowed opacity-45'
-              }`}
-            >
-              <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${canGoBack ? 'transition-transform group-hover:-translate-x-0.5' : ''}`} strokeWidth={2.4} />
-            </button>
-
-            <div className="w-[1px] h-3.5 bg-gradient-to-b from-transparent via-slate-300 to-transparent mx-0.5" />
-
-            <button
-              type="button"
-              onClick={onGoForward}
-              disabled={!canGoForward}
-              title={canGoForward ? "Go to next page" : "No next page in history"}
-              aria-label="Next page"
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 group ${
-                canGoForward
-                  ? 'text-slate-700 bg-white/95 shadow-xs border border-slate-200/70 hover:bg-gradient-to-tr hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-transparent hover:shadow-md hover:scale-105 active:scale-90 cursor-pointer'
-                  : 'text-slate-300 bg-transparent border-transparent cursor-not-allowed opacity-45'
-              }`}
-            >
-              <ArrowRight className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${canGoForward ? 'transition-transform group-hover:translate-x-0.5' : ''}`} strokeWidth={2.4} />
-            </button>
-          </div>
-
           <div 
             className="flex items-center gap-3 cursor-pointer select-none shrink-0"
             onClick={() => setCurrentTab('home')}
@@ -545,9 +501,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer (Responsive & Scrollable for all phone heights) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden px-4 pt-2 pb-6 border-t border-slate-100 bg-white/95 shadow-xl space-y-3">
+        <div className="lg:hidden px-4 pt-2 pb-6 border-t border-slate-100 bg-white/95 backdrop-blur-md shadow-xl space-y-3 max-h-[calc(100vh-80px)] overflow-y-auto no-scrollbar">
           {/* Quick Search Bar Trigger in Drawer */}
           <button
             type="button"
@@ -555,18 +511,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               setMobileMenuOpen(false);
               setSearchBarOpen(true);
             }}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-300 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-300 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
           >
-            <div className="flex items-center gap-2.5">
-              <Search className="w-4 h-4 text-cyan-600" />
-              <span>{lang === 'en' ? 'Search polar research...' : 'ध्रुवीय अनुसंधान खोजें...'}</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200">
-              Ctrl+K
-            </span>
+            <Search className="w-4 h-4 text-cyan-600 shrink-0" />
+            <span>{lang === 'en' ? 'Search polar research...' : 'ध्रुवीय अनुसंधान खोजें...'}</span>
           </button>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1.5">
             {navLinks.map(link => {
               const isActive = isTabActive(link.id);
               return (
@@ -576,11 +527,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setCurrentTab(link.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${isActive ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${isActive ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200 shadow-xs' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
                     }`}
                 >
-                  {link.icon}
-                  {link.label}
+                  <span className={isActive ? 'text-cyan-600' : 'text-slate-500'}>{link.icon}</span>
+                  <span>{link.label}</span>
                 </button>
               );
             })}
@@ -589,7 +540,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setCurrentTab('account');
                 setMobileMenuOpen(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${isTabActive('account') ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${isTabActive('account') ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200 shadow-xs' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
                 }`}
             >
               <User className="w-4 h-4 text-cyan-600" />
@@ -600,18 +551,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setCurrentTab('about');
                 setMobileMenuOpen(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${isTabActive('about') ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${isTabActive('about') ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200 shadow-xs' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
                 }`}
             >
-              <Compass className="w-4 h-4" />
-              {lang === 'en' ? 'About' : 'परिचय'}
+              <Compass className="w-4 h-4 text-slate-500" />
+              <span>{lang === 'en' ? 'About' : 'परिचय'}</span>
             </button>
             <button
               onClick={() => {
                 setCurrentTab('ask');
                 setMobileMenuOpen(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${isTabActive('ask') ? 'bg-sky-50 text-sky-700 font-bold border border-sky-300' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${isTabActive('ask') ? 'bg-sky-50 text-sky-700 font-bold border border-sky-300 shadow-xs' : 'text-slate-700 hover:bg-slate-50 border border-transparent'
                 }`}
             >
               <Sparkles className="w-4 h-4 text-sky-600" />

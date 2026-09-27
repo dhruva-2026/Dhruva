@@ -13,12 +13,13 @@ interface PaperDetailPageProps {
   paperId: string;
   onBack: () => void;
   lang: 'en' | 'hi';
+  initialTab?: 'summary' | 'abstract' | 'paper' | 'learn' | 'ask' | 'sources';
 }
 
-export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBack, lang }) => {
+export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBack, lang, initialTab = 'summary' }) => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'summary' | 'abstract' | 'paper' | 'learn' | 'ask' | 'sources'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'abstract' | 'paper' | 'learn' | 'ask' | 'sources'>(initialTab);
   const [summaryLang, setSummaryLang] = useState<'en' | 'hi'>(lang);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   
@@ -836,14 +837,15 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
               {/* SECTION A: 3D CONCEPT FLASHCARDS */}
+              {/* SECTION A: INTERACTIVE 3D FLASHCARDS */}
               {normalizedFlashcards.length > 0 && (
-                <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px 28px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Layers size={18} style={{ color: '#6366F1' }} />
-                      <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Interactive Concept Flashcards</h3>
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-7 shadow-xs">
+                  <div className="flex items-center justify-between gap-2 mb-3.5 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Layers size={18} className="text-indigo-600 shrink-0" />
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 m-0">Interactive Concept Flashcards</h3>
                     </div>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#6366F1', background: '#EEF2FF', padding: '3px 10px', borderRadius: '9999px', border: '1px solid #C7D2FE' }}>
+                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
                       Card {flashcardIdx + 1} of {normalizedFlashcards.length}
                     </span>
                   </div>
@@ -853,39 +855,31 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
                     onClick={() => setFlashcardFlipped(!flashcardFlipped)}
                     style={{ 
                       cursor: 'pointer', 
-                      minHeight: '180px', 
-                      padding: '28px', 
-                      borderRadius: '14px', 
+                      minHeight: '170px', 
                       background: !flashcardFlipped 
                         ? 'linear-gradient(135deg, #EEF2FF 0%, #E0F2FE 100%)' 
                         : 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)', 
                       border: !flashcardFlipped ? '1.5px solid #C7D2FE' : '1.5px solid #86EFAC', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      textAlign: 'center', 
-                      transition: 'all 0.25s ease',
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.04)'
                     }}
+                    className="p-5 sm:p-8 rounded-xl flex flex-col items-center justify-center text-center transition-all duration-200 shadow-xs"
                   >
                     {!flashcardFlipped ? (
-                      <div>
-                        <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6366F1', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                      <div className="w-full">
+                        <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-indigo-600 mb-2 flex items-center justify-center gap-1.5">
                           <HelpCircle size={13} />
                           <span>Scientific Concept Question (Click to Flip)</span>
                         </div>
-                        <h4 style={{ fontSize: '16.5px', fontWeight: 800, color: '#0F172A', margin: 0, maxWidth: '650px', lineHeight: 1.4 }}>
+                        <h4 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 m-0 max-w-2xl mx-auto leading-snug">
                           {normalizedFlashcards[flashcardIdx]?.front}
                         </h4>
                       </div>
                     ) : (
-                      <div>
-                        <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#16A34A', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                      <div className="w-full">
+                        <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-emerald-700 mb-2 flex items-center justify-center gap-1.5">
                           <CheckCircle2 size={13} />
                           <span>Verified Scientific Explanation</span>
                         </div>
-                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#064E3B', margin: 0, maxWidth: '650px', lineHeight: 1.6 }}>
+                        <p className="text-xs sm:text-sm md:text-base font-medium text-emerald-950 m-0 max-w-2xl mx-auto leading-relaxed">
                           {normalizedFlashcards[flashcardIdx]?.back}
                         </p>
                       </div>
@@ -893,28 +887,28 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
                   </div>
 
                   {/* Card Navigation Controls */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-                    <div style={{ fontSize: '11.5px', color: '#64748B' }}>
-                      Source: <span style={{ fontWeight: 600, color: '#0F172A' }}>{normalizedFlashcards[flashcardIdx]?.source_section || 'Manuscript'}</span>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100">
+                    <div className="text-xs text-slate-500 self-start sm:self-auto">
+                      Source: <span className="font-semibold text-slate-800">{normalizedFlashcards[flashcardIdx]?.source_section || 'Manuscript'}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <button 
                         onClick={() => { setFlashcardFlipped(false); setFlashcardIdx(prev => Math.max(0, prev - 1)); }} 
                         disabled={flashcardIdx === 0} 
-                        style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFFFFF', fontSize: '12px', fontWeight: 600, color: flashcardIdx === 0 ? '#94A3B8' : '#0F172A', cursor: flashcardIdx === 0 ? 'not-allowed' : 'pointer' }}
+                        className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 disabled:opacity-40 cursor-pointer hover:bg-slate-50 transition-colors"
                       >
                         Previous
                       </button>
                       <button 
                         onClick={() => setFlashcardFlipped(!flashcardFlipped)} 
-                        style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid #BAE6FD', background: '#F0F9FF', fontSize: '12px', fontWeight: 700, color: '#0284C7', cursor: 'pointer' }}
+                        className="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg border border-sky-300 bg-sky-50 text-xs font-bold text-sky-700 cursor-pointer hover:bg-sky-100 transition-colors"
                       >
                         Flip Card
                       </button>
                       <button 
                         onClick={() => { setFlashcardFlipped(false); setFlashcardIdx(prev => Math.min(normalizedFlashcards.length - 1, prev + 1)); }} 
                         disabled={flashcardIdx === normalizedFlashcards.length - 1} 
-                        style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFFFFF', fontSize: '12px', fontWeight: 600, color: flashcardIdx === normalizedFlashcards.length - 1 ? '#94A3B8' : '#0F172A', cursor: flashcardIdx === normalizedFlashcards.length - 1 ? 'not-allowed' : 'pointer' }}
+                        className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 disabled:opacity-40 cursor-pointer hover:bg-slate-50 transition-colors"
                       >
                         Next
                       </button>
@@ -925,26 +919,30 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
 
               {/* SECTION B: KNOWLEDGE ASSESSMENT QUIZ (5-6+ MCQS) */}
               {normalizedMcqs.length > 0 && (
-                <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px 28px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-7 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
                     <div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                      <h3 className="text-base sm:text-lg font-extrabold text-slate-900 m-0">
                         Knowledge Assessment Quiz ({normalizedMcqs.length} MCQs)
                       </h3>
-                      <p style={{ fontSize: '12px', color: '#64748B', margin: '4px 0 0' }}>
+                      <p className="text-xs text-slate-500 mt-0.5 mb-0">
                         Test your understanding against verified findings and scientific measurements.
                       </p>
                     </div>
                     
                     {quizSubmitted && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '9999px', background: calculateScore() >= normalizedMcqs.length * 0.7 ? '#F0FDF4' : '#FFFBEB', border: calculateScore() >= normalizedMcqs.length * 0.7 ? '1px solid #86EFAC' : '1px solid #FDE68A', color: calculateScore() >= normalizedMcqs.length * 0.7 ? '#16A34A' : '#D97706', fontSize: '13px', fontWeight: 800 }}>
-                        <Award size={15} />
+                      <div className={`self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
+                        calculateScore() >= normalizedMcqs.length * 0.7 
+                          ? 'bg-emerald-50 border border-emerald-300 text-emerald-700' 
+                          : 'bg-amber-50 border border-amber-300 text-amber-700'
+                      }`}>
+                        <Award size={14} />
                         <span>Score: {calculateScore()} / {normalizedMcqs.length} ({((calculateScore() / normalizedMcqs.length) * 100).toFixed(0)}%)</span>
                       </div>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                  <div className="flex flex-col gap-4">
                     {normalizedMcqs.map((q: any, idx: number) => {
                       const selectedKey = quizAnswers[idx];
                       const isCorrect = selectedKey === q.correct_option;
@@ -952,24 +950,19 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
                       return (
                         <div 
                           key={idx} 
-                          style={{ 
-                            background: '#F8FAFC', 
-                            border: '1px solid #E2E8F0', 
-                            borderRadius: '14px', 
-                            padding: '18px 20px' 
-                          }}
+                          className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 sm:p-5"
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                            <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', margin: 0, lineHeight: 1.45 }}>
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 m-0 leading-snug flex-1">
                               Q{idx + 1}. {q.question}
                             </h4>
-                            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', background: '#FFFFFF', border: '1px solid #E2E8F0', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                            <span className="self-start sm:self-auto inline-flex items-center text-[10.5px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md shrink-0">
                               Source: {q.source_section} (p.{q.source_page})
                             </span>
                           </div>
 
                           {/* 4 Options Grid */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                          <div className="grid grid-cols-1 gap-2">
                             {q.options.map((opt: any) => {
                               const isSelected = selectedKey === opt.key;
                               const isThisOptionCorrect = opt.key === q.correct_option;
@@ -1002,9 +995,9 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
                                   style={{
                                     width: '100%',
                                     textAlign: 'left',
-                                    padding: '10px 14px',
+                                    padding: '9px 12px',
                                     borderRadius: '10px',
-                                    fontSize: '13px',
+                                    fontSize: '12.5px',
                                     border: btnBorder,
                                     background: btnBg,
                                     color: btnColor,
@@ -1017,8 +1010,8 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
                                   }}
                                 >
                                   <span style={{ 
-                                    width: '24px', 
-                                    height: '24px', 
+                                    width: '22px', 
+                                    height: '22px', 
                                     borderRadius: '6px', 
                                     background: isSelected ? '#0284C7' : (quizSubmitted && isThisOptionCorrect ? '#16A34A' : '#E2E8F0'), 
                                     color: isSelected || (quizSubmitted && isThisOptionCorrect) ? '#FFFFFF' : '#475569',
@@ -1031,9 +1024,9 @@ export const PaperDetailPage: React.FC<PaperDetailPageProps> = ({ paperId, onBac
                                   }}>
                                     {opt.key}
                                   </span>
-                                  <span style={{ flex: 1 }}>{opt.text}</span>
-                                  {quizSubmitted && isThisOptionCorrect && <Check size={16} color="#16A34A" />}
-                                  {quizSubmitted && isSelected && !isThisOptionCorrect && <XCircle size={16} color="#DC2626" />}
+                                  <span style={{ flex: 1, lineHeight: 1.4 }}>{opt.text}</span>
+                                  {quizSubmitted && isThisOptionCorrect && <Check size={16} color="#16A34A" className="shrink-0" />}
+                                  {quizSubmitted && isSelected && !isThisOptionCorrect && <XCircle size={16} color="#DC2626" className="shrink-0" />}
                                 </button>
                               );
                             })}

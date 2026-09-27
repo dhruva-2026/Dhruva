@@ -181,18 +181,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <ArrowLeft size={16} strokeWidth={2.4} className="transition-transform group-hover:-translate-x-0.5" />
           </button>
 
-          {/* Sign Out Button inside popup (if logged in) */}
-          {isAuthenticated && (
-            <button
-              type="button"
-              onClick={() => setSignOutWarningOpen(true)}
-              className="absolute top-5 right-5 sm:top-6 sm:right-6 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-full transition-colors cursor-pointer shadow-2xs z-20"
-            >
-              <LogOut size={12} />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-          )}
-
           {/* Brand Header */}
           <div className="text-center mb-6 pt-1">
             <div className="inline-flex items-center justify-center mb-3">
@@ -223,46 +211,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {/* Active Session Card (when logged in) */}
           {isAuthenticated && (
             <div className="mb-5 p-3.5 rounded-2xl bg-sky-50/90 border border-sky-200/90 shadow-xs">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-white border border-sky-200 flex items-center justify-center text-sky-600 shrink-0 shadow-2xs">
-                    {currentUser.role === 'admin' ? (
-                      <ShieldCheck size={18} className="text-rose-600" />
-                    ) : (
-                      <FlaskConical size={18} className="text-sky-600" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 whitespace-nowrap">
-                        {currentUser.role}
-                      </span>
-                      <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active Session
-                      </span>
-                    </div>
-                    <div className="text-xs font-bold text-slate-900 mt-1 truncate">
-                      {currentUser.name || currentUser.email}
-                    </div>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white border border-sky-200 flex items-center justify-center text-sky-600 shrink-0 shadow-2xs">
+                  {currentUser.role === 'admin' ? (
+                    <ShieldCheck size={18} className="text-rose-600" />
+                  ) : (
+                    <FlaskConical size={18} className="text-sky-600" />
+                  )}
                 </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => onNavigate(currentUser.role === 'admin' ? 'admin-dashboard' : 'researcher-dashboard')}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-700 text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSignOutWarningOpen(true)}
-                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                  >
-                    <LogOut size={12} />
-                    <span>Sign Out</span>
-                  </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 whitespace-nowrap">
+                      {currentUser.role}
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 whitespace-nowrap">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active Session
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm font-bold text-slate-900 mt-1 break-words">
+                    {currentUser.name || currentUser.email}
+                  </div>
                 </div>
               </div>
             </div>
@@ -485,18 +453,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           )}
 
-          {/* Quick Sign Out Action if logged in */}
+          {/* Active User Information */}
           {isAuthenticated && (
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-2">
-              <span className="text-xs text-slate-500">Signed in as {currentUser.name}?</span>
-              <button
-                type="button"
-                onClick={() => setSignOutWarningOpen(true)}
-                className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <LogOut size={12} />
-                <span>Sign Out</span>
-              </button>
+            <div className="mt-4 pt-3 border-t border-slate-100 text-center px-2">
+              <p className="text-xs text-slate-600 font-medium break-words leading-relaxed">
+                Signed in as <span className="font-semibold text-slate-900">{currentUser.name || currentUser.email}</span>
+                {currentUser.role ? (
+                  <span className="text-slate-500 font-normal"> ({currentUser.role === 'admin' ? 'Admin Reviewer' : currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)})</span>
+                ) : null}
+              </p>
             </div>
           )}
 

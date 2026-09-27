@@ -74,6 +74,7 @@ export function App() {
   };
 
   const [selectedPaperId, setSelectedPaperId] = useState<string>('paper-001');
+  const [paperDetailInitialTab, setPaperDetailInitialTab] = useState<'summary' | 'abstract' | 'paper' | 'learn' | 'ask' | 'sources'>('summary');
   const [selectedTheme, setSelectedTheme] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [askInitialQuery, setAskInitialQuery] = useState<string>('');
@@ -180,8 +181,9 @@ export function App() {
     }
   };
 
-  const handleReadPaper = (id: string) => {
+  const handleReadPaper = (id: string, initialTab: 'summary' | 'abstract' | 'paper' | 'learn' | 'ask' | 'sources' = 'summary') => {
     setSelectedPaperId(id);
+    setPaperDetailInitialTab(initialTab);
     setCurrentTab('paper-detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -245,6 +247,7 @@ export function App() {
               onReadPaper={handleReadPaper}
               onAskPaper={(paper) => {
                 setSelectedPaperId(paper.id);
+                setPaperDetailInitialTab('ask');
                 setCurrentTab('paper-detail');
               }}
               initialArea={selectedTheme}
@@ -258,6 +261,7 @@ export function App() {
           <div className="animate-fadeIn w-full" key="paper-detail">
             <PaperDetailPage
               paperId={selectedPaperId}
+              initialTab={paperDetailInitialTab}
               onBack={() => setCurrentTab('explore')}
               lang={lang}
             />

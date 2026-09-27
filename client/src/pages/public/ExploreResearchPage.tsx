@@ -288,8 +288,8 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
 
-        {/* Science badge — top right */}
-        <div style={{ position: 'absolute', top: '24px', right: '32px', zIndex: 2, textAlign: 'right' }}>
+        {/* Science badge — top right (hidden on mobile to prevent overlapping hero text) */}
+        <div className="hidden sm:block" style={{ position: 'absolute', top: '24px', right: '32px', zIndex: 2, textAlign: 'right' }}>
           <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#64748B', lineHeight: 1.7 }}>
             SCIENCE<br />FOR A SUSTAINABLE<br />
             <span style={{ color: '#0284C7', fontWeight: 800 }}>POLAR FUTURE</span>
@@ -784,7 +784,7 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
         {/* ═══ PAPER CARDS GRID ═══ */}
         <div style={{ marginTop: '28px', marginBottom: '32px' }}>
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <div key={i} style={{ height: '360px', borderRadius: '14px', background: '#F8FAFC', border: '1px solid #E2E8F0', animation: 'pulse 1.5s ease-in-out infinite' }} />
               ))}
@@ -801,7 +801,7 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {pagedPapers.map((paper, idx) => (
                 <ExploreCard key={paper.id} paper={paper} idx={(page - 1) * ITEMS_PER_PAGE + idx} onRead={onReadPaper} lang={lang} />
               ))}
@@ -811,8 +811,8 @@ export const ExploreResearchPage: React.FC<ExploreResearchPageProps> = ({ onRead
 
         {/* ═══ PAGINATION ═══ */}
         {!loading && papers.length > ITEMS_PER_PAGE && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '3rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', paddingBottom: '3rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}

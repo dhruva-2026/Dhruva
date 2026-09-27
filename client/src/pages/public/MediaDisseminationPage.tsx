@@ -404,7 +404,7 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
     return matchSearch && matchType && matchRegion;
   });
 
-  const cardsPerPage = 3;
+  const cardsPerPage = 6;
   const maxPages = Math.max(1, Math.ceil(filteredMedia.length / cardsPerPage));
 
   const handlePrev = () => {
@@ -486,7 +486,7 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
             padding: 'clamp(3rem, 5vw, 4.5rem) clamp(1.2rem, 3vw, 3rem) 2.5rem',
           }}
         >
-          {/* Top Row: Eyebrow + Quote */}
+          {/* Top Row: Eyebrow */}
           <div
             style={{
               display: 'flex',
@@ -501,35 +501,6 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
             <div className="section-eyebrow">
               <span className="eyebrow-dot" />
               <span>{lang === 'en' ? 'Polar Science Dissemination' : 'ध्रुवीय विज्ञान प्रसार'}</span>
-            </div>
-
-            {/* Right quote with accent line */}
-            <div style={{ textAlign: 'right', maxWidth: '280px' }}>
-              <p
-                style={{
-                  fontSize: '13px',
-                  fontStyle: 'italic',
-                  color: '#64748B',
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}
-              >
-                "Real stories.
-                <br />
-                Greater understanding.
-                <br />
-                A colder, brighter tomorrow."
-              </p>
-              <div
-                style={{
-                  width: '42px',
-                  height: '3px',
-                  background: '#0284C7',
-                  marginTop: '8px',
-                  marginLeft: 'auto',
-                  borderRadius: '2px',
-                }}
-              />
             </div>
           </div>
 
@@ -724,40 +695,13 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
             )}
           </div>
 
-          {/* ═══ Unified Search & Dual Filter Capsule Bar ═══ */}
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.94)',
-              border: '1px solid rgba(14, 116, 144, 0.18)',
-              borderRadius: '9999px',
-              padding: '6px 8px 6px 18px',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              flexWrap: 'wrap',
-              boxShadow: '0 8px 30px rgba(15, 23, 42, 0.06)',
-            }}
-          >
+          {/* ═══ Unified Search & Dual Filter Bar ═══ */}
+          <div className="w-full space-y-3.5">
             {/* Search Input */}
-            <div
-              style={{
-                position: 'relative',
-                flex: '1 1 240px',
-                minWidth: '200px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
+            <div className="w-full flex items-center bg-white/95 border border-slate-200 hover:border-sky-400 focus-within:border-sky-500 rounded-xl sm:rounded-full px-4 py-2.5 shadow-xs backdrop-blur-md transition-all">
               <Search
                 size={16}
-                style={{
-                  color: '#0284C7',
-                  marginRight: '10px',
-                  flexShrink: 0,
-                }}
+                className="text-sky-600 mr-2.5 shrink-0"
               />
               <input
                 value={searchTerm}
@@ -766,123 +710,67 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
                   setCarouselIndex(0);
                 }}
                 placeholder="Search stories, infographics, videos, or keywords..."
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  padding: '8px 0',
-                  fontSize: '13px',
-                  color: '#0F172A',
-                  fontFamily: 'inherit',
-                }}
+                className="w-full bg-transparent border-none outline-none text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-medium"
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
-            {/* Middle: Content Type Pills */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '6px',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
-            >
-              {TYPE_FILTERS.map(t => {
-                const active = selectedType === t;
-                return (
-                  <button
-                    key={t}
-                    onClick={() => {
-                      setSelectedType(t);
-                      setCarouselIndex(0);
-                    }}
-                    style={{
-                      padding: '7px 16px',
-                      borderRadius: '9999px',
-                      border: active ? 'none' : '1px solid #E2E8F0',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      transition: 'all 0.18s ease',
-                      background: active
-                        ? 'linear-gradient(135deg, #0284C7, #0369A1)'
-                        : '#F1F5F9',
-                      color: active ? '#FFFFFF' : '#64748B',
-                      boxShadow: active ? '0 2px 10px rgba(2, 132, 199, 0.35)' : 'none',
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = '#E2E8F0';
-                        (e.currentTarget as HTMLElement).style.color = '#0F172A';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = '#F1F5F9';
-                        (e.currentTarget as HTMLElement).style.color = '#64748B';
-                      }
-                    }}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Filter Pills: Types + Regions */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              {/* Type Pills */}
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
+                {TYPE_FILTERS.map(t => {
+                  const active = selectedType === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => {
+                        setSelectedType(t);
+                        setCarouselIndex(0);
+                      }}
+                      className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        active
+                          ? 'bg-gradient-to-r from-sky-600 to-cyan-700 text-white shadow-sm shadow-sky-600/30 border border-transparent'
+                          : 'bg-white/90 text-slate-600 border border-slate-200/90 hover:bg-slate-100 hover:text-slate-900'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
 
-            {/* Right: Region Filters */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                paddingLeft: '10px',
-                borderLeft: '1px solid #E2E8F0',
-              }}
-            >
-              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>
-                Region:
-              </span>
-              {REGION_FILTERS.map(r => {
-                const active = selectedRegion === r;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setSelectedRegion(r);
-                      setCarouselIndex(0);
-                    }}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '9999px',
-                      border: active ? 'none' : '1px solid #E2E8F0',
-                      cursor: 'pointer',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      transition: 'all 0.18s ease',
-                      background: active
-                        ? 'linear-gradient(135deg, #0284C7, #0369A1)'
-                        : '#F1F5F9',
-                      color: active ? '#FFFFFF' : '#64748B',
-                      boxShadow: active ? '0 2px 8px rgba(2, 132, 199, 0.3)' : 'none',
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = '#E2E8F0';
-                        (e.currentTarget as HTMLElement).style.color = '#0F172A';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = '#F1F5F9';
-                        (e.currentTarget as HTMLElement).style.color = '#64748B';
-                      }
-                    }}
-                  >
-                    {r}
-                  </button>
-                );
-              })}
+              {/* Region Pills */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-xs text-slate-500 font-semibold hidden sm:inline">Region:</span>
+                {REGION_FILTERS.map(r => {
+                  const active = selectedRegion === r;
+                  return (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setSelectedRegion(r);
+                        setCarouselIndex(0);
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        active
+                          ? 'bg-gradient-to-r from-sky-600 to-cyan-700 text-white shadow-sm shadow-sky-600/30 border border-transparent'
+                          : 'bg-white/90 text-slate-600 border border-slate-200/90 hover:bg-slate-100 hover:text-slate-900'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -893,87 +781,33 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
         style={{
           maxWidth: '1520px',
           margin: '0 auto',
-          padding: '2.5rem clamp(1.2rem, 3vw, 3rem) 4rem',
+          padding: '2rem clamp(1rem, 3vw, 3rem) 4rem',
           position: 'relative',
         }}
       >
         {/* Navigation Arrow Left */}
-        <button
-          onClick={handlePrev}
-          aria-label="Previous Stories"
-          style={{
-            position: 'absolute',
-            left: '8px',
-            top: '46%',
-            transform: 'translateY(-50%)',
-            zIndex: 10,
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            background: '#FFFFFF',
-            border: '1px solid rgba(14, 116, 144, 0.25)',
-            color: '#0284C7',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.08)',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-50%) scale(1.1)';
-            (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(2, 132, 199, 0.25)';
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-50%) scale(1)';
-            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.25)';
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(15, 23, 42, 0.08)';
-          }}
-        >
-          <ChevronLeft size={22} strokeWidth={2.5} />
-        </button>
+        {maxPages > 1 && (
+          <button
+            onClick={handlePrev}
+            aria-label="Previous Stories"
+            className="hidden sm:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 text-sky-600 items-center justify-center cursor-pointer shadow-md hover:scale-110 hover:border-sky-500 transition-all"
+          >
+            <ChevronLeft size={22} strokeWidth={2.5} />
+          </button>
+        )}
 
         {/* Navigation Arrow Right */}
-        <button
-          onClick={handleNext}
-          aria-label="Next Stories"
-          style={{
-            position: 'absolute',
-            right: '8px',
-            top: '46%',
-            transform: 'translateY(-50%)',
-            zIndex: 10,
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            background: '#FFFFFF',
-            border: '1px solid rgba(14, 116, 144, 0.25)',
-            color: '#0284C7',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.08)',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-50%) scale(1.1)';
-            (e.currentTarget as HTMLElement).style.borderColor = '#0284C7';
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(2, 132, 199, 0.25)';
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-50%) scale(1)';
-            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14, 116, 144, 0.25)';
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(15, 23, 42, 0.08)';
-          }}
-        >
-          <ChevronRight size={22} strokeWidth={2.5} />
-        </button>
+        {maxPages > 1 && (
+          <button
+            onClick={handleNext}
+            aria-label="Next Stories"
+            className="hidden sm:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 text-sky-600 items-center justify-center cursor-pointer shadow-md hover:scale-110 hover:border-sky-500 transition-all"
+          >
+            <ChevronRight size={22} strokeWidth={2.5} />
+          </button>
+        )}
 
-        {/* 3-Column Card Grid */}
+        {/* Responsive Card Grid */}
         {filteredMedia.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '5rem 2rem' }}>
             <Search size={36} style={{ color: '#94A3B8', margin: '0 auto 12px' }} />
@@ -982,14 +816,7 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
             </p>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '24px',
-              padding: '0 28px',
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-1 sm:px-8">
             {currentCards.map(item => {
               const badge = getBadgeStyle(item.type);
               const isVideo = item.type === 'Video' || item.type === 'Videos & Documentaries' || item.type === 'Expedition Story';
@@ -1324,7 +1151,7 @@ export const MediaDisseminationPage: React.FC<MediaDisseminationPageProps> = ({ 
                         }}
                       >
                         <Calendar size={13} style={{ color: '#94A3B8' }} />
-                        {item.publication_date}
+                        {item.publication_date ? item.publication_date.split('T')[0] : '2024-04-01'}
                       </span>
                       <span
                         style={{
